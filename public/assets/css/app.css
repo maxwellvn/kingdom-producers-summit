@@ -574,10 +574,10 @@ body.menu-open { overflow: hidden; }
 .footer__flag-wordmark { position: absolute; z-index: 3; inset: auto var(--gutter) clamp(.8rem, 1.6vw, 1.5rem); overflow: hidden; white-space: nowrap; font-family: var(--font-display); font-size: clamp(3.15rem, 10.6vw, 10rem); font-weight: 700; line-height: .78; letter-spacing: -.045em; text-align: center; text-transform: uppercase; color: var(--paper); background: linear-gradient(90deg, #f3eee2, #d9a521 52%, #f3eee2); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; -webkit-mask: url("../img/footer-wordmark-halftone-alpha-v1.png") center / 100% 100% no-repeat; mask: url("../img/footer-wordmark-halftone-alpha-v1.png") center / 100% 100% no-repeat; -webkit-text-stroke: 1px rgba(243,238,226,.36); filter: drop-shadow(0 3px 0 rgba(27,34,66,.95)) drop-shadow(0 12px 24px rgba(7,11,27,.68)); pointer-events: none; }
 
 /* ---------- Registration ---------- */
-.reg { position: relative; isolation: isolate; padding-top: clamp(7rem, 14vh, 9rem); padding-bottom: var(--section); overflow: hidden; }
+.reg { position: relative; isolation: isolate; padding-top: clamp(7rem, 14vh, 9rem); padding-bottom: var(--section); overflow: clip; }
 .reg::before { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .11; background: url("../img/process-battersea-halftone-v1.jpg") right 6rem / min(68rem, 70vw) auto no-repeat; pointer-events: none; }
 .reg__grid { display: grid; grid-template-columns: minmax(18rem, 23rem) minmax(0, 1fr); gap: clamp(3rem, 8vw, 8rem); align-items: start; }
-.reg__aside { position: sticky; top: 0; align-self: start; }
+.reg__aside { position: sticky; top: 5.5rem; align-self: start; }
 .reg__card { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 40rem; padding: clamp(2rem, 4vw, 3rem); color: var(--paper); background: var(--ink); border: 1px solid rgba(243,238,226,.16); box-shadow: 0 30px 60px -42px rgba(21,27,55,.85); }
 .reg__card::before { content: ""; position: absolute; inset: auto 0 0; height: 48%; opacity: .46; background: url("../img/poster-st-pauls-halftone-v1.jpg") center top / cover no-repeat; }
 .reg__card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 46%, rgba(27,34,66,.94) 62%, rgba(27,34,66,.58) 100%); pointer-events: none; }
