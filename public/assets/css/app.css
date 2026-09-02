@@ -578,15 +578,15 @@ body.menu-open { overflow: hidden; }
 .reg::before { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .11; background: url("../img/process-battersea-halftone-v1.jpg") right 6rem / min(68rem, 70vw) auto no-repeat; pointer-events: none; }
 .reg__grid { display: grid; grid-template-columns: minmax(18rem, 23rem) minmax(0, 1fr); gap: clamp(3rem, 8vw, 8rem); align-items: start; }
 .reg__aside { position: sticky; top: 0; align-self: start; }
-.reg__card { position: relative; overflow: hidden; min-height: 40rem; padding: clamp(2rem, 4vw, 3rem); color: var(--paper); background: var(--ink); border: 1px solid rgba(243,238,226,.16); box-shadow: 0 30px 60px -42px rgba(21,27,55,.85); }
+.reg__card { position: relative; overflow: hidden; min-height: 40rem; padding: clamp(2rem, 4vw, 3rem); color: var(--paper); background: var(--ink); border: 1px solid rgba(243,238,226,.16); box-shadow: 0 30px 60px -42px rgba(21,27,55,.85); text-align: center; }
 .reg__card::before { content: ""; position: absolute; inset: auto 0 0; height: 48%; opacity: .46; background: url("../img/poster-st-pauls-halftone-v1.jpg") center top / cover no-repeat; }
 .reg__card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 46%, rgba(27,34,66,.94) 62%, rgba(27,34,66,.58) 100%); pointer-events: none; }
 .reg__card > * { position: relative; z-index: 1; }
 .reg__kicker { margin: 0 0 1.5rem; color: #e65a5f; }
 .reg__title { color: var(--paper); font-size: var(--fs-h1); font-weight: 700; margin-bottom: 1rem; }
-.reg__lede { max-width: 27ch; color: rgba(243,238,226,.86); margin-bottom: 2.5rem; }
-.reg__steps { display: flex; flex-direction: column; gap: .75rem; color: rgba(243,238,226,.72); margin-bottom: 2.5rem; }
-.reg__steps li { display: flex; gap: .9rem; align-items: baseline; transition: color var(--dur-fast); }
+.reg__lede { max-width: 27ch; color: rgba(243,238,226,.86); margin: 0 auto 2.5rem; }
+.reg__steps { display: flex; flex-direction: column; align-items: center; gap: .75rem; color: rgba(243,238,226,.72); margin-bottom: 2.5rem; }
+.reg__steps li { display: flex; justify-content: center; gap: .9rem; align-items: baseline; transition: color var(--dur-fast); }
 .reg__steps li span { color: rgba(243,238,226,.58); min-width: 2ch; }
 .reg__steps li.is-current { color: var(--paper); }
 .reg__steps li.is-current span { color: #e65a5f; }
