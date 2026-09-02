@@ -80,7 +80,7 @@ $next = [
         <a class="btn btn--outline" href="<?= url('/') ?>"><span class="btn__label">Back to the summit</span></a>
       </div>
 
-      <p class="confirmed__fine mono">Something wrong? Email <a href="mailto:<?= e(config('app.mail.from')) ?>"><?= e(config('app.mail.from')) ?></a> quoting your reference.</p>
+      <p class="confirmed__fine mono">Something wrong? Email <a href="mailto:<?= e(config('app.mail.reply_to')) ?>"><?= e(config('app.mail.reply_to')) ?></a> quoting your reference.</p>
     </aside>
   </div>
 </section>

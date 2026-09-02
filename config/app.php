@@ -15,8 +15,15 @@ return [
     ],
 
     'mail' => [
+        'mailer'    => env('MAIL_MAILER', 'smtp'),
+        'host'      => env('MAIL_HOST', ''),
+        'port'      => (int) env('MAIL_PORT', '465'),
+        'encryption'=> env('MAIL_ENCRYPTION', 'ssl'),
+        'username'  => env('MAIL_USERNAME', ''),
+        'password'  => env('MAIL_PASSWORD', ''),
         'from'      => env('MAIL_FROM', 'lkps@loveworldconsulate.org'),
         'from_name' => env('MAIL_FROM_NAME', 'Loveworld Kingdom Producers Summit'),
+        'reply_to'  => env('MAIL_REPLY_TO', 'lkps@loveworldconsulate.org'),
     ],
 
     'summit' => [

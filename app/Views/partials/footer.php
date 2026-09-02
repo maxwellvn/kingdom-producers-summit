@@ -39,7 +39,7 @@
 
     <div class="footer__col">
       <h4 class="footer__heading mono">Contact</h4>
-      <a href="mailto:<?= e(config('app.mail.from')) ?>"><?= e(config('app.mail.from')) ?></a>
+      <a href="mailto:<?= e(config('app.mail.reply_to')) ?>"><?= e(config('app.mail.reply_to')) ?></a>
       <span><?= e($summit['city']) ?></span>
     </div>
   </div>

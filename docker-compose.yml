@@ -19,6 +19,13 @@ services:
       ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH:?Set ADMIN_PASSWORD_HASH in Coolify}"
       MAIL_FROM: "${MAIL_FROM:-lkps@loveworldconsulate.org}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Loveworld Kingdom Producers Summit}"
+      MAIL_REPLY_TO: "${MAIL_REPLY_TO:-lkps@loveworldconsulate.org}"
+      MAIL_MAILER: "${MAIL_MAILER:-smtp}"
+      MAIL_HOST: "${MAIL_HOST:-smtp.hostinger.com}"
+      MAIL_PORT: "${MAIL_PORT:-465}"
+      MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-ssl}"
+      MAIL_USERNAME: "${MAIL_USERNAME:?Set MAIL_USERNAME in Coolify}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:?Set MAIL_PASSWORD in Coolify}"
     expose:
       - "80"
     depends_on:

@@ -582,9 +582,9 @@ body.menu-open { overflow: hidden; }
 .reg__card::before { content: ""; position: absolute; inset: auto 0 0; height: 48%; opacity: .46; background: url("../img/poster-st-pauls-halftone-v1.jpg") center top / cover no-repeat; }
 .reg__card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 46%, rgba(27,34,66,.94) 62%, rgba(27,34,66,.58) 100%); pointer-events: none; }
 .reg__card > * { position: relative; z-index: 1; }
-.reg__card-inner { width: min(100%, 17.5rem); text-align: left; }
+.reg__card-inner { width: min(100%, 17.5rem); margin-inline: auto; text-align: left; }
 .reg__kicker { margin: 0 0 1.5rem; color: #e65a5f; }
-.reg__title { color: var(--paper); font-size: var(--fs-h1); font-weight: 700; margin-bottom: 1rem; }
+.reg__title { width: 100%; color: var(--paper); font-size: clamp(3.2rem, 5.3vw, 4.45rem); font-weight: 700; letter-spacing: -.025em; margin-bottom: 1rem; }
 .reg__lede { max-width: 27ch; color: rgba(243,238,226,.86); margin: 0 0 2.5rem; }
 .reg__steps { display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; color: rgba(243,238,226,.72); margin-bottom: 2.5rem; }
 .reg__steps li { display: flex; justify-content: flex-start; gap: .9rem; align-items: baseline; transition: color var(--dur-fast); }

@@ -11,6 +11,7 @@ use App\Core\Session;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
+use App\Services\RegistrationMail;
 use PDOException;
 
 final class RegistrationController extends Controller
@@ -57,12 +58,22 @@ final class RegistrationController extends Controller
         }
 
         Session::put('last_registration', $registration['reference']);
+
+        try {
+            (new RegistrationMail())->send($registration);
+        } catch (\Throwable $e) {
+            error_log('Registration confirmation email could not be sent.');
+        }
+
         return $this->redirect('/register/confirmed');
     }
 
     public function confirmed(Request $request): Response
     {
         $reference = Session::get('last_registration');
+        if (!is_string($reference)) {
+            $reference = AttendanceService::referenceFromToken($request->str('access'));
+        }
         $registration = is_string($reference) ? Registration::findByReference($reference) : null;
 
         if ($registration === null) {
