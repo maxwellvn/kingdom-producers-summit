@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\Session;
+use App\Models\Registration;
+use App\Services\RegistrationService;
+use App\Services\AttendanceService;
+use PDOException;
+
+final class RegistrationController extends Controller
+{
+    public function create(Request $request): Response
+    {
+        $mode = $request->str('mode');
+        if (!in_array($mode, Registration::PARTICIPATION, true)) {
+            $mode = '';
+        }
+
+        return $this->view('register/create', [
+            'title'     => 'Register — ' . config('app.name'),
+            'bodyClass' => 'page-register',
+            'summit'    => config('app.summit'),
+            'mode'      => $mode,
+            'fields'    => Registration::FIELDS,
+            'stages'    => Registration::STAGES,
+            'ageBands'  => Registration::AGE_BANDS,
+            'interests' => Registration::INTERESTS,
+            'contribute'=> Registration::CONTRIBUTE,
+            'hearAbout' => Registration::HEAR_ABOUT,
+            'countries' => $this->countries(),
+        ]);
+    }
+
+    public function store(Request $request): Response
+    {
+        $service = new RegistrationService();
+        [$errors, $clean] = $service->validate($request);
+
+        if ($errors) {
+            return $this->back($request, $errors, $request->all());
+        }
+
+        try {
+            $registration = $service->register($clean);
+        } catch (PDOException $e) {
+            // 23000 = integrity constraint (duplicate email under race)
+            if ($e->getCode() === '23000') {
+                return $this->back($request, ['email' => 'This email is already registered.'], $request->all());
+            }
+            throw $e;
+        }
+
+        Session::put('last_registration', $registration['reference']);
+        return $this->redirect('/register/confirmed');
+    }
+
+    public function confirmed(Request $request): Response
+    {
+        $reference = Session::get('last_registration');
+        $registration = is_string($reference) ? Registration::findByReference($reference) : null;
+
+        if ($registration === null) {
+            return $this->redirect('/register');
+        }
+
+        return $this->view('register/confirmed', [
+            'title'        => 'You are registered — ' . config('app.name'),
+            'bodyClass'    => 'page-confirmed',
+            'summit'       => config('app.summit'),
+            'registration' => $registration,
+            'accessToken'  => AttendanceService::tokenFor($registration['reference']),
+        ]);
+    }
+
+    /** @return string[] */
+    private function countries(): array
+    {
+        return [
+            'United Kingdom', 'Nigeria', 'Ghana', 'South Africa', 'Kenya', 'United States', 'Canada', 'Ireland',
+            'France', 'Germany', 'Netherlands', 'Italy', 'Spain', 'Portugal', 'Belgium', 'Switzerland', 'Sweden',
+            'Norway', 'Denmark', 'Finland', 'Poland', 'Austria', 'Greece', 'Turkey', 'United Arab Emirates',
+            'Saudi Arabia', 'Qatar', 'India', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Singapore', 'Malaysia',
+            'Philippines', 'Indonesia', 'Japan', 'South Korea', 'China', 'Hong Kong', 'Australia', 'New Zealand',
+            'Brazil', 'Argentina', 'Mexico', 'Jamaica', 'Trinidad and Tobago', 'Barbados', 'Zimbabwe', 'Zambia',
+            'Uganda', 'Tanzania', 'Rwanda', 'Ethiopia', 'Cameroon', 'Côte d\'Ivoire', 'Senegal', 'Sierra Leone',
+            'Liberia', 'Gambia', 'Botswana', 'Namibia', 'Malawi', 'Mozambique', 'Angola', 'DR Congo', 'Egypt',
+            'Morocco', 'Other',
+        ];
+    }
+}

@@ -1,0 +1,21 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Serve static assets from /public directly
+  RewriteCond %{REQUEST_URI} ^(.*)/(assets/.*)$
+  RewriteCond %{DOCUMENT_ROOT}%1/public/%2 -f
+  RewriteRule ^(assets/.*)$ public/$1 [L]
+
+  # Everything else goes to the front controller
+  RewriteCond %{REQUEST_URI} !^(.*)/public/
+  RewriteRule ^(.*)$ public/index.php [QSA,L]
+</IfModule>
+
+# Deny access to application internals
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(\.env|\.env\..*|composer\.(json|lock))$">
+    Require all denied
+  </FilesMatch>
+</IfModule>

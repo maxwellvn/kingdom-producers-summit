@@ -1,0 +1,201 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Core\Database;
+use PDO;
+use PDOException;
+
+final class Registration
+{
+    public const PARTICIPATION = ['onsite', 'online', 'initiative'];
+    public const STAGES = ['emerge', 'build', 'establish', 'multiply'];
+    public const AGE_BANDS = ['under18', '18-24', '25-34', '35-44', '45-54', '55-64', '65plus'];
+
+    public const FIELDS = [
+        'Technology & Software', 'Media & Film', 'Music & Performing Arts', 'Fashion & Design',
+        'Manufacturing & Engineering', 'Agriculture & Food', 'Finance & Investment', 'Property & Construction',
+        'Health & Wellbeing', 'Education & Training', 'Publishing & Writing', 'Retail & E-commerce',
+        'Ministry & Community', 'Public Service & Policy', 'Student', 'Other',
+    ];
+
+    public const INTERESTS = [
+        'product'   => 'Product & manufacturing',
+        'digital'   => 'Digital & software',
+        'content'   => 'Content, media & publishing',
+        'capital'   => 'Funding & investment readiness',
+        'ip'        => 'Intellectual property & licensing',
+        'export'    => 'Export & international trade',
+        'youth'     => 'Youth & student producers',
+        'mentoring' => 'Mentoring & masterclasses',
+    ];
+
+    public const CONTRIBUTE = [
+        'mentor'    => 'Mentor other producers',
+        'speaker'   => 'Speak or teach',
+        'showcase'  => 'Showcase a product',
+        'volunteer' => 'Volunteer at events',
+        'partner'   => 'Partner or sponsor',
+        'research'  => 'Contribute research & case studies',
+    ];
+
+    public const HEAR_ABOUT = [
+        'church' => 'Church / Zone announcement', 'social' => 'Social media', 'friend' => 'A friend or colleague',
+        'email' => 'Email', 'poster' => 'Poster or flyer', 'other' => 'Other',
+    ];
+
+    public static function emailExists(string $email): bool
+    {
+        $stmt = Database::connection()->prepare('SELECT 1 FROM registrations WHERE email = ? LIMIT 1');
+        $stmt->execute([mb_strtolower($email)]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public static function referenceExists(string $reference): bool
+    {
+        $stmt = Database::connection()->prepare('SELECT 1 FROM registrations WHERE reference = ? LIMIT 1');
+        $stmt->execute([$reference]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public static function create(array $data): int
+    {
+        $columns = array_keys($data);
+        $placeholders = array_map(static fn (string $c) => ':' . $c, $columns);
+
+        $sql = sprintf(
+            'INSERT INTO registrations (%s) VALUES (%s)',
+            implode(', ', array_map(static fn (string $c) => "`{$c}`", $columns)),
+            implode(', ', $placeholders)
+        );
+
+        $pdo = Database::connection();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($data);
+
+        return (int) $pdo->lastInsertId();
+    }
+
+    public static function findByReference(string $reference): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE reference = ? LIMIT 1');
+        $stmt->execute([$reference]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** @return array{total:int, onsite:int, online:int, initiative:int, today:int, countries:int} */
+    public static function stats(): array
+    {
+        $sql = "SELECT
+                    COUNT(*) AS total,
+                    SUM(participation = 'onsite') AS onsite,
+                    SUM(participation = 'online') AS online,
+                    SUM(participation = 'initiative') AS initiative,
+                    SUM(DATE(created_at) = CURDATE()) AS today,
+                    COUNT(DISTINCT country) AS countries
+                FROM registrations WHERE status <> 'cancelled'";
+
+        $row = Database::connection()->query($sql)->fetch() ?: [];
+        return array_map('intval', $row + ['total' => 0, 'onsite' => 0, 'online' => 0, 'initiative' => 0, 'today' => 0, 'countries' => 0]);
+    }
+
+    /** @return array{today:int,total:int} */
+    public static function attendanceStats(): array
+    {
+        $row = Database::connection()->query(
+            "SELECT COUNT(*) AS total, SUM(DATE(checked_in_at) = CURDATE()) AS today FROM attendances"
+        )->fetch() ?: [];
+
+        return ['total' => (int) ($row['total'] ?? 0), 'today' => (int) ($row['today'] ?? 0)];
+    }
+
+    /** @return array{created:bool,checked_in_at:string} */
+    public static function recordAttendance(int $registrationId, string $staffEmail, string $ipAddress): array
+    {
+        $pdo = Database::connection();
+        try {
+            $stmt = $pdo->prepare(
+                'INSERT INTO attendances (registration_id, checked_in_by, ip_address) VALUES (?, ?, ?)'
+            );
+            $stmt->execute([$registrationId, mb_substr($staffEmail, 0, 190), @inet_pton($ipAddress) ?: null]);
+            return ['created' => true, 'checked_in_at' => date('Y-m-d H:i:s')];
+        } catch (PDOException $e) {
+            if ($e->getCode() !== '23000') {
+                throw $e;
+            }
+        }
+
+        $stmt = $pdo->prepare('SELECT checked_in_at FROM attendances WHERE registration_id = ? LIMIT 1');
+        $stmt->execute([$registrationId]);
+        return ['created' => false, 'checked_in_at' => (string) $stmt->fetchColumn()];
+    }
+
+    /** @return array<int, array{label:string, count:int}> */
+    public static function byStage(): array
+    {
+        $rows = Database::connection()
+            ->query("SELECT producer_stage AS label, COUNT(*) AS count FROM registrations WHERE status <> 'cancelled' GROUP BY producer_stage")
+            ->fetchAll();
+        $map = array_column($rows, 'count', 'label');
+        return array_map(static fn (string $s) => ['label' => $s, 'count' => (int) ($map[$s] ?? 0)], self::STAGES);
+    }
+
+    public static function paginate(int $page, int $perPage = 25, ?string $participation = null, string $search = ''): array
+    {
+        $pdo = Database::connection();
+        $where = ["r.status <> 'cancelled'"];
+        $params = [];
+
+        if ($participation && in_array($participation, self::PARTICIPATION, true)) {
+            $where[] = 'r.participation = :participation';
+            $params['participation'] = $participation;
+        }
+        if ($search !== '') {
+            $where[] = '(r.first_name LIKE :search_first OR r.last_name LIKE :search_last OR r.email LIKE :search_email OR r.reference LIKE :search_reference OR r.country LIKE :search_country)';
+            $term = '%' . $search . '%';
+            $params['search_first'] = $term;
+            $params['search_last'] = $term;
+            $params['search_email'] = $term;
+            $params['search_reference'] = $term;
+            $params['search_country'] = $term;
+        }
+
+        $whereSql = 'WHERE ' . implode(' AND ', $where);
+
+        $count = $pdo->prepare("SELECT COUNT(*) FROM registrations r {$whereSql}");
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+
+        $offset = max(0, ($page - 1) * $perPage);
+        $stmt = $pdo->prepare(
+            "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone, r.country, r.city,
+                    r.field, r.producer_stage, r.created_at, a.checked_in_at
+             FROM registrations r
+             LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}
+             ORDER BY r.created_at DESC
+             LIMIT {$perPage} OFFSET {$offset}"
+        );
+        $stmt->execute($params);
+
+        return [
+            'rows'  => $stmt->fetchAll(),
+            'total' => $total,
+            'pages' => max(1, (int) ceil($total / $perPage)),
+            'page'  => $page,
+        ];
+    }
+
+    /** Stream every row for CSV export. */
+    public static function all(): \Generator
+    {
+        $stmt = Database::connection()->query(
+            'SELECT r.*, a.checked_in_at, a.checked_in_by FROM registrations r LEFT JOIN attendances a ON a.registration_id = r.id ORDER BY r.created_at ASC'
+        );
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            yield $row;
+        }
+    }
+}

@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.DS_Store
+.agents
+.claude
+.impeccable
+storage/logs/*

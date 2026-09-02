@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      APP_NAME: "${APP_NAME:-The Loveworld Kingdom Producers Summit}"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "${APP_URL:-}"
+      APP_KEY: "${APP_KEY:?Set APP_KEY in Coolify}"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: "${DB_NAME:-lw_producers_summit}"
+      DB_USER: "${DB_USER:-producers}"
+      DB_PASS: "${DB_PASS:?Set DB_PASS in Coolify}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:?Set ADMIN_EMAIL in Coolify}"
+      ADMIN_PASSWORD_HASH: "${ADMIN_PASSWORD_HASH:?Set ADMIN_PASSWORD_HASH in Coolify}"
+      MAIL_FROM: "${MAIL_FROM:-lkps@loveworldconsulate.org}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Loveworld Kingdom Producers Summit}"
+    expose:
+      - "80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_NAME:-lw_producers_summit}"
+      MYSQL_USER: "${DB_USER:-producers}"
+      MYSQL_PASSWORD: "${DB_PASS:?Set DB_PASS in Coolify}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS:?Set DB_ROOT_PASS in Coolify}"
+    volumes:
+      - producers_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+volumes:
+  producers_db:
