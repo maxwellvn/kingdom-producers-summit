@@ -21,9 +21,7 @@ $summit = $summit ?? config('app.summit');
   <script>
     (function () {
       var reloaded = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]?.type === 'reload';
-      var hasChoice = false;
-      try { hasChoice = !!localStorage.getItem('producers_cookie_choice'); } catch (e) {}
-      if (reloaded || !hasChoice) document.documentElement.classList.add('intro-pending');
+      if (reloaded) document.documentElement.classList.add('intro-pending');
     })();
   </script>
 
