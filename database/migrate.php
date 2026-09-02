@@ -18,14 +18,25 @@ $cfg = config('database');
 $dbName = $cfg['name'];
 
 $createDatabase = filter_var(env('DB_CREATE_DATABASE', 'true'), FILTER_VALIDATE_BOOLEAN);
-if ($createDatabase) {
-    $server = Database::server();
-    $server->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+try {
+    if ($createDatabase) {
+        $server = Database::server();
+        $server->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    }
+
+    echo "Database `{$dbName}` ready.\n";
+
+    $pdo = Database::connection();
+} catch (Throwable $e) {
+    fwrite(STDERR, sprintf(
+        "Database connection failed (host: %s, port: %s): %s\n",
+        config('database.host'),
+        config('database.port'),
+        $e->getMessage()
+    ));
+    exit(1);
 }
-
-echo "Database `{$dbName}` ready.\n";
-
-$pdo = Database::connection();
 $pdo->exec(
     'CREATE TABLE IF NOT EXISTS migrations (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT,
