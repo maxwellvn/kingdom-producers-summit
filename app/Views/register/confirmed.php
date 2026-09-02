@@ -22,41 +22,50 @@ $next = [
 ?>
 
 <section class="confirmed">
-  <div class="container confirmed__grid">
-    <div class="confirmed__card" data-reveal>
-      <span class="tape tape--mustard confirmed__tape" aria-hidden="true"></span>
-      <div class="confirmed__stamp" aria-hidden="true"><span>Registered</span></div>
-
-      <p class="eyebrow"><span class="eyebrow__dot"></span><?= e($summit['short']) ?> <span class="eyebrow__sep">/</span> <?= e($summit['edition']) ?></p>
+  <div class="confirmed__architecture" aria-hidden="true"></div>
+  <div class="container confirmed__intro" data-reveal>
+    <p class="mono confirmed__edition"><?= e($summit['short']) ?> · <?= e($summit['edition']) ?></p>
+    <div class="confirmed__headline">
       <h1 class="confirmed__title">You're in,<br><?= e($r['first_name']) ?>.</h1>
+      <p>Your place is registered. Keep this page or save your reference—the access pass is ready when you arrive.</p>
+    </div>
+  </div>
 
-      <div class="confirmed__ref">
-        <span class="mono confirmed__ref-label">Reference</span>
-        <span class="confirmed__ref-code" id="refCode"><?= e($r['reference']) ?></span>
-        <button type="button" class="confirmed__copy mono" data-copy="#refCode">Copy</button>
+  <div class="container confirmed__grid">
+    <article class="confirmed__ticket" data-reveal aria-labelledby="access-pass-title">
+      <header class="confirmed__ticket-head">
+        <div>
+          <span class="mono">Official access pass</span>
+          <h2 id="access-pass-title"><?= e($pathLabel) ?></h2>
+        </div>
+        <div class="confirmed__stamp" aria-hidden="true"><span>Registered</span></div>
+      </header>
+
+      <div class="confirmed__pass">
+        <div class="confirmed__qr-wrap">
+          <div class="confirmed__qr" id="accessQr" data-qr-value="<?= e($accessToken) ?>" aria-label="QR access code for <?= e($r['reference']) ?>"></div>
+          <span class="mono">Scan once at entry</span>
+        </div>
+        <div class="confirmed__pass-copy">
+          <span class="mono">Registration reference</span>
+          <strong class="confirmed__ref-code" id="refCode"><?= e($r['reference']) ?></strong>
+          <button type="button" class="confirmed__copy mono" data-copy="#refCode">Copy reference</button>
+          <p>Present this QR code to the attendance team. It confirms your arrival without exposing your registration details.</p>
+        </div>
       </div>
 
-      <section class="confirmed__pass" aria-labelledby="access-pass-title">
-        <div class="confirmed__pass-copy">
-          <span class="mono">Access pass</span>
-          <h2 id="access-pass-title">Show this code at the entrance.</h2>
-          <p>The attendance desk will scan it once to confirm your arrival.</p>
-        </div>
-        <div class="confirmed__qr" id="accessQr" data-qr-value="<?= e($accessToken) ?>" aria-label="QR access code for <?= e($r['reference']) ?>"></div>
-      </section>
-
       <dl class="confirmed__facts mono">
-        <div><dt>Path</dt><dd><?= e($pathLabel) ?></dd></div>
         <div><dt>Name</dt><dd><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></dd></div>
         <div><dt>Email</dt><dd><?= e($r['email']) ?></dd></div>
         <div><dt>Field</dt><dd><?= e($r['field']) ?></dd></div>
         <div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div>
         <div><dt>Registered</dt><dd><?= e(date('j M Y, H:i', strtotime($r['created_at']))) ?></dd></div>
       </dl>
-    </div>
+    </article>
 
-    <div class="confirmed__next" data-reveal>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>What happens next</p>
+    <aside class="confirmed__next" data-reveal>
+      <span class="mono confirmed__section-label">What happens next</span>
+      <h2>From registration to arrival.</h2>
       <ol class="next__list">
         <?php foreach ($next as $i => $line): ?>
           <li>
@@ -72,7 +81,7 @@ $next = [
       </div>
 
       <p class="confirmed__fine mono">Something wrong? Email <a href="mailto:<?= e(config('app.mail.from')) ?>"><?= e(config('app.mail.from')) ?></a> quoting your reference.</p>
-    </div>
+    </aside>
   </div>
 </section>
 
