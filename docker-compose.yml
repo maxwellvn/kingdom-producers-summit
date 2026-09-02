@@ -11,6 +11,7 @@ services:
       APP_KEY: "${APP_KEY:?Set APP_KEY in Coolify}"
       DB_HOST: db
       DB_PORT: 3306
+      DB_CREATE_DATABASE: "false"
       DB_NAME: "${DB_NAME:-lw_producers_summit}"
       DB_USER: "${DB_USER:-producers}"
       DB_PASS: "${DB_PASS:?Set DB_PASS in Coolify}"

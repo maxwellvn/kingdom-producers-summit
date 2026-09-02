@@ -17,8 +17,12 @@ require dirname(__DIR__) . '/app/bootstrap.php';
 $cfg = config('database');
 $dbName = $cfg['name'];
 
-$server = Database::server();
-$server->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+$createDatabase = filter_var(env('DB_CREATE_DATABASE', 'true'), FILTER_VALIDATE_BOOLEAN);
+if ($createDatabase) {
+    $server = Database::server();
+    $server->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+}
+
 echo "Database `{$dbName}` ready.\n";
 
 $pdo = Database::connection();
