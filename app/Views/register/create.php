@@ -32,22 +32,24 @@ $stageCopy = [
     <!-- ===== Sticky sidebar ===== -->
     <aside class="reg__aside">
       <div class="reg__card">
-        <p class="reg__kicker mono">London Edition 2026</p>
-        <h1 class="reg__title">Register</h1>
-        <p class="reg__lede">Choose how you will take part, then tell us a little about the work you want to produce.</p>
+        <div class="reg__card-inner">
+          <p class="reg__kicker mono">London Edition 2026</p>
+          <h1 class="reg__title">Register</h1>
+          <p class="reg__lede">Choose how you will take part, then tell us a little about the work you want to produce.</p>
 
-        <ol class="reg__steps mono" id="regSteps">
-          <li data-step="path" class="is-current"><span>01</span> Choose your path</li>
-          <li data-step="you"><span>02</span> About you</li>
-          <li data-step="produce"><span>03</span> What you produce</li>
-          <li data-step="details"><span>04</span> Details</li>
-          <li data-step="consent"><span>05</span> Confirm</li>
-        </ol>
+          <ol class="reg__steps mono" id="regSteps">
+            <li data-step="path" class="is-current"><span>01</span> Choose your path</li>
+            <li data-step="you"><span>02</span> About you</li>
+            <li data-step="produce"><span>03</span> What you produce</li>
+            <li data-step="details"><span>04</span> Details</li>
+            <li data-step="consent"><span>05</span> Confirm</li>
+          </ol>
 
-        <dl class="reg__facts mono">
-          <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
-          <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
-        </dl>
+          <dl class="reg__facts mono">
+            <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
+            <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
+          </dl>
+        </div>
       </div>
     </aside>
 
