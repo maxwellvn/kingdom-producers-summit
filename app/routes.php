@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AdminController;
 use App\Controllers\HomeController;
+use App\Controllers\PaymentController;
 use App\Controllers\RegistrationController;
 use App\Core\Router;
 use App\Middleware\RequireAdmin;
@@ -17,6 +18,12 @@ $router->get('/about', [HomeController::class, 'about']);
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
 $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']);
+$router->get('/register/paid', [PaymentController::class, 'paid']);
+$router->get('/register/pay', [PaymentController::class, 'payForm']);
+$router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
+
+// Stripe webhook: signed by Stripe, no session/CSRF.
+$router->post('/stripe/webhook', [PaymentController::class, 'webhook']);
 
 $router->get('/admin/login', [AdminController::class, 'loginForm']);
 $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::class]);

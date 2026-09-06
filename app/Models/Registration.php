@@ -53,6 +53,13 @@ final class Registration
         return (bool) $stmt->fetchColumn();
     }
 
+    public static function findByEmail(string $email): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE email = ? LIMIT 1');
+        $stmt->execute([mb_strtolower(trim($email))]);
+        return $stmt->fetch() ?: null;
+    }
+
     public static function referenceExists(string $reference): bool
     {
         $stmt = Database::connection()->prepare('SELECT 1 FROM registrations WHERE reference = ? LIMIT 1');
@@ -82,6 +89,40 @@ final class Registration
     {
         $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE reference = ? LIMIT 1');
         $stmt->execute([$reference]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public static function setStripeSession(string $reference, string $sessionId): void
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE registrations SET stripe_session_id = ? WHERE reference = ?'
+        );
+        $stmt->execute([$sessionId, $reference]);
+    }
+
+    /** Transition unpaid → paid. Returns false when already paid (idempotent). */
+    public static function markPaid(string $reference, string $sessionId, int $amountPence): bool
+    {
+        $stmt = Database::connection()->prepare(
+            "UPDATE registrations
+             SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, stripe_session_id = ?
+             WHERE reference = ? AND payment_status = 'unpaid'"
+        );
+        $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $reference]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /** Pending onsite registration awaiting payment, matched by reference + email. */
+    public static function findPayable(string $reference, string $email): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT * FROM registrations
+             WHERE reference = ? AND email = ? AND participation = 'onsite'
+               AND payment_status = 'unpaid' AND status = 'pending'
+             LIMIT 1"
+        );
+        $stmt->execute([$reference, $email]);
         $row = $stmt->fetch();
         return $row ?: null;
     }

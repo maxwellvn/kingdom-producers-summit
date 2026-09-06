@@ -669,6 +669,9 @@ body.menu-open { overflow: hidden; }
 .ticket input:checked + .ticket__body .ticket__letter { background: var(--ink); color: var(--paper); }
 .ticket__label { font-family: var(--font-display); text-transform: uppercase; font-weight: 600; font-size: 1.2rem; color: var(--ink); line-height: 1; }
 .ticket__desc { color: var(--muted); font-size: .9rem; line-height: 1.45; }
+.ticket__price { margin-top: .35rem; font-size: .85rem; letter-spacing: .04em; color: var(--ink); }
+.ticket__price s { color: var(--muted); margin-right: .35rem; }
+.ticket__price em { font-style: normal; color: var(--stamp); font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; margin-left: .35rem; }
 .ticket__punch { position: absolute; right: -8px; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); border-left: 1.5px solid rgba(27,34,66,.22); transform: translateY(-50%); }
 .ticket input:checked + .ticket__body .ticket__punch { border-color: var(--ink); }
 
@@ -689,6 +692,25 @@ body.menu-open { overflow: hidden; }
 .portal-note { position: relative; display: flex; gap: 1.2rem; align-items: flex-start; padding: 1.2rem 1.3rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); }
 .portal-note p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
 .portal-note__stamp { flex: none; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; color: var(--stamp); border: 3px double var(--stamp); border-radius: 6px; padding: .35rem .6rem .3rem; transform: rotate(-6deg); font-size: .95rem; letter-spacing: .1em; mix-blend-mode: multiply; }
+
+/* onsite payment note + resume-payment page */
+.pay-note { display: flex; gap: 1.2rem; align-items: flex-start; padding: 1.2rem 1.3rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); }
+.pay-note__stamp { flex: none; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; color: var(--stamp); border: 3px double var(--stamp); border-radius: 6px; padding: .35rem .6rem .3rem; transform: rotate(-6deg); font-size: .95rem; letter-spacing: .1em; mix-blend-mode: multiply; }
+.pay-note p { margin: 0; color: var(--ink); font-size: .95rem; line-height: 1.5; }
+
+.pay { display: grid; justify-items: center; padding-block: 2rem 4rem; }
+.pay__card { width: min(100%, 34rem); display: flex; flex-direction: column; gap: 1.4rem; padding: clamp(2rem, 5vw, 3rem); background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); box-shadow: 0 30px 60px -42px rgba(21,27,55,.85); }
+.pay__kicker { display: inline-flex; align-items: center; gap: .6rem; margin: 0; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.pay__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--stamp); }
+.pay__title { margin: 0; font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 3rem); line-height: .95; text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); }
+.pay__lede { margin: 0; color: var(--ink); font-size: 1rem; line-height: 1.55; }
+.pay__alert { padding: 1rem 1.2rem; border-left: 3px solid var(--stamp); background: rgba(180,35,43,.07); color: var(--ink); }
+.pay__alert strong { display: block; margin-bottom: .25rem; }
+.pay__form { display: flex; flex-direction: column; gap: 1.2rem; }
+.pay__form .btn { justify-content: center; }
+.pay__form .form__fine { margin: 0; }
+.pay__fine { margin: 0; font-size: .8rem; color: var(--muted); }
+.pay__fine a { color: var(--ink); }
 
 /* ---------- Confirmed ---------- */
 .confirmed { position: relative; overflow: clip; padding: clamp(8rem, 15vh, 11rem) 0 var(--section); color: var(--paper); background: var(--ink); isolation: isolate; }

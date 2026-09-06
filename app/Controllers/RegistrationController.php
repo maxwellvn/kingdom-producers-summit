@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
+use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
 use App\Services\RegistrationMail;
@@ -52,9 +53,31 @@ final class RegistrationController extends Controller
         } catch (PDOException $e) {
             // 23000 = integrity constraint (duplicate email under race)
             if ($e->getCode() === '23000') {
-                return $this->back($request, ['email' => 'This email is already registered.'], $request->all());
+                return $this->back($request, ['email' => RegistrationService::duplicateMessage($request->str('email')) ?? 'This email is already registered.'], $request->all());
             }
             throw $e;
+        }
+
+        // Onsite is a paid path: save as pending, then hand off to Stripe Checkout.
+        if ($registration['participation'] === 'onsite') {
+            Session::put('last_registration', $registration['reference']);
+            try {
+                $checkoutUrl = (new PaymentService())->startCheckout($registration);
+            } catch (\Throwable $e) {
+                error_log('Stripe checkout failed: ' . $e->getMessage());
+                return $this->view('register/pay', [
+                    'title'     => 'Complete payment — ' . config('app.name'),
+                    'bodyClass' => 'page-register',
+                    'summit'    => config('app.summit'),
+                    'reference' => $registration['reference'],
+                    'email'     => $registration['email'],
+                    'savedRegistration' => true,
+                    'cancelled' => false,
+                    'error'     => PaymentService::unavailableMessage() ?? 'Your place is saved but payment could not start. Complete it below with your reference and email.',
+                ]);
+            }
+
+            return Response::redirect($checkoutUrl);
         }
 
         Session::put('last_registration', $registration['reference']);
@@ -78,6 +101,11 @@ final class RegistrationController extends Controller
 
         if ($registration === null) {
             return $this->redirect('/register');
+        }
+
+        // Unpaid onsite registrations have no access pass yet.
+        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'unpaid') {
+            return $this->redirect('/register/pay?ref=' . rawurlencode((string) $registration['reference']));
         }
 
         return $this->view('register/confirmed', [

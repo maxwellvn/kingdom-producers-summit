@@ -59,6 +59,9 @@ $next = [
         <div><dt>Email</dt><dd><?= e($r['email']) ?></dd></div>
         <div><dt>Field</dt><dd><?= e($r['field']) ?></dd></div>
         <div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div>
+        <?php if ($r['participation'] === 'onsite' && ($r['payment_status'] ?? '') === 'paid'): ?>
+          <div><dt>Paid</dt><dd>&pound;<?= number_format((int) $r['payment_amount'] / 100, 2) ?></dd></div>
+        <?php endif; ?>
         <div><dt>Registered</dt><dd><?= e(date('j M Y, H:i', strtotime($r['created_at']))) ?></dd></div>
       </dl>
     </article>

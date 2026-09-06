@@ -16,6 +16,10 @@ final class RegistrationMail
             'online' => 'Following online',
             'initiative' => 'Kingdom Producers member',
         ][(string) $registration['participation']] ?? 'Registered producer';
+        if ($registration['participation'] === 'onsite' && ($registration['payment_status'] ?? '') === 'paid') {
+            $amount = number_format((int) $registration['payment_amount'] / 100, 2);
+            $path .= " \u{00B7} \u{00A3}{$amount} paid";
+        }
         $path = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
         $site = rtrim((string) config('app.url'), '/');
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');

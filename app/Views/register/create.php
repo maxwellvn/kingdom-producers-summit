@@ -61,6 +61,12 @@ $stageCopy = [
         <div class="form__alert" role="alert">
           <strong>Please check the form.</strong>
           <span><?= count($errors) === 1 ? 'There is one thing to correct.' : 'There are ' . count($errors) . ' things to correct.' ?></span>
+          <?php if (!empty($errors['email'])): ?>
+            <p><?= e($errors['email']) ?></p>
+            <?php if (str_contains($errors['email'], 'payment is still outstanding')): ?>
+              <a href="<?= url('/register/pay') ?>">Complete payment</a>
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
       <?php endif; ?>
 
@@ -83,6 +89,11 @@ $stageCopy = [
                 <span class="ticket__letter mono"><?= $letter ?></span>
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
+                <?php if ($value === 'onsite'): ?>
+                  <span class="ticket__price mono"><s>&pound;<?= number_format(config('stripe.original_pence') / 100, 0) ?></s> &pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?> <em>discounted place</em></span>
+                <?php else: ?>
+                  <span class="ticket__price mono"><em>Free</em></span>
+                <?php endif; ?>
                 <span class="ticket__punch" aria-hidden="true"></span>
               </span>
             </label>
@@ -122,6 +133,9 @@ $stageCopy = [
             <input id="email" name="email" type="email" autocomplete="email" inputmode="email" value="<?= old('email') ?>" required>
             <p class="field__hint">Your reference and all updates go here.</p>
             <?php if ($err = error_for('email')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+            <?php if (str_contains((string) error_for('email'), 'payment is still outstanding')): ?>
+              <p><a href="<?= url('/register/pay') ?>">Complete payment</a></p>
+            <?php endif; ?>
           </div>
           <div class="field <?= error_for('phone') ? 'has-error' : '' ?>">
             <label for="phone">Phone <span class="field__opt" data-onsite-hide>optional</span></label>
@@ -344,8 +358,14 @@ $stageCopy = [
         </div>
 
         <div class="form__submit">
+          <div class="form__conditional" data-only="onsite">
+            <div class="pay-note">
+              <span class="pay-note__stamp mono">Secure payment</span>
+              <p>Onsite attendance is <strong>&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></strong> per place (standard &pound;<?= number_format(config('stripe.original_pence') / 100, 0) ?>). You'll complete payment on the next step via Stripe.</p>
+            </div>
+          </div>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
-            <span class="btn__label">Complete registration</span>
+            <span class="btn__label" data-pay-label="Continue to payment &mdash; &pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?>" data-free-label="Complete registration">Complete registration</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </button>
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>

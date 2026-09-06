@@ -185,6 +185,11 @@
     function applyPath(path) {
       conditionals.forEach(function (el) { el.classList.toggle('is-active', el.getAttribute('data-only') === path); });
       onsiteHide.forEach(function (el) { el.style.display = path === 'onsite' ? 'none' : ''; });
+      var submitLabel = document.querySelector('#submitBtn .btn__label');
+      if (submitLabel) {
+        var paid = path === 'onsite' ? submitLabel.getAttribute('data-pay-label') : submitLabel.getAttribute('data-free-label');
+        if (paid) submitLabel.innerHTML = paid;
+      }
     }
 
     function stepFromScroll() {

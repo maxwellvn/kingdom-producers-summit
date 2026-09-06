@@ -47,6 +47,14 @@ final class AttendanceService
             return ['ok' => false, 'status' => 'invalid', 'message' => 'No active registration matches this code.'];
         }
 
+        if ($registration['participation'] === 'onsite'
+            && !in_array($registration['payment_status'], ['paid', 'not_required'], true)) {
+            return ['ok' => false, 'status' => 'invalid', 'message' => 'Payment is outstanding. Complete onsite payment before check-in.'];
+        }
+        if ($registration['status'] !== 'confirmed') {
+            return ['ok' => false, 'status' => 'invalid', 'message' => 'This registration is not confirmed. Please contact the organisers.'];
+        }
+
         $attendance = Registration::recordAttendance((int) $registration['id'], $staffEmail, $ipAddress);
         $name = trim($registration['first_name'] . ' ' . $registration['last_name']);
 
