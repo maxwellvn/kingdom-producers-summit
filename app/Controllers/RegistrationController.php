@@ -31,7 +31,7 @@ final class RegistrationController extends Controller
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
             'mode'      => $mode,
-            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
+            'seatsLeft' => max(0, $capacity - Registration::stats()['onsite']),
             'fields'    => Registration::FIELDS,
             'stages'    => Registration::STAGES,
             'ageBands'  => Registration::AGE_BANDS,

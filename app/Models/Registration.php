@@ -46,13 +46,6 @@ final class Registration
         'email' => 'Email', 'poster' => 'Poster or flyer', 'other' => 'Other',
     ];
 
-    public static function emailExists(string $email): bool
-    {
-        $stmt = Database::connection()->prepare('SELECT 1 FROM registrations WHERE email = ? LIMIT 1');
-        $stmt->execute([mb_strtolower($email)]);
-        return (bool) $stmt->fetchColumn();
-    }
-
     public static function findByEmail(string $email): ?array
     {
         $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE email = ? LIMIT 1');
@@ -125,15 +118,6 @@ final class Registration
         $stmt->execute([$reference, $email]);
         $row = $stmt->fetch();
         return $row ?: null;
-    }
-
-    /** Onsite places currently held, including those awaiting payment. */
-    public static function onsiteSeatsTaken(): int
-    {
-        $stmt = Database::connection()->query(
-            "SELECT COUNT(*) FROM registrations WHERE participation = 'onsite' AND status <> 'cancelled'"
-        );
-        return (int) $stmt->fetchColumn();
     }
 
     /** @return array{total:int, onsite:int, online:int, initiative:int, today:int, countries:int} */

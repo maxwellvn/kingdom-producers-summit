@@ -98,8 +98,6 @@ final class PaymentController extends Controller
             ));
         }
 
-        Session::put('last_registration', $reference);
-
         return Response::redirect($checkoutUrl);
     }
 
