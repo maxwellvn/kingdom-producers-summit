@@ -90,7 +90,7 @@ $stageCopy = [
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__price mono"><s>&pound;<?= number_format(config('stripe.original_pence') / 100, 0) ?></s> &pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?> <em>discounted place</em></span>
+                  <span class="ticket__price mono">&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?> <em>per place</em></span>
                 <?php else: ?>
                   <span class="ticket__price mono"><em>Free</em></span>
                 <?php endif; ?>
@@ -361,7 +361,7 @@ $stageCopy = [
           <div class="form__conditional" data-only="onsite">
             <div class="pay-note">
               <span class="pay-note__stamp mono">Secure payment</span>
-              <p>Onsite attendance is <strong>&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></strong> per place (standard &pound;<?= number_format(config('stripe.original_pence') / 100, 0) ?>). You'll complete payment on the next step via Stripe.</p>
+              <p>Onsite attendance is <strong>&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></strong> per place. You'll complete payment on the next step via Stripe.</p>
             </div>
           </div>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">

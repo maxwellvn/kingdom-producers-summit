@@ -49,7 +49,7 @@ final class PaymentService
             'line_items[0][price_data][currency]' => (string) config('stripe.currency'),
             'line_items[0][price_data][unit_amount]' => (string) config('stripe.price_pence'),
             'line_items[0][price_data][product_data][name]' => 'Kingdom Producers Summit — onsite registration (London Edition 2026)',
-            'line_items[0][price_data][product_data][description]' => 'Discounted place — standard price £50.',
+            'line_items[0][price_data][product_data][description]' => 'Onsite place — London Edition 2026.',
         ]);
 
         Registration::setStripeSession($reference, (string) $session['id']);
