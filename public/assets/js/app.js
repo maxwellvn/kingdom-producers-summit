@@ -19,7 +19,14 @@
   }
 
   function showCookieBanner() {
-    if (cookieBanner && !storedCookieChoice()) cookieBanner.hidden = false;
+    if (cookieBanner && !storedCookieChoice()) {
+      cookieBanner.hidden = false;
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          cookieBanner.classList.add('is-in');
+        });
+      });
+    }
   }
 
   function closeIntro() {
@@ -50,10 +57,62 @@
   }
 
   if (cookieBanner) {
+    var customizeBtn = cookieBanner.querySelector('[data-cookie-customize]');
+    var prefsPanel = cookieBanner.querySelector('.cookie-banner__prefs');
+
+    function readToggles() {
+      var prefs = { necessary: true };
+      cookieBanner.querySelectorAll('[data-cookie-toggle]').forEach(function (input) {
+        prefs[input.getAttribute('data-cookie-toggle')] = input.checked;
+      });
+      return prefs;
+    }
+
+    function dismissCookieBanner() {
+      cookieBanner.classList.remove('is-in');
+      cookieBanner.classList.add('is-out');
+      window.setTimeout(function () { cookieBanner.hidden = true; }, reduce ? 0 : 420);
+    }
+
+    if (customizeBtn && prefsPanel) {
+      customizeBtn.addEventListener('click', function () {
+        var open = prefsPanel.classList.toggle('is-open');
+        customizeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    function saveConsent(prefs, action) {
+      try { localStorage.setItem('producers_cookie_choice', JSON.stringify(prefs)); } catch (e) {}
+      var endpoint = cookieBanner.getAttribute('data-consent-endpoint');
+      if (!endpoint) return;
+      try {
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            action: action,
+            preferences: !!prefs.preferences,
+            analytics: !!prefs.analytics,
+            marketing: !!prefs.marketing
+          }),
+          keepalive: true
+        }).catch(function () {});
+      } catch (e) {}
+    }
+
     cookieBanner.querySelectorAll('[data-cookie-choice]').forEach(function (button) {
       button.addEventListener('click', function () {
-        try { localStorage.setItem('producers_cookie_choice', button.getAttribute('data-cookie-choice')); } catch (e) {}
-        cookieBanner.hidden = true;
+        var choice = button.getAttribute('data-cookie-choice');
+        var prefs;
+        if (choice === 'accepted') {
+          prefs = { necessary: true, preferences: true, analytics: true, marketing: true };
+        } else if (choice === 'rejected') {
+          prefs = { necessary: true, preferences: false, analytics: false, marketing: false };
+        } else {
+          prefs = readToggles();
+        }
+        saveConsent(prefs, choice);
+        dismissCookieBanner();
       });
     });
   }

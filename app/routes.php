@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AdminController;
+use App\Controllers\ConsentController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
 use App\Controllers\RegistrationController;
@@ -24,6 +25,9 @@ $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyC
 
 // Stripe webhook: signed by Stripe, no session/CSRF.
 $router->post('/stripe/webhook', [PaymentController::class, 'webhook']);
+
+// Cookie consent log: anonymous audit row only, no session/CSRF.
+$router->post('/api/consent', [ConsentController::class, 'store']);
 
 $router->get('/admin/login', [AdminController::class, 'loginForm']);
 $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::class]);
