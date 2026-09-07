@@ -9,6 +9,7 @@
  * @var array    $hearAbout
  * @var string[] $countries
  * @var array    $summit
+ * @var int      $seatsLeft
  */
 $errors = \App\Core\Session::get('_errors', []);
 $oldMode = \App\Core\Session::get('_old', [])['participation'] ?? null;
@@ -48,6 +49,7 @@ $stageCopy = [
           <dl class="reg__facts mono">
             <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
+            <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
           </dl>
         </div>
       </div>
@@ -91,6 +93,7 @@ $stageCopy = [
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <?php if ($value === 'onsite'): ?>
                   <span class="ticket__price mono">&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?> <em>per place</em></span>
+                  <span class="ticket__seats mono"><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> places left</span>
                 <?php else: ?>
                   <span class="ticket__price mono"><em>Free</em></span>
                 <?php endif; ?>

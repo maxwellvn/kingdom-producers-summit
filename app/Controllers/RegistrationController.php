@@ -24,11 +24,14 @@ final class RegistrationController extends Controller
             $mode = '';
         }
 
+        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
+
         return $this->view('register/create', [
             'title'     => 'Register — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
             'mode'      => $mode,
+            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
             'fields'    => Registration::FIELDS,
             'stages'    => Registration::STAGES,
             'ageBands'  => Registration::AGE_BANDS,

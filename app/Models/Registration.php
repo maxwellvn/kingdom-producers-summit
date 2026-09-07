@@ -127,6 +127,15 @@ final class Registration
         return $row ?: null;
     }
 
+    /** Onsite places currently held, including those awaiting payment. */
+    public static function onsiteSeatsTaken(): int
+    {
+        $stmt = Database::connection()->query(
+            "SELECT COUNT(*) FROM registrations WHERE participation = 'onsite' AND status <> 'cancelled'"
+        );
+        return (int) $stmt->fetchColumn();
+    }
+
     /** @return array{total:int, onsite:int, online:int, initiative:int, today:int, countries:int} */
     public static function stats(): array
     {

@@ -34,6 +34,7 @@ return [
         'organiser' => 'Loveworld Consulate UK',
         'office'    => 'The Loveworld Consulate, United Kingdom',
         'motto'     => 'Exceptionalism. Expansionism. Perfectionism.',
+        'onsite_capacity' => 100,
         'targets'   => ['100 Producers', '1,000 UK', '10,000 Global'],
         'stages'    => ['Emerge', 'Build', 'Establish', 'Multiply'],
         'partners'  => ['Ministry of Commerce', 'The Office of the Exchequer', 'Loveworld Consulate UK'],

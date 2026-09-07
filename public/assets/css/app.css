@@ -721,6 +721,7 @@ body.menu-open { overflow: hidden; }
 .ticket__price { margin-top: .35rem; font-size: .85rem; letter-spacing: .04em; color: var(--ink); }
 .ticket__price s { color: var(--muted); margin-right: .35rem; }
 .ticket__price em { font-style: normal; color: var(--stamp); font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; margin-left: .35rem; }
+.ticket__seats { margin-top: .3rem; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--stamp); }
 .ticket__punch { position: absolute; right: -8px; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); border-left: 1.5px solid rgba(27,34,66,.22); transform: translateY(-50%); }
 .ticket input:checked + .ticket__body .ticket__punch { border-color: var(--ink); }
 
