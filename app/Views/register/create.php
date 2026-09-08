@@ -113,7 +113,7 @@ $stageCopy = [
             <label for="title">Title <span class="field__opt">optional</span></label>
             <select id="title" name="title">
               <option value="">—</option>
-              <?php foreach (['Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Pastor', 'Deacon', 'Deaconess', 'Rev', 'Prof', 'Sir', 'Lady'] as $t): ?>
+              <?php foreach (['Mr', 'Mrs', 'Ms', 'Miss', 'Brother', 'Sister', 'Dr', 'Pastor', 'Deacon', 'Deaconess', 'Rev'] as $t): ?>
                 <option value="<?= $t ?>" <?= old('title') === $t ? 'selected' : '' ?>><?= $t ?></option>
               <?php endforeach; ?>
             </select>
