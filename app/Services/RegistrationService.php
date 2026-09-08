@@ -120,8 +120,8 @@ final class RegistrationService
             'user_agent'        => $this->nullable($request->userAgent()),
             'status'            => $participation === 'onsite' ? 'pending' : 'confirmed',
             'payment_status'    => $participation === 'onsite' ? 'unpaid' : 'not_required',
-            'payment_amount'    => $participation === 'onsite' ? (int) config('stripe.price_pence') : null,
-            'stripe_session_id' => null,
+            'payment_amount'    => $participation === 'onsite' ? (int) config('paypal.price_pence') : null,
+            'payment_session_id' => null,
         ];
 
         return [[], $clean];

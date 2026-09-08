@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Core\Url;
 use App\Models\Registration;
 use RuntimeException;
 
@@ -12,8 +11,9 @@ final class PaymentService
 {
     public static function unavailableMessage(): ?string
     {
-        if (!filter_var(config('stripe.enabled'), FILTER_VALIDATE_BOOL)
-            || trim((string) config('stripe.secret')) === '') {
+        if (!filter_var(config('paypal.enabled'), FILTER_VALIDATE_BOOL)
+            || trim((string) config('paypal.client_id')) === ''
+            || trim((string) config('paypal.secret')) === '') {
             return 'Online payment is not available yet. Your registration is saved. Please contact the organisers to complete payment; you do not need to register again.';
         }
 
@@ -21,40 +21,48 @@ final class PaymentService
     }
 
     /**
-     * Create a Stripe Checkout session for an onsite registration and
-     * persist the session id. Returns the hosted checkout URL.
+     * Create a PayPal order for an onsite registration, persist the order id,
+     * and return the approval link to redirect the payer to.
      */
     public function startCheckout(array $registration): string
     {
         if (self::unavailableMessage() !== null) {
-            throw new RuntimeException('Payments are disabled or the Stripe secret key is not configured.');
+            throw new RuntimeException('Payments are disabled or PayPal credentials are not configured.');
         }
 
         $reference = (string) $registration['reference'];
         $base = rtrim((string) config('app.url'), '/');
         if ($base === '') {
-            $base = (string) Url::base();
+            $base = (string) \App\Core\Url::base();
         }
 
-        $session = (new StripeClient())->createCheckoutSession([
-            'mode' => 'payment',
-            'success_url' => $base . '/register/paid?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'  => $base . '/register/pay?ref=' . rawurlencode($reference) . '&cancelled=1',
-            'customer_email' => (string) $registration['email'],
-            'client_reference_id' => $reference,
-            'metadata[reference]' => $reference,
-            'payment_intent_data[metadata][reference]' => $reference,
-            'payment_intent_data[description]' => 'KPS26 onsite registration ' . $reference,
-            'line_items[0][quantity]' => '1',
-            'line_items[0][price_data][currency]' => (string) config('stripe.currency'),
-            'line_items[0][price_data][unit_amount]' => (string) config('stripe.price_pence'),
-            'line_items[0][price_data][product_data][name]' => 'Kingdom Producers Summit — onsite registration (London Edition 2026)',
-            'line_items[0][price_data][product_data][description]' => 'Onsite place — London Edition 2026.',
+        $order = (new PayPalClient())->createOrder([
+            'intent' => 'CAPTURE',
+            'purchase_units' => [[
+                'custom_id'   => $reference,
+                'description' => 'Kingdom Producers Summit — onsite place (London Edition 2026)',
+                'amount'      => [
+                    'currency_code' => (string) config('paypal.currency'),
+                    'value'         => number_format((int) config('paypal.price_pence') / 100, 2, '.', ''),
+                ],
+            ]],
+            'application_context' => [
+                'brand_name' => 'Kingdom Producers Summit',
+                'user_action' => 'PAY_NOW',
+                'return_url' => $base . '/register/paid',
+                'cancel_url' => $base . '/register/pay?ref=' . rawurlencode($reference) . '&cancelled=1',
+            ],
         ]);
 
-        Registration::setStripeSession($reference, (string) $session['id']);
+        Registration::setPaymentSession($reference, (string) $order['id']);
 
-        return (string) $session['url'];
+        foreach ($order['links'] ?? [] as $link) {
+            if (($link['rel'] ?? '') === 'approve') {
+                return (string) $link['href'];
+            }
+        }
+
+        throw new RuntimeException('PayPal order created without an approval link.');
     }
 
     /**
@@ -64,7 +72,7 @@ final class PaymentService
     public function markPaid(string $reference, string $sessionId, int $amountPence = 0): bool
     {
         if ($amountPence <= 0) {
-            $amountPence = (int) config('stripe.price_pence');
+            $amountPence = (int) config('paypal.price_pence');
         }
 
         $updated = Registration::markPaid($reference, $sessionId, $amountPence);

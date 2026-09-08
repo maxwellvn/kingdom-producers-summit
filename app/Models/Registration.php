@@ -86,10 +86,10 @@ final class Registration
         return $row ?: null;
     }
 
-    public static function setStripeSession(string $reference, string $sessionId): void
+    public static function setPaymentSession(string $reference, string $sessionId): void
     {
         $stmt = Database::connection()->prepare(
-            'UPDATE registrations SET stripe_session_id = ? WHERE reference = ?'
+            'UPDATE registrations SET payment_session_id = ? WHERE reference = ?'
         );
         $stmt->execute([$sessionId, $reference]);
     }
@@ -99,7 +99,7 @@ final class Registration
     {
         $stmt = Database::connection()->prepare(
             "UPDATE registrations
-             SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, stripe_session_id = ?
+             SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, payment_session_id = ?
              WHERE reference = ? AND payment_status = 'unpaid'"
         );
         $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $reference]);

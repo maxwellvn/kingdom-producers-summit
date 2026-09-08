@@ -20,7 +20,7 @@
       <?php elseif (!empty($savedRegistration)): ?>
         <p class="pay__lede">Your registration is saved. Continue below to complete payment for your onsite place.</p>
       <?php else: ?>
-        <p class="pay__lede">Your details are already with us. Enter the reference and email you registered with to pay the <strong>&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></strong> place and confirm your attendance in London.</p>
+        <p class="pay__lede">Your details are already with us. Enter the reference and email you registered with to pay the <strong>&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></strong> place and confirm your attendance in London.</p>
       <?php endif; ?>
 
       <form class="pay__form" method="post" action="<?= url('/register/pay') ?>">
@@ -39,10 +39,10 @@
         </div>
         <?php endif; ?>
         <button type="submit" class="btn btn--stamp btn--lg">
-          <span class="btn__label">Continue to payment &mdash; &pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></span>
+          <span class="btn__label">Continue to payment &mdash; &pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></span>
           <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
         </button>
-        <p class="form__fine mono">Payments are processed securely by Stripe. We never see your card details.</p>
+        <p class="form__fine mono">Payments are processed securely by PayPal. We never see your card details.</p>
       </form>
 
       <p class="pay__fine mono">No reference? <a href="<?= url('/register') ?>">Register here</a> — online and initiative places remain free.</p>

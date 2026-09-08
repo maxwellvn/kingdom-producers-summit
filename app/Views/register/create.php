@@ -92,7 +92,7 @@ $stageCopy = [
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__price mono">&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?> <em>per place</em></span>
+                  <span class="ticket__price mono">&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?> <em>per place</em></span>
                   <span class="ticket__seats mono"><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> places left</span>
                 <?php else: ?>
                   <span class="ticket__price mono"><em>Free</em></span>
@@ -364,11 +364,11 @@ $stageCopy = [
           <div class="form__conditional" data-only="onsite">
             <div class="pay-note">
               <span class="pay-note__stamp mono">Secure payment</span>
-              <p>Onsite attendance is <strong>&pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?></strong> per place. You'll complete payment on the next step via Stripe.</p>
+              <p>Onsite attendance is <strong>&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></strong> per place. You'll complete payment on the next step via PayPal.</p>
             </div>
           </div>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
-            <span class="btn__label" data-pay-label="Continue to payment &mdash; &pound;<?= number_format(config('stripe.price_pence') / 100, 0) ?>" data-free-label="Complete registration">Complete registration</span>
+            <span class="btn__label" data-pay-label="Continue to payment &mdash; &pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?>" data-free-label="Complete registration">Complete registration</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </button>
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>

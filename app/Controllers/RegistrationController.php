@@ -61,13 +61,13 @@ final class RegistrationController extends Controller
             throw $e;
         }
 
-        // Onsite is a paid path: save as pending, then hand off to Stripe Checkout.
+        // Onsite is a paid path: save as pending, then hand off to PayPal.
         if ($registration['participation'] === 'onsite') {
             Session::put('last_registration', $registration['reference']);
             try {
                 $checkoutUrl = (new PaymentService())->startCheckout($registration);
             } catch (\Throwable $e) {
-                error_log('Stripe checkout failed: ' . $e->getMessage());
+                error_log('PayPal checkout failed: ' . $e->getMessage());
                 return $this->view('register/pay', [
                     'title'     => 'Complete payment — ' . config('app.name'),
                     'bodyClass' => 'page-register',

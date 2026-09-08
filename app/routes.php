@@ -23,8 +23,8 @@ $router->get('/register/paid', [PaymentController::class, 'paid']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
 
-// Stripe webhook: signed by Stripe, no session/CSRF.
-$router->post('/stripe/webhook', [PaymentController::class, 'webhook']);
+// PayPal webhook: verified against PayPal's signature API, no session/CSRF.
+$router->post('/paypal/webhook', [PaymentController::class, 'webhook']);
 
 // Cookie consent log: anonymous audit row only, no session/CSRF.
 $router->post('/api/consent', [ConsentController::class, 'store']);

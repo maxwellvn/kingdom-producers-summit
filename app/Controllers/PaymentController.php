@@ -10,33 +10,53 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
 use App\Services\PaymentService;
-use App\Services\StripeClient;
+use App\Services\PayPalClient;
 use RuntimeException;
 
 final class PaymentController extends Controller
 {
-    /** Stripe redirect landing: verify session, mark paid, continue to confirmation. */
+    /** PayPal approval landing: capture the order, mark paid, continue to confirmation. */
     public function paid(Request $request): Response
     {
-        $sessionId = $request->str('session_id');
-        if ($sessionId === '') {
+        $orderId = $request->str('token'); // PayPal appends ?token=<order id>&PayerID=…
+        if ($orderId === '') {
             return $this->redirect('/register');
         }
 
+        $client = new PayPalClient();
         try {
-            $session = (new StripeClient())->retrieveSession($sessionId);
+            $order = $client->captureOrder($orderId);
         } catch (RuntimeException $e) {
-            error_log('Stripe session lookup failed: ' . $e->getMessage());
+            // A capture can fail for "already captured" or "not approved";
+            // fall back to reading the order's actual state before giving up.
+            try {
+                $order = $client->retrieveOrder($orderId);
+            } catch (RuntimeException $e2) {
+                error_log('PayPal order lookup failed: ' . $e2->getMessage());
+                return $this->redirect('/register/pay?ref=' . rawurlencode($request->str('ref')));
+            }
+            if (($order['status'] ?? '') !== 'COMPLETED') {
+                error_log('PayPal order not completed: ' . $e->getMessage());
+                return $this->redirect('/register/pay?ref=' . rawurlencode($request->str('ref')));
+            }
+        }
+
+        if (($order['status'] ?? '') !== 'COMPLETED') {
             return $this->redirect('/register/pay?ref=' . rawurlencode($request->str('ref')));
         }
 
-        $reference = (string) ($session['metadata']['reference'] ?? $session['client_reference_id'] ?? '');
+        $unit = $order['purchase_units'][0] ?? [];
+        $reference = (string) ($unit['custom_id'] ?? '');
+        $capture = $unit['payments']['captures'][0] ?? [];
+        $amountPence = isset($capture['amount']['value'])
+            ? (int) round((float) $capture['amount']['value'] * 100)
+            : 0;
 
-        if (($session['payment_status'] ?? '') !== 'paid' || $reference === '') {
-            return $this->redirect('/register/pay?ref=' . rawurlencode($reference));
+        if ($reference === '') {
+            return $this->redirect('/register/pay?ref=' . rawurlencode($request->str('ref')));
         }
 
-        (new PaymentService())->markPaid($reference, $sessionId, (int) ($session['amount_total'] ?? 0));
+        (new PaymentService())->markPaid($reference, (string) ($capture['id'] ?? $orderId), $amountPence);
 
         Session::put('last_registration', $reference);
 
@@ -90,7 +110,7 @@ final class PaymentController extends Controller
         try {
             $checkoutUrl = (new PaymentService())->startCheckout($registration);
         } catch (RuntimeException $e) {
-            error_log('Stripe checkout failed: ' . $e->getMessage());
+            error_log('PayPal checkout failed: ' . $e->getMessage());
             return $this->view('register/pay', $this->payViewData(
                 $reference,
                 PaymentService::unavailableMessage() ?? 'Payment could not be started. Your registration is saved. Please try again in a moment.',
@@ -130,53 +150,44 @@ final class PaymentController extends Controller
         return $registration;
     }
 
-    /** Stripe webhook: authoritative confirmation for abandoned return URLs. */
+    /** PayPal webhook: authoritative confirmation for payers who never return to the site. */
     public function webhook(Request $request): Response
     {
         $payload = (string) file_get_contents('php://input');
-        $secret = (string) config('stripe.webhook_secret');
+        $event = json_decode($payload, true);
+        $webhookId = (string) config('paypal.webhook_id');
 
-        if ($secret === '' || !$this->signatureValid($payload, $secret)) {
+        $headers = [];
+        foreach (['PAYPAL-AUTH-ALGO', 'PAYPAL-CERT-URL', 'PAYPAL-TRANSMISSION-ID', 'PAYPAL-TRANSMISSION-SIG', 'PAYPAL-TRANSMISSION-TIME'] as $name) {
+            $headers[$name] = (string) ($_SERVER['HTTP_' . str_replace('-', '_', $name)] ?? '');
+        }
+
+        if (!is_array($event) || !$this->signatureValid($headers, $webhookId, $event)) {
             return Response::json(['ok' => false], 400);
         }
 
-        $event = json_decode($payload, true);
-        $type = (string) ($event['type'] ?? '');
-        $session = $event['data']['object'] ?? [];
-
         if (
-            in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)
-            && ($session['payment_status'] ?? '') === 'paid'
+            ($event['event_type'] ?? '') === 'PAYMENT.CAPTURE.COMPLETED'
+            && ($event['resource']['status'] ?? '') === 'COMPLETED'
         ) {
-            $reference = (string) ($session['metadata']['reference'] ?? $session['client_reference_id'] ?? '');
+            $reference = (string) ($event['resource']['custom_id'] ?? '');
             if ($reference !== '') {
-                (new PaymentService())->markPaid($reference, (string) ($session['id'] ?? ''), (int) ($session['amount_total'] ?? 0));
+                $amountPence = isset($event['resource']['amount']['value'])
+                    ? (int) round((float) $event['resource']['amount']['value'] * 100)
+                    : 0;
+                (new PaymentService())->markPaid($reference, (string) ($event['resource']['id'] ?? ''), $amountPence);
             }
         }
 
-        return Response::json(['ok' => true, 'received' => $type]);
+        return Response::json(['ok' => true, 'received' => (string) ($event['event_type'] ?? '')]);
     }
 
-    /** Verify Stripe-Signature (t=…,v1=…) within a 5-minute tolerance. */
-    private function signatureValid(string $payload, string $secret): bool
+    /** Defer to PayPal's verify-webhook-signature API — no local secret math to get wrong. */
+    private function signatureValid(array $headers, string $webhookId, array $event): bool
     {
-        $header = (string) ($_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '');
-        $parts = [];
-        foreach (explode(',', $header) as $piece) {
-            $pair = explode('=', trim($piece), 2);
-            if (count($pair) === 2) {
-                $parts[$pair[0]] = $pair[1];
-            }
-        }
-
-        $timestamp = (int) ($parts['t'] ?? 0);
-        $signature = (string) ($parts['v1'] ?? '');
-
-        if ($timestamp === 0 || $signature === '' || abs(time() - $timestamp) > 300) {
+        if ($webhookId === '') {
             return false;
         }
-
-        $expected = hash_hmac('sha256', $timestamp . '.' . $payload, $secret);
-        return hash_equals($expected, $signature);
+        return (new PayPalClient())->webhookSignatureValid($headers, $webhookId, $event);
     }
 }
