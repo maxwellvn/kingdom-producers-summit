@@ -10,6 +10,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
 use App\Models\Registration;
+use App\Models\Setting;
 use App\Services\AttendanceService;
 use App\Services\PaymentService;
 
@@ -215,6 +216,27 @@ final class AdminController extends Controller
         }
 
         return $this->redirect('/admin/registrations');
+    }
+
+    /** Read-only payment method details (from config/payments.php) + live on/off switches. */
+    public function paymentSettings(Request $request): Response
+    {
+        return $this->view('admin/payment_settings', [
+            'title'      => 'Payment methods',
+            'flash'      => (string) Session::get('admin_flash', ''),
+            'paypalLive' => PaymentService::unavailableMessage() === null,
+        ], 'layouts/admin');
+    }
+
+    public function savePaymentSettings(Request $request): Response
+    {
+        foreach (['pay_espees_enabled', 'pay_paypal_enabled', 'pay_bank_enabled'] as $key) {
+            Setting::set($key, $request->input($key) === '1' ? '1' : '0');
+        }
+
+        Session::flash('admin_flash', 'Payment method switches updated.');
+
+        return $this->redirect('/admin/payments');
     }
 
     /** Permanently remove a registration and its attendance record (e.g. wrong entry, erasure request). */
