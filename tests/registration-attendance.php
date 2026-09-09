@@ -21,7 +21,7 @@ try {
         'email' => 'attendance-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900123', 'country' => 'United Kingdom', 'age_band' => '25-34',
         'field' => Registration::FIELDS[0], 'producer_stage' => 'build',
-        'onsite_days' => ['day1'], 'consent_terms' => '1',
+        'consent_terms' => '1',
     ], []);
     $service = new RegistrationService();
     [$errors, $clean] = $service->validate($request);

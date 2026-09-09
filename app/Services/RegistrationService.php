@@ -44,7 +44,6 @@ final class RegistrationService
 
         if ($participation === 'onsite') {
             $rules['phone'] = 'required|max:30|phone';
-            $rules['onsite_days'] = 'required|array|max_items:3|in:day1,day2,day3';
             $rules['dietary'] = 'max:160';
             $rules['accessibility'] = 'max:255';
             $rules['emergency_contact'] = 'max:160';
@@ -64,7 +63,6 @@ final class RegistrationService
             'age_band'       => 'Age group',
             'field'          => 'Field',
             'producer_stage' => 'Producer stage',
-            'onsite_days'    => 'Days attending',
             'consent_terms'  => 'the privacy notice',
             'what_to_produce'=> 'Your answer',
         ];
@@ -105,7 +103,7 @@ final class RegistrationService
             'what_to_produce'   => $this->nullable($request->str('what_to_produce')),
             'interests'         => $this->json($request->list('interests')),
             'hear_about'        => $this->nullable($request->str('hear_about')),
-            'onsite_days'       => $participation === 'onsite' ? $this->json($request->list('onsite_days')) : null,
+            'onsite_days'       => null,
             'dietary'           => $participation === 'onsite' ? $this->nullable($request->str('dietary')) : null,
             'accessibility'     => $participation === 'onsite' ? $this->nullable($request->str('accessibility')) : null,
             'needs_letter'      => $participation === 'onsite' && $request->str('needs_letter') === '1' ? 1 : 0,

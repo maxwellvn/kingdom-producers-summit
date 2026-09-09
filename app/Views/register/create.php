@@ -258,17 +258,6 @@ $stageCopy = [
         <legend class="form__legend"><span class="mono">04</span> Details</legend>
 
         <div class="form__conditional" data-only="onsite">
-          <div class="field <?= error_for('onsite_days') ? 'has-error' : '' ?>">
-            <span class="field__label">Which days will you attend?</span>
-            <div class="chips chips--check">
-              <?php foreach (['day1' => 'Day one', 'day2' => 'Day two', 'day3' => 'Day three'] as $k => $l): ?>
-                <label class="chip"><input type="checkbox" name="onsite_days[]" value="<?= $k ?>" <?= old_checked('onsite_days', $k) ?>><span><?= $l ?></span></label>
-              <?php endforeach; ?>
-            </div>
-            <p class="field__hint">The final programme may be shorter — we'll confirm with the date.</p>
-            <?php if ($err = error_for('onsite_days')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-          </div>
-
           <div class="form__row">
             <div class="field">
               <label for="dietary">Dietary requirements <span class="field__opt">optional</span></label>
