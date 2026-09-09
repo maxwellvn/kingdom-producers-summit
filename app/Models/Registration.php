@@ -94,6 +94,12 @@ final class Registration
         return $row ?: null;
     }
 
+    public static function delete(int $id): void
+    {
+        $stmt = Database::connection()->prepare('DELETE FROM registrations WHERE id = ?');
+        $stmt->execute([$id]);
+    }
+
     /** Registrant says they sent an offline payment (Espees / bank). Awaiting admin confirmation. */
     public static function claimPayment(string $reference, string $method): bool
     {

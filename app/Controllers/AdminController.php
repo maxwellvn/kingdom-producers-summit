@@ -218,6 +218,14 @@ final class AdminController extends Controller
         return $this->redirect('/admin/registrations');
     }
 
+    /** Permanently remove a registration and its attendance record (e.g. wrong entry, erasure request). */
+    public function deleteRegistration(Request $request): Response
+    {
+        Registration::delete((int) $request->input('id', 0));
+
+        return $this->redirect('/admin/registrations');
+    }
+
     private const PAYMENT_SETTING_KEYS = [
         'pay_paypal_enabled', 'pay_espees_enabled', 'pay_bank_enabled',
         'pay_espees_code', 'pay_espees_note',

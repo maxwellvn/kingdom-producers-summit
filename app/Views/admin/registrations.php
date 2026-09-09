@@ -49,6 +49,11 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                   <button type="submit" class="adm-btn adm-btn--ghost" style="padding:.25rem .6rem;font-size:.75rem">Confirm £<?= number_format(config('paypal.price_pence') / 100, 0) ?> received</button>
                 </form>
               <?php endif; ?>
+              <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                <button type="submit" class="adm-btn adm-btn--ghost" style="padding:.25rem .6rem;font-size:.75rem;color:#b4232b">Delete</button>
+              </form>
             </td>
             <td><?php if ($r['checked_in_at']): ?><span class="adm-checkin mono">Checked in<br><?= e(date('j M, H:i', strtotime($r['checked_in_at']))) ?></span><?php else: ?><span class="adm-muted mono">Not arrived</span><?php endif; ?></td>
             <td class="mono adm-muted"><?= e(date('j M Y', strtotime($r['created_at']))) ?></td>
