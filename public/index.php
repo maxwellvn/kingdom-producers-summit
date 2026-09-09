@@ -19,7 +19,8 @@ try {
 
     $response = Response::html(
         View::render('errors/500', [
-            'title' => 'Something went wrong',
+            'title'  => 'Something went wrong',
+            'detail' => config('app.debug') ? $e->getMessage() . ' — ' . basename($e->getFile()) . ':' . $e->getLine() : '',
         ]),
         500
     );

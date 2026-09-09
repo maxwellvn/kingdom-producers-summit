@@ -112,6 +112,34 @@ final class RegistrationController extends Controller
         ]);
     }
 
+    /** The attendee's access-pass QR as a PNG (embedded in confirmation emails). */
+    public function qr(Request $request): Response
+    {
+        $token = $request->str('token');
+
+        if (AttendanceService::referenceFromToken($token) === null) {
+            return Response::html(\App\Core\View::render('errors/404', ['title' => 'Not found']), 404);
+        }
+
+        $old = error_reporting(E_ALL & ~E_DEPRECATED); // vendored phpqrcode predates 8.3 signatures
+        require_once BASE_PATH . '/lib/phpqrcode.php';
+        ob_start();
+        // The vendored lib's trailing colour params became implicitly required in PHP 8.3.
+        \QRcode::png($token, false, \QR_ECLEVEL_M, 6, 3, false, 0xFFFFFF, 0x000000);
+        $png = (string) ob_get_clean();
+        error_reporting($old);
+
+        // Never let a stray notice corrupt the image stream.
+        $signature = chr(0x89) . 'PNG';
+        if (!str_starts_with($png, $signature) && ($pos = strpos($png, $signature)) !== false) {
+            $png = substr($png, $pos);
+        }
+
+        return (new Response($png, 200))
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'private, max-age=86400');
+    }
+
     /** @return string[] */
     private function countries(): array
     {

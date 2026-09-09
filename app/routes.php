@@ -19,6 +19,7 @@ $router->get('/about', [HomeController::class, 'about']);
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
 $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']);
+$router->get('/access/qr', [RegistrationController::class, 'qr']);
 $router->get('/register/paid', [PaymentController::class, 'paid']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
