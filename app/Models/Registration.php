@@ -22,14 +22,14 @@ final class Registration
     ];
 
     public const INTERESTS = [
-        'product'   => 'Product & manufacturing',
-        'digital'   => 'Digital & software',
-        'content'   => 'Content, media & publishing',
-        'capital'   => 'Funding & investment readiness',
-        'ip'        => 'Intellectual property & licensing',
-        'export'    => 'Export & international trade',
-        'youth'     => 'Youth & student producers',
-        'mentoring' => 'Mentoring & masterclasses',
+        'facilitators' => '1-to-1 engagement with facilitators',
+        'launch'       => 'Launch & networking',
+        'product'      => 'Product showcases',
+        'mentoring'    => 'Masterclasses & mentoring',
+        'capital'      => 'Funding & investment readiness',
+        'export'       => 'Export & international trade',
+        'youth'        => 'Youth & student producers',
+        'digital'      => 'Digital & software tools',
     ];
 
     public const CONTRIBUTE = [
