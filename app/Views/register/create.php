@@ -81,7 +81,7 @@ $stageCopy = [
           <?php
           $paths = [
             'onsite'     => ['A', 'Attend in London', 'Onsite for the full summit.'],
-            'online'     => ['B', 'Follow online', 'Programme, recordings and updates.'],
+            'online'     => ['B', 'Attend online', 'Live stream from Rainham, Essex — programme, recordings and updates.'],
             'initiative' => ['C', 'Join the initiative', 'Member of Kingdom Producers with portal access.'],
           ];
           foreach ($paths as $value => [$letter, $label, $desc]): ?>

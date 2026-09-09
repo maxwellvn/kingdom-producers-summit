@@ -29,6 +29,11 @@
             tabindex="0" role="button" aria-haspopup="dialog">produce</em>.
       </p>
 
+      <p class="hero__date mono">
+        <span class="hero__date-dot" aria-hidden="true"></span>
+        <?= e($summit['date_text']) ?> &middot; <?= e($summit['city']) ?>
+      </p>
+
       <div class="hero__actions">
         <a href="<?= url('/register') ?>?mode=onsite" class="btn btn--stamp">
           <span class="btn__label">Register to attend</span>
@@ -116,9 +121,9 @@
       </article>
 
       <article class="path" data-reveal data-reveal-delay="0.1">
-        <h3 class="path__title">Follow online</h3>
-        <p class="path__copy">Receive programme updates, session recordings and practical producer resources.</p>
-        <a href="<?= url('/register') ?>?mode=online" class="path__cta">Get updates <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
+        <h3 class="path__title">Attend online</h3>
+        <p class="path__copy">Join the live stream from Rainham, Essex — programme, session recordings and practical producer resources.</p>
+        <a href="<?= url('/register') ?>?mode=online" class="path__cta">Attend online <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
       </article>
 
       <article class="path" data-reveal data-reveal-delay="0.2">
@@ -201,7 +206,7 @@
         ['Who is the summit for?', 'Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet.'],
         ['When exactly is it?', 'The London date is being finalised and will be announced to registered people first. Register now and you will hear before anyone else.'],
         ['Is there a cost to attend?', 'Details of any fee will be shared with the date. Registering your intention now costs nothing and does not commit you.'],
-        ['I cannot travel to London. Can I still take part?', 'Yes. Choose "Follow online" to receive the programme and recordings, or "Join the initiative" to become a member with portal access.'],
+        ['I cannot travel to London. Can I still take part?', 'Yes. Choose "Attend online" to join the live stream from Rainham, Essex and receive the programme and recordings, or "Join the initiative" to become a member with portal access.'],
         ['What is the Kingdom Producers portal?', 'A members-only portal containing methods, case studies, capital pathways, a producer directory, session recordings and opportunities. Members are notified as it opens.'],
         ['How is my data used?', 'Only to administer the summit and the initiative. We do not sell or share your details. You can ask us to remove them at any time.'],
       ];

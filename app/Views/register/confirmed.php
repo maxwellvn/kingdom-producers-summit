@@ -1,15 +1,15 @@
 <?php
 /** @var array $registration @var array $summit @var string $accessToken */
 $r = $registration;
-$pathLabel = ['onsite' => 'Attending in London', 'online' => 'Following online', 'initiative' => 'Kingdom Producers member'][$r['participation']] ?? $r['participation'];
+$pathLabel = ['onsite' => 'Attending in London', 'online' => 'Attending online — Rainham, Essex', 'initiative' => 'Kingdom Producers member'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
-    'We will email the confirmed London date and venue to you before it is announced publicly.',
+    'Join us on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
     'Your reference code is your ticket reference. Keep it — you will be asked for it at registration on the day.',
     'The programme, travel notes and any invitation letter you requested will follow by email.',
   ],
   'online' => [
-    'You will receive the programme and speaker announcements as they are confirmed.',
+    'Join the live stream from Rainham, Essex on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — your access link arrives by email.',
     'Session recordings and producer resources will be sent after the summit.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
