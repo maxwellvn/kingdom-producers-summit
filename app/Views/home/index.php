@@ -86,7 +86,7 @@
 <section class="statement section" id="summit">
   <div class="container statement__grid">
     <h2 class="statement__title" data-split>
-      A London gathering for people ready to build.
+      A gathering for people ready to build.
     </h2>
     <figure class="statement__image" data-reveal>
       <img src="<?= e(asset('img/producers-summit-v3.jpg')) ?>" alt="A diverse group of producers discussing a project during a public summit" width="1448" height="1086" loading="lazy">
@@ -110,12 +110,12 @@
   <div class="container">
     <div class="section__head" data-reveal>
       <h2 class="section__title">Choose how you will take part.</h2>
-      <p class="section__lede">Attend in London, follow the programme online, or join the ongoing producer initiative.</p>
+      <p class="section__lede">Attend onsite, follow the programme online, or join the ongoing producer initiative.</p>
     </div>
 
     <div class="pathways__grid">
       <article class="path" data-reveal data-reveal-delay="0">
-        <h3 class="path__title">Attend in London</h3>
+        <h3 class="path__title">Attend onsite</h3>
         <p class="path__copy">Join the sessions, producer showcases, masterclasses and working rooms in person.</p>
         <a href="<?= url('/register') ?>?mode=onsite" class="path__cta">Register to attend <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
       </article>

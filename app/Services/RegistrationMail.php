@@ -102,7 +102,7 @@ final class RegistrationMail
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
         $path = [
-            'onsite' => 'Attending in London',
+            'onsite' => 'Attending onsite',
             'online' => 'Attending online — Rainham, Essex',
             'initiative' => 'Kingdom Producers member',
         ][(string) $registration['participation']] ?? 'Registered producer';

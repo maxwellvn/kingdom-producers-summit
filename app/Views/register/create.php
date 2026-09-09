@@ -80,7 +80,7 @@ $stageCopy = [
         <div class="tickets" role="radiogroup" aria-label="How would you like to take part?">
           <?php
           $paths = [
-            'onsite'     => ['A', 'Attend in London', 'Onsite for the full summit.'],
+            'onsite'     => ['A', 'Attend onsite', 'Onsite for the full summit.'],
             'online'     => ['B', 'Attend online', 'Live stream from Rainham, Essex — programme, recordings and updates.'],
             'initiative' => ['C', 'Join the initiative', 'Member of Kingdom Producers with portal access.'],
           ];
