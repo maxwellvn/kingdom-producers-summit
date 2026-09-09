@@ -7,7 +7,7 @@ $methodLabel = ['espees' => 'Espees', 'bank' => 'bank transfer', 'paypal' => 'Pa
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment received — pending confirmation</p>
       <h1 class="pay__title">Thank you — nearly there</h1>
 
-      <p class="pay__lede">We've logged your &pound;50 <strong><?= e($methodLabel) ?></strong> payment claim for reference <strong class="mono"><?= e($registration['reference']) ?></strong>. Our team is confirming it now.</p>
+      <p class="pay__lede">We've logged your &pound;50 <strong><?= e($methodLabel) ?></strong> payment for reference <strong class="mono"><?= e($registration['reference']) ?></strong>. Our team is confirming it now.</p>
 
       <div class="pay__alert" role="note">
         <strong>Send your proof of payment.</strong>
