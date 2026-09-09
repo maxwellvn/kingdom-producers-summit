@@ -30,7 +30,7 @@ return [
         'short'     => 'The Producers Summit',
         'edition'   => 'London Edition 2026',
         'city'      => 'London, United Kingdom',
-        'date_text' => 'Date to be announced',
+        'date_text' => '19th September 2026, 12 noon',
         'organiser' => 'Loveworld Consulate UK',
         'office'    => 'The Loveworld Consulate, United Kingdom',
         'motto'     => 'Exceptionalism. Expansionism. Perfectionism.',
