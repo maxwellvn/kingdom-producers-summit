@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Models\AdminUser;
 use App\Models\Registration;
 use App\Services\AttendanceService;
 
@@ -48,6 +49,12 @@ final class AdminController extends Controller
             && hash_equals($expectedEmail, $email)
             && password_verify($password, $hash);
 
+        // Additional panel-created admins, alongside the env-configured root.
+        if (!$ok) {
+            $admin = AdminUser::findByEmail($email);
+            $ok = $admin !== null && password_verify($password, (string) $admin['password_hash']);
+        }
+
         if (!$ok) {
             $attempts++;
             Session::put('login_attempts', $attempts);
@@ -72,6 +79,55 @@ final class AdminController extends Controller
     {
         Session::destroy();
         return $this->redirect('/admin/login');
+    }
+
+    public function admins(Request $request): Response
+    {
+        return $this->view('admin/admins', [
+            'title'     => 'Admin users',
+            'admins'    => AdminUser::all(),
+            'rootEmail' => (string) config('app.admin.email'),
+            'flash'     => (string) Session::get('admin_flash', ''),
+        ], 'layouts/admin');
+    }
+
+    public function addAdmin(Request $request): Response
+    {
+        $email = mb_strtolower(trim($request->str('email')));
+        $password = (string) $request->input('password', '');
+        $rootEmail = mb_strtolower((string) config('app.admin.email'));
+
+        $errors = [];
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Enter a valid email address.';
+        } elseif ($email === $rootEmail) {
+            $errors['email'] = 'That address is the root admin and already has access.';
+        } elseif (AdminUser::findByEmail($email) !== null) {
+            $errors['email'] = 'That email already has admin access.';
+        }
+        if (strlen($password) < 10) {
+            $errors['password'] = 'Password must be at least 10 characters.';
+        }
+
+        if ($errors) {
+            return $this->back($request, $errors, $request->all());
+        }
+
+        AdminUser::create($email, password_hash($password, PASSWORD_DEFAULT));
+        Session::flash('admin_flash', "Admin access added for {$email}.");
+
+        return $this->redirect('/admin/admins');
+    }
+
+    public function deleteAdmin(Request $request): Response
+    {
+        $admin = AdminUser::find((int) $request->input('id', 0));
+
+        if ($admin !== null && mb_strtolower((string) $admin['email']) !== mb_strtolower((string) Session::get('admin_email'))) {
+            AdminUser::delete((int) $admin['id']);
+        }
+
+        return $this->redirect('/admin/admins');
     }
 
     public function dashboard(Request $request): Response

@@ -35,5 +35,8 @@ $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::
 $router->get('/admin', [AdminController::class, 'dashboard'], [RequireAdmin::class]);
 $router->get('/admin/registrations', [AdminController::class, 'registrations'], [RequireAdmin::class]);
 $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmin::class]);
+$router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);
+$router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/export.csv', [AdminController::class, 'exportCsv'], [RequireAdmin::class]);
