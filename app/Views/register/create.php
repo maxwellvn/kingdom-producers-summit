@@ -20,7 +20,7 @@ $ageLabels = [
   '45-54' => '45–54', '55-64' => '55–64', '65plus' => '65+',
 ];
 $stageCopy = [
-  'emerge'    => 'I have an idea or a skill, and I\'m working out what to produce.',
+  'emerge'    => 'I don\'t have anything yet — I\'m starting from scratch.',
   'build'     => 'I\'m making the first version — prototype, pilot, first customers.',
   'establish' => 'Something works. I\'m structuring it to last.',
   'multiply'  => 'I\'m reproducing what I\'ve built through others.',
