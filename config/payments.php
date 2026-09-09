@@ -28,6 +28,6 @@ return [
 
     'proof' => [
         'kingschat' => '', // leave empty to hide the KingsChat line
-        'email'     => '', // falls back to MAIL_REPLY_TO when empty
+        'email'     => 'unitedkingdom@loveworldconsulate.org',
     ],
 ];

@@ -11,6 +11,7 @@ use App\Core\Session;
 use App\Models\Registration;
 use App\Services\PaymentService;
 use App\Services\PayPalClient;
+use App\Services\RegistrationMail;
 use RuntimeException;
 
 final class PaymentController extends Controller
@@ -66,9 +67,12 @@ final class PaymentController extends Controller
     /** Method choice after registering (or resuming): Espees first, then PayPal, then bank. */
     public function methodPage(Request $request): Response
     {
-        $registration = $this->sessionRegistration(true);
+        $registration = $this->sessionRegistration(false);
         if ($registration === null) {
             return $this->redirect('/register/pay');
+        }
+        if ($registration['payment_status'] === 'claimed') {
+            return $this->redirect('/register/awaiting'); // already claimed — nothing left to choose
         }
 
         return $this->view('register/method', [
@@ -134,6 +138,12 @@ final class PaymentController extends Controller
             return $this->redirect('/register/pay');
         }
 
+        try {
+            (new RegistrationMail())->sendClaimReceived(Registration::findByReference((string) $registration['reference']) ?? $registration);
+        } catch (\Throwable $e) {
+            error_log('Payment claim email could not be sent: ' . $e->getMessage());
+        }
+
         return $this->redirect('/register/awaiting');
     }
 
@@ -176,6 +186,12 @@ final class PaymentController extends Controller
     /** Resume-payment page (reached via cancel link or after a failed attempt). */
     public function payForm(Request $request): Response
     {
+        // Someone who already claimed should see their status, not a payment form.
+        $claimed = $this->sessionRegistration(false);
+        if ($claimed !== null && $claimed['payment_status'] === 'claimed') {
+            return $this->redirect('/register/awaiting');
+        }
+
         $saved = $this->savedRegistration($request->str('ref'));
         return $this->view('register/pay', [
             'title'     => 'Complete payment — ' . config('app.name'),
