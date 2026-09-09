@@ -5,10 +5,48 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Registration;
+use App\Models\Setting;
 use RuntimeException;
 
 final class PaymentService
 {
+    /** The pay methods shown to the registrant, Espees first, in display order. */
+    public static function methods(): array
+    {
+        $amount = number_format((int) config('paypal.price_pence') / 100, 2);
+
+        return [
+            'espees' => [
+                'label' => 'Espees',
+                'blurb' => 'Pay from your Espees wallet.',
+                'available' => Setting::get('pay_espees_enabled', '1') === '1'
+                    && trim(Setting::get('pay_espees_code')) !== '',
+                'href' => 'instructions?type=espees',
+            ],
+            'paypal' => [
+                'label' => 'PayPal',
+                'blurb' => "Card or PayPal balance — £{$amount} GBP.",
+                'available' => Setting::get('pay_paypal_enabled', '1') === '1'
+                    && self::unavailableMessage() === null,
+                'href' => null, // handled by the checkout POST
+            ],
+            'bank' => [
+                'label' => 'Bank transfer',
+                'blurb' => "UK bank transfer of £{$amount} with your reference.",
+                'available' => Setting::get('pay_bank_enabled', '1') === '1'
+                    && trim(Setting::get('pay_bank_account_name')) !== ''
+                    && trim(Setting::get('pay_bank_number')) !== '',
+                'href' => 'instructions?type=bank',
+            ],
+        ];
+    }
+
+    /** Only the methods an actual registrant may use right now. */
+    public static function availableMethods(): array
+    {
+        return array_filter(self::methods(), static fn (array $m) => $m['available']);
+    }
+
     public static function unavailableMessage(): ?string
     {
         if (!filter_var(config('paypal.enabled'), FILTER_VALIDATE_BOOL)

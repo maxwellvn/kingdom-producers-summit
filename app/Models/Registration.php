@@ -86,6 +86,26 @@ final class Registration
         return $row ?: null;
     }
 
+    public static function find(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Registrant says they sent an offline payment (Espees / bank). Awaiting admin confirmation. */
+    public static function claimPayment(string $reference, string $method): bool
+    {
+        $stmt = Database::connection()->prepare(
+            "UPDATE registrations
+             SET payment_status = 'claimed', payment_method = ?
+             WHERE reference = ? AND payment_status = 'unpaid'"
+        );
+        $stmt->execute([$method, $reference]);
+        return $stmt->rowCount() > 0;
+    }
+
     public static function setPaymentSession(string $reference, string $sessionId): void
     {
         $stmt = Database::connection()->prepare(
@@ -94,13 +114,13 @@ final class Registration
         $stmt->execute([$sessionId, $reference]);
     }
 
-    /** Transition unpaid → paid. Returns false when already paid (idempotent). */
+    /** Transition unpaid (or claimed offline payment) → paid. Returns false when already paid (idempotent). */
     public static function markPaid(string $reference, string $sessionId, int $amountPence): bool
     {
         $stmt = Database::connection()->prepare(
             "UPDATE registrations
              SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, payment_session_id = ?
-             WHERE reference = ? AND payment_status = 'unpaid'"
+             WHERE reference = ? AND payment_status IN ('unpaid', 'claimed')"
         );
         $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $reference]);
         return $stmt->rowCount() > 0;
@@ -206,7 +226,7 @@ final class Registration
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $pdo->prepare(
             "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone, r.country, r.city,
-                    r.field, r.producer_stage, r.created_at, a.checked_in_at
+                    r.field, r.producer_stage, r.payment_status, r.payment_method, r.created_at, a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}
              ORDER BY r.created_at DESC

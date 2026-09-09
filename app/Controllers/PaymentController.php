@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
+use App\Models\Setting;
 use App\Services\PaymentService;
 use App\Services\PayPalClient;
 use RuntimeException;
@@ -63,6 +64,116 @@ final class PaymentController extends Controller
         return $this->redirect('/register/confirmed');
     }
 
+    /** Method choice after registering (or resuming): Espees first, then PayPal, then bank. */
+    public function methodPage(Request $request): Response
+    {
+        $registration = $this->sessionRegistration(true);
+        if ($registration === null) {
+            return $this->redirect('/register/pay');
+        }
+
+        return $this->view('register/method', [
+            'title'     => 'Choose payment — ' . config('app.name'),
+            'bodyClass' => 'page-register',
+            'summit'    => config('app.summit'),
+            'registration' => $registration,
+            'methods'   => PaymentService::availableMethods(),
+            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+        ]);
+    }
+
+    /** Offline instructions: the Espees code or bank details, with their reference. */
+    public function instructions(Request $request): Response
+    {
+        $type = $request->str('type');
+        $registration = $this->sessionRegistration(true);
+        $methods = PaymentService::methods();
+
+        if ($registration === null || !isset($methods[$type]) || !$methods[$type]['available']) {
+            return $this->redirect('/register/method');
+        }
+
+        return $this->view('register/instructions', [
+            'title'     => 'Payment details — ' . config('app.name'),
+            'bodyClass' => 'page-register',
+            'summit'    => config('app.summit'),
+            'registration' => $registration,
+            'type'      => $type,
+            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+        ]);
+    }
+
+    /** "Have you paid?" — the confirmation step before a claim is recorded. */
+    public function claimForm(Request $request): Response
+    {
+        $type = $request->str('type');
+        $registration = $this->sessionRegistration(true);
+        $methods = PaymentService::methods();
+
+        if ($registration === null || !isset($methods[$type]) || !$methods[$type]['available']) {
+            return $this->redirect('/register/method');
+        }
+
+        return $this->view('register/claim', [
+            'title'     => 'Confirm payment — ' . config('app.name'),
+            'bodyClass' => 'page-register',
+            'summit'    => config('app.summit'),
+            'registration' => $registration,
+            'type'      => $type,
+            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+        ]);
+    }
+
+    /** Record the registrant's payment claim; an admin verifies before the pass is issued. */
+    public function claim(Request $request): Response
+    {
+        $type = $request->str('type');
+        $registration = $this->sessionRegistration(true);
+
+        if ($registration === null || !in_array($type, ['espees', 'bank'], true)
+            || !Registration::claimPayment((string) $registration['reference'], $type)) {
+            return $this->redirect('/register/pay');
+        }
+
+        return $this->redirect('/register/awaiting');
+    }
+
+    /** Claim received — payment pending organiser confirmation, proof requested. */
+    public function awaiting(Request $request): Response
+    {
+        $registration = $this->sessionRegistration(false);
+        if ($registration === null) {
+            return $this->redirect('/register/pay');
+        }
+
+        return $this->view('register/awaiting', [
+            'title'     => 'Payment awaiting confirmation — ' . config('app.name'),
+            'bodyClass' => 'page-register',
+            'summit'    => config('app.summit'),
+            'registration' => $registration,
+            'kingschat' => Setting::get('pay_proof_kingschat'),
+            'proofEmail' => Setting::get('pay_proof_email', (string) config('app.mail.reply_to')),
+        ]);
+    }
+
+    /** Start PayPal checkout for the session-held registration (from the method page). */
+    public function checkout(Request $request): Response
+    {
+        $registration = $this->sessionRegistration(true);
+        if ($registration === null) {
+            return $this->redirect('/register/pay');
+        }
+
+        try {
+            $checkoutUrl = (new PaymentService())->startCheckout($registration);
+        } catch (RuntimeException $e) {
+            error_log('PayPal checkout failed: ' . $e->getMessage());
+            return $this->redirect('/register/pay?ref=' . rawurlencode((string) $registration['reference']));
+        }
+
+        return Response::redirect($checkoutUrl);
+    }
+
     /** Resume-payment page (reached via cancel link or after a failed attempt). */
     public function payForm(Request $request): Response
     {
@@ -79,7 +190,7 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /** Start (or restart) checkout for an unpaid onsite registration. */
+    /** Match a reference + email, then hand the registrant to the method choice. */
     public function payResume(Request $request): Response
     {
         $reference = strtoupper($request->str('reference'));
@@ -98,6 +209,14 @@ final class PaymentController extends Controller
             : null;
 
         if ($registration === null) {
+            // Already-claimed registrations resume at the awaiting page, not the pay form.
+            $claimed = $reference !== '' ? Registration::findByReference($reference) : null;
+            if ($claimed !== null && mb_strtolower((string) $claimed['email']) === $email
+                && $claimed['participation'] === 'onsite' && $claimed['payment_status'] === 'claimed') {
+                Session::put('last_registration', (string) $claimed['reference']);
+                return $this->redirect('/register/awaiting');
+            }
+
             return $this->view('register/pay', $this->payViewData(
                 $request->str('reference'),
                 'No unpaid onsite registration matches that reference and email. Check your original registration details. If you have already paid, use your confirmation email.',
@@ -105,20 +224,9 @@ final class PaymentController extends Controller
             ));
         }
 
-        Session::put('last_registration', $reference);
+        Session::put('last_registration', (string) $registration['reference']);
 
-        try {
-            $checkoutUrl = (new PaymentService())->startCheckout($registration);
-        } catch (RuntimeException $e) {
-            error_log('PayPal checkout failed: ' . $e->getMessage());
-            return $this->view('register/pay', $this->payViewData(
-                $reference,
-                PaymentService::unavailableMessage() ?? 'Payment could not be started. Your registration is saved. Please try again in a moment.',
-                $email
-            ));
-        }
-
-        return Response::redirect($checkoutUrl);
+        return $this->redirect('/register/method');
     }
 
     private function payViewData(string $reference, string $error, string $email = ''): array
@@ -135,6 +243,25 @@ final class PaymentController extends Controller
         ];
     }
 
+    /** A pending onsite registration held by the current session. */
+    private function sessionRegistration(bool $unpaidOnly = true): ?array
+    {
+        $reference = Session::get('last_registration');
+        if (!is_string($reference) || $reference === '') {
+            return null;
+        }
+        $registration = Registration::findByReference($reference);
+        if ($registration === null || $registration['participation'] !== 'onsite'
+            || $registration['status'] !== 'pending') {
+            return null;
+        }
+        $statuses = $unpaidOnly ? ['unpaid'] : ['unpaid', 'claimed'];
+        if (!in_array($registration['payment_status'], $statuses, true)) {
+            return null;
+        }
+        return $registration;
+    }
+
     /** Only a server-held session may supply registration details without an email lookup. */
     private function savedRegistration(string $requestedReference): ?array
     {
@@ -142,12 +269,7 @@ final class PaymentController extends Controller
         if (!is_string($reference) || ($requestedReference !== '' && strtoupper($requestedReference) !== $reference)) {
             return null;
         }
-        $registration = Registration::findByReference($reference);
-        if ($registration === null || $registration['participation'] !== 'onsite'
-            || $registration['payment_status'] !== 'unpaid' || $registration['status'] !== 'pending') {
-            return null;
-        }
-        return $registration;
+        return $this->sessionRegistration(true);
     }
 
     /** PayPal webhook: authoritative confirmation for payers who never return to the site. */

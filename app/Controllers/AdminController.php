@@ -10,7 +10,9 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
 use App\Models\Registration;
+use App\Models\Setting;
 use App\Services\AttendanceService;
+use App\Services\PaymentService;
 
 final class AdminController extends Controller
 {
@@ -196,6 +198,61 @@ final class AdminController extends Controller
             'participation' => $participation,
             'search'        => $search,
         ], 'layouts/admin');
+    }
+
+    /** Mark an offline payment (Espees / bank claim) as received. Issues the pass by email. */
+    public function confirmPayment(Request $request): Response
+    {
+        $registration = Registration::find((int) $request->input('id', 0));
+
+        if ($registration !== null
+            && $registration['participation'] === 'onsite'
+            && in_array($registration['payment_status'], ['unpaid', 'claimed'], true)) {
+            (new PaymentService())->markPaid(
+                (string) $registration['reference'],
+                'manual-' . date('Ymd-His'),
+                (int) config('paypal.price_pence')
+            );
+        }
+
+        return $this->redirect('/admin/registrations');
+    }
+
+    private const PAYMENT_SETTING_KEYS = [
+        'pay_paypal_enabled', 'pay_espees_enabled', 'pay_bank_enabled',
+        'pay_espees_code', 'pay_espees_note',
+        'pay_bank_account_name', 'pay_bank_number', 'pay_bank_sort_code', 'pay_bank_note',
+        'pay_proof_kingschat', 'pay_proof_email',
+    ];
+
+    public function paymentSettings(Request $request): Response
+    {
+        $values = [];
+        foreach (self::PAYMENT_SETTING_KEYS as $key) {
+            $values[$key] = Setting::get($key, str_ends_with($key, '_enabled') ? '1' : '');
+        }
+
+        return $this->view('admin/payment_settings', [
+            'title'  => 'Payment methods',
+            'values' => $values,
+            'flash'  => (string) Session::get('admin_flash', ''),
+            'paypalLive' => PaymentService::unavailableMessage() === null,
+        ], 'layouts/admin');
+    }
+
+    public function savePaymentSettings(Request $request): Response
+    {
+        foreach (self::PAYMENT_SETTING_KEYS as $key) {
+            if (str_ends_with($key, '_enabled')) {
+                Setting::set($key, $request->input($key) === '1' ? '1' : '0');
+                continue;
+            }
+            Setting::set($key, mb_substr(trim((string) $request->input($key, '')), 0, 500));
+        }
+
+        Session::flash('admin_flash', 'Payment methods updated.');
+
+        return $this->redirect('/admin/payments');
     }
 
     public function exportCsv(Request $request): Response

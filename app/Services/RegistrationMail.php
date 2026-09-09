@@ -6,6 +6,45 @@ namespace App\Services;
 
 final class RegistrationMail
 {
+    /** Onsite acknowledgement: registration recorded, payment still to complete. No access pass yet. */
+    public function sendAcknowledgement(array $registration): void
+    {
+        $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
+        $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
+        $site = rtrim((string) config('app.url'), '/');
+        $amount = number_format((int) config('paypal.price_pence') / 100, 2);
+        $payUrl = $site . '/register/pay?ref=' . rawurlencode((string) $registration['reference']);
+        $pay = htmlspecialchars($payUrl, ENT_QUOTES, 'UTF-8');
+        $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
+        $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
+
+        $subject = 'You are on the list — complete your place payment (' . (string) $registration['reference'] . ')';
+        $html = '<!doctype html><html><body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
+            . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
+            . '<tr><td background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">London Edition 2026</p>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase">You are on the list,<br>' . $firstName . '.</h1>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your onsite place is held. Complete your &pound;' . $amount . ' payment to confirm it — Espees, bank transfer or PayPal.</p></td></tr>'
+            . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
+            . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
+            . '<p style="margin:28px 0 8px"><a href="' . $pay . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">Complete payment</a></p>'
+            . '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Your QR access pass is issued by email as soon as your payment is confirmed.</p></td></tr>'
+            . '<tr><td style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · London Edition 2026</td></tr>'
+            . '</table></td></tr></table></body></html>';
+
+        $text = "You are on the list, {$registration['first_name']}.\n\n"
+            . "Your onsite place is held. Complete your £{$amount} payment to confirm it — Espees, bank transfer or PayPal.\n\n"
+            . "Registration reference: {$registration['reference']}\n"
+            . "Complete payment: {$payUrl}\n\n"
+            . "Your QR access pass is issued by email as soon as your payment is confirmed.\n\n"
+            . "The Loveworld Consulate, United Kingdom";
+
+        (new Mailer())->send((string) $registration['email'], $subject, $html, $text, [
+            'Reply-To' => (string) config('app.mail.reply_to'),
+        ]);
+    }
     /** @param array<string,mixed> $registration */
     public function send(array $registration): void
     {

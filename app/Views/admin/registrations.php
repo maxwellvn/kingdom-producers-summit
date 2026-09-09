@@ -28,7 +28,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     <p class="adm-empty mono">Nothing matches.</p>
   <?php else: ?>
     <table class="adm-table">
-      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Attendance</th><th>Registered</th></tr></thead>
+      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Payment</th><th>Attendance</th><th>Registered</th></tr></thead>
       <tbody>
         <?php foreach ($result['rows'] as $r): ?>
           <tr>
@@ -39,6 +39,17 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
             <td><?= e($r['field']) ?></td>
             <td><?= e(ucfirst($r['producer_stage'])) ?></td>
             <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?></td>
+            <td>
+              <?php $payState = $r['participation'] === 'onsite' ? ($r['payment_status'] ?? 'unpaid') : 'not_required'; ?>
+              <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) : '' ?></span>
+              <?php if ($r['participation'] === 'onsite' && in_array($payState, ['unpaid', 'claimed'], true)): ?>
+                <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                  <button type="submit" class="adm-btn adm-btn--ghost" style="padding:.25rem .6rem;font-size:.75rem">Confirm £<?= number_format(config('paypal.price_pence') / 100, 0) ?> received</button>
+                </form>
+              <?php endif; ?>
+            </td>
             <td><?php if ($r['checked_in_at']): ?><span class="adm-checkin mono">Checked in<br><?= e(date('j M, H:i', strtotime($r['checked_in_at']))) ?></span><?php else: ?><span class="adm-muted mono">Not arrived</span><?php endif; ?></td>
             <td class="mono adm-muted"><?= e(date('j M Y', strtotime($r['created_at']))) ?></td>
           </tr>

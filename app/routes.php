@@ -22,6 +22,12 @@ $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']
 $router->get('/register/paid', [PaymentController::class, 'paid']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
+$router->get('/register/method', [PaymentController::class, 'methodPage']);
+$router->get('/register/instructions', [PaymentController::class, 'instructions']);
+$router->get('/register/claim', [PaymentController::class, 'claimForm']);
+$router->post('/register/claim', [PaymentController::class, 'claim'], [VerifyCsrf::class]);
+$router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
+$router->post('/register/pay/checkout', [PaymentController::class, 'checkout'], [VerifyCsrf::class]);
 
 // PayPal webhook: verified against PayPal's signature API, no session/CSRF.
 $router->post('/paypal/webhook', [PaymentController::class, 'webhook']);
@@ -35,6 +41,9 @@ $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::
 $router->get('/admin', [AdminController::class, 'dashboard'], [RequireAdmin::class]);
 $router->get('/admin/registrations', [AdminController::class, 'registrations'], [RequireAdmin::class]);
 $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmin::class]);
+$router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [RequireAdmin::class]);
+$router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/registrations/confirm-payment', [AdminController::class, 'confirmPayment'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);

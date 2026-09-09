@@ -756,6 +756,12 @@ body.menu-open { overflow: hidden; }
 .pay__lede { margin: 0; color: var(--ink); font-size: 1rem; line-height: 1.55; }
 .pay__alert { padding: 1rem 1.2rem; border-left: 3px solid var(--stamp); background: rgba(180,35,43,.07); color: var(--ink); }
 .pay__alert strong { display: block; margin-bottom: .25rem; }
+.pay__alert span { display: block; margin-top: .35rem; }
+.pay__methods { display: flex; flex-direction: column; gap: .8rem; margin-top: 1.4rem; }
+.pay__method { display: flex; justify-content: space-between; align-items: center; gap: 1rem; width: 100%; padding: 1.1rem 1.2rem; border: 1.5px solid rgba(27,34,66,.25); background: transparent; color: var(--ink); text-decoration: none; text-align: left; transition: border-color .15s ease, background .15s ease; }
+.pay__method:hover { border-color: var(--ink); background: rgba(27,34,66,.04); }
+.pay__method strong { display: block; font-size: 1.05rem; }
+.pay__method-blurb { display: block; color: var(--muted); font-size: .88rem; margin-top: .15rem; }
 .pay__form { display: flex; flex-direction: column; gap: 1.2rem; }
 .pay__form .btn { justify-content: center; }
 .pay__form .form__fine { margin: 0; }

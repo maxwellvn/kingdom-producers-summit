@@ -9,7 +9,6 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
-use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
 use App\Services\RegistrationMail;
@@ -61,26 +60,16 @@ final class RegistrationController extends Controller
             throw $e;
         }
 
-        // Onsite is a paid path: save as pending, then hand off to PayPal.
+        // Onsite is a paid path: save as pending, acknowledge by email, then offer payment methods.
         if ($registration['participation'] === 'onsite') {
             Session::put('last_registration', $registration['reference']);
             try {
-                $checkoutUrl = (new PaymentService())->startCheckout($registration);
+                (new RegistrationMail())->sendAcknowledgement($registration);
             } catch (\Throwable $e) {
-                error_log('PayPal checkout failed: ' . $e->getMessage());
-                return $this->view('register/pay', [
-                    'title'     => 'Complete payment — ' . config('app.name'),
-                    'bodyClass' => 'page-register',
-                    'summit'    => config('app.summit'),
-                    'reference' => $registration['reference'],
-                    'email'     => $registration['email'],
-                    'savedRegistration' => true,
-                    'cancelled' => false,
-                    'error'     => PaymentService::unavailableMessage() ?? 'Your place is saved but payment could not start. Complete it below with your reference and email.',
-                ]);
+                error_log('Registration acknowledgement email could not be sent: ' . $e->getMessage());
             }
 
-            return Response::redirect($checkoutUrl);
+            return $this->redirect('/register/method');
         }
 
         Session::put('last_registration', $registration['reference']);
@@ -106,9 +95,12 @@ final class RegistrationController extends Controller
             return $this->redirect('/register');
         }
 
-        // Unpaid onsite registrations have no access pass yet.
+        // Unpaid onsite registrations have no access pass yet; claimed ones await confirmation.
         if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'unpaid') {
             return $this->redirect('/register/pay?ref=' . rawurlencode((string) $registration['reference']));
+        }
+        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'claimed') {
+            return $this->redirect('/register/awaiting');
         }
 
         return $this->view('register/confirmed', [
