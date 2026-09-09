@@ -22,7 +22,7 @@ final class PaymentService
                 'available' => (bool) config('payments.espees.enabled')
                     && trim((string) config('payments.espees.code')) !== ''
                     && Setting::get('pay_espees_enabled', '1') === '1',
-                'href' => 'instructions?type=espees',
+                'href' => 'espees',
             ],
             'paypal' => [
                 'label' => 'PayPal',
@@ -39,7 +39,7 @@ final class PaymentService
                     && trim((string) config('payments.bank.account_name')) !== ''
                     && trim((string) config('payments.bank.account_number')) !== ''
                     && Setting::get('pay_bank_enabled', '1') === '1',
-                'href' => 'instructions?type=bank',
+                'href' => 'bank',
             ],
         ];
     }

@@ -762,6 +762,9 @@ body.menu-open { overflow: hidden; }
 .pay__method:hover { border-color: var(--ink); background: rgba(27,34,66,.04); }
 .pay__method strong { display: block; font-size: 1.05rem; }
 .pay__method-blurb { display: block; color: var(--muted); font-size: .88rem; margin-top: .15rem; }
+.copy-btn { display: inline-block; margin-left: .5rem; padding: .15rem .55rem; border: 1px solid rgba(27,34,66,.35); border-radius: 3px; background: transparent; color: var(--ink); font: 500 .68rem/1.4 var(--font-mono, monospace); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background .12s ease, border-color .12s ease; vertical-align: middle; }
+.copy-btn:hover { background: rgba(27,34,66,.06); border-color: var(--ink); }
+.copy-btn.is-copied { color: #1e7d3c; border-color: #1e7d3c; }
 .pay__form { display: flex; flex-direction: column; gap: 1.2rem; }
 .pay__form .btn { justify-content: center; }
 .pay__form .form__fine { margin: 0; }

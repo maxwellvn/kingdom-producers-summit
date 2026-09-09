@@ -530,6 +530,39 @@
     var tpl = document.createElement('template'); tpl.innerHTML = html; return tpl.content.childNodes;
   }
 
+  /* ---------- Copy-to-clipboard buttons ---------- */
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy') || '';
+      var swap = function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('is-copied');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('is-copied');
+        }, 1600);
+      };
+      var fallback = function () {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(swap, function () { fallback(); swap(); });
+      } else {
+        fallback();
+        swap();
+      }
+    });
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initGsap);
   } else {
