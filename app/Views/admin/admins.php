@@ -26,7 +26,7 @@ $errors = \App\Core\Session::get('_errors', []);
       <input type="password" name="password" placeholder="Password (min 10 characters)" autocomplete="new-password" required>
       <?php if (!empty($errors['password'])): ?><p class="form__error"><?= e($errors['password']) ?></p><?php endif; ?>
     </div>
-    <button type="submit" class="adm-btn">Add admin</button>
+    <button type="submit" class="adm-btn adm-btn--dark">Add admin</button>
   </form>
 
   <table class="adm-table">
@@ -50,7 +50,7 @@ $errors = \App\Core\Session::get('_errors', []);
               <form method="post" action="<?= url('/admin/admins/delete') ?>" style="display:inline">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $admin['id'] ?>">
-                <button type="submit" class="adm-btn adm-btn--ghost">Remove</button>
+                <button type="submit" class="adm-btn adm-btn--solid" style="padding:.25rem .6rem;font-size:.75rem;color:#b4232b">Remove</button>
               </form>
             <?php endif; ?>
           </td>

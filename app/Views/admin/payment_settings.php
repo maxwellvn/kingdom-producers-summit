@@ -60,6 +60,6 @@
       <?php $text('pay_proof_email', 'Email address', 'e.g. payments@loveworldconsulate.org'); ?>
     </fieldset>
 
-    <div><button type="submit" class="adm-btn">Save payment methods</button></div>
+    <div><button type="submit" class="adm-btn adm-btn--dark">Save payment methods</button></div>
   </form>
 </section>
