@@ -22,9 +22,9 @@ final class VerifyCsrf
         }
 
         if ($request->wantsJson()) {
-            return Response::json(['ok' => false, 'message' => 'Your session expired. Please refresh and try again.'], 419);
+            return Response::json(['ok' => false, 'message' => 'Your session expired. Please refresh and try again.'], 403);
         }
 
-        return Response::html(View::render('errors/419', ['title' => 'Session expired']), 419);
+        return Response::html(View::render('errors/403', ['title' => 'Session expired']), 403);
     }
 }
