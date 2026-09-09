@@ -42,8 +42,6 @@ $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::
 $router->get('/admin', [AdminController::class, 'dashboard'], [RequireAdmin::class]);
 $router->get('/admin/registrations', [AdminController::class, 'registrations'], [RequireAdmin::class]);
 $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmin::class]);
-$router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [RequireAdmin::class]);
-$router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/confirm-payment', [AdminController::class, 'confirmPayment'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/delete', [AdminController::class, 'deleteRegistration'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);

@@ -1,7 +1,9 @@
 <?php /** @var array $summit @var array $registration @var string $type @var string $amount */
 $isEspees = $type === 'espees';
-$code = \App\Models\Setting::get('pay_espees_code');
-$note = \App\Models\Setting::get($isEspees ? 'pay_espees_note' : 'pay_bank_note');
+$code = (string) config('payments.espees.code');
+$note = (string) config($isEspees ? 'payments.espees.note' : 'payments.bank.note');
+$cell = 'padding:10px 0;border-top:1px solid rgba(0,0,0,.15);color:#756f60;text-transform:uppercase;font-size:.72rem;letter-spacing:1.5px';
+$cellR = 'padding:10px 0;border-top:1px solid rgba(0,0,0,.15);font-weight:600';
 ?>
 <section class="reg">
   <div class="container pay">
@@ -11,13 +13,23 @@ $note = \App\Models\Setting::get($isEspees ? 'pay_espees_note' : 'pay_bank_note'
 
       <?php if ($isEspees): ?>
         <p class="pay__lede">Open your Espees wallet and send <strong>&pound;<?= e($amount) ?></strong> to this Espees code:</p>
-        <p class="mono" style="font-size:1.6rem;letter-spacing:2px;color:var(--ink,#1b2242);font-weight:700"><?= e($code) ?></p>
+        <p class="mono" style="font-size:1.6rem;letter-spacing:2px;color:#1b2242;font-weight:700"><?= e($code) ?></p>
       <?php else: ?>
-        <p class="pay__lede">Transfer <strong>&pound;<?= e($amount) ?></strong> to the account below:</p>
+        <p class="pay__lede">Transfer <strong>&pound;<?= e($amount) ?></strong> to:</p>
         <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
-          <tr><td class="mono" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);color:#756f60;text-transform:uppercase;font-size:.72rem;letter-spacing:1.5px">Account name</td><td align="right" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);font-weight:600"><?= e(\App\Models\Setting::get('pay_bank_account_name')) ?></td></tr>
-          <tr><td class="mono" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);color:#756f60;text-transform:uppercase;font-size:.72rem;letter-spacing:1.5px">Account number</td><td align="right" class="mono" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);font-weight:600"><?= e(\App\Models\Setting::get('pay_bank_number')) ?></td></tr>
-          <tr><td class="mono" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);border-bottom:1px solid rgba(0,0,0,.15);color:#756f60;text-transform:uppercase;font-size:.72rem;letter-spacing:1.5px">Sort code</td><td align="right" class="mono" style="padding:10px 0;border-top:1px solid rgba(0,0,0,.15);border-bottom:1px solid rgba(0,0,0,.15);font-weight:600"><?= e(\App\Models\Setting::get('pay_bank_sort_code')) ?></td></tr>
+          <tr><td class="mono" style="<?= $cell ?>">Recipient</td><td align="right" style="<?= $cellR ?>"><?= e(config('payments.bank.account_name')) ?></td></tr>
+          <tr><td class="mono" style="<?= $cell ?>;border-bottom:1px solid rgba(0,0,0,.15)">Address</td><td align="right" style="<?= $cellR ?>;border-bottom:1px solid rgba(0,0,0,.15)"><?= e(config('payments.bank.account_address')) ?></td></tr>
+        </table>
+        <p class="pay__lede" style="margin-top:18px"><strong>Transfer from a UK bank</strong></p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
+          <tr><td class="mono" style="<?= $cell ?>">Account number</td><td align="right" class="mono" style="<?= $cellR ?>"><?= e(config('payments.bank.account_number')) ?></td></tr>
+          <tr><td class="mono" style="<?= $cell ?>;border-bottom:1px solid rgba(0,0,0,.15)">Sort code</td><td align="right" class="mono" style="<?= $cellR ?>;border-bottom:1px solid rgba(0,0,0,.15)"><?= e(config('payments.bank.sort_code')) ?></td></tr>
+        </table>
+        <p class="pay__lede" style="margin-top:18px"><strong>Transfer from outside the UK</strong></p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
+          <tr><td class="mono" style="<?= $cell ?>">IBAN</td><td align="right" class="mono" style="<?= $cellR ?>"><?= e(config('payments.bank.iban')) ?></td></tr>
+          <tr><td class="mono" style="<?= $cell ?>">BIC</td><td align="right" class="mono" style="<?= $cellR ?>"><?= e(config('payments.bank.bic')) ?></td></tr>
+          <tr><td class="mono" style="<?= $cell ?>;border-bottom:1px solid rgba(0,0,0,.15)">Intermediary BIC</td><td align="right" class="mono" style="<?= $cellR ?>;border-bottom:1px solid rgba(0,0,0,.15)"><?= e(config('payments.bank.intermediary_bic')) ?></td></tr>
         </table>
       <?php endif; ?>
 

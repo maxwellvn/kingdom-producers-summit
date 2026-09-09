@@ -34,7 +34,6 @@ $current = \App\Core\Url::currentPath();
         <a href="<?= url('/admin') ?>" class="<?= $current === '/admin' ? 'is-active' : '' ?>">Overview</a>
         <a href="<?= url('/admin/registrations') ?>" class="<?= $current === '/admin/registrations' ? 'is-active' : '' ?>">Registrations</a>
         <a href="<?= url('/admin/scanner') ?>" class="<?= $current === '/admin/scanner' ? 'is-active' : '' ?>">Access scanner</a>
-        <a href="<?= url('/admin/payments') ?>" class="<?= $current === '/admin/payments' ? 'is-active' : '' ?>">Payments</a>
         <a href="<?= url('/admin/admins') ?>" class="<?= $current === '/admin/admins' ? 'is-active' : '' ?>">Admin users</a>
         <a href="<?= url('/admin/export.csv') ?>">Export CSV</a>
         <a href="<?= url('/') ?>" target="_blank" rel="noopener">View site ↗</a>

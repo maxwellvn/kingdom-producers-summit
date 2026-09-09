@@ -9,7 +9,6 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
-use App\Models\Setting;
 use App\Services\PaymentService;
 use App\Services\PayPalClient;
 use RuntimeException;
@@ -151,8 +150,8 @@ final class PaymentController extends Controller
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
             'registration' => $registration,
-            'kingschat' => Setting::get('pay_proof_kingschat'),
-            'proofEmail' => Setting::get('pay_proof_email', (string) config('app.mail.reply_to')),
+            'kingschat' => (string) config('payments.proof.kingschat'),
+            'proofEmail' => (string) (config('payments.proof.email') ?: config('app.mail.reply_to')),
         ]);
     }
 

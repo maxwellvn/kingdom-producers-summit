@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Registration;
-use App\Models\Setting;
 use RuntimeException;
 
 final class PaymentService
@@ -19,23 +18,23 @@ final class PaymentService
             'espees' => [
                 'label' => 'Espees',
                 'blurb' => 'Pay from your Espees wallet.',
-                'available' => Setting::get('pay_espees_enabled', '1') === '1'
-                    && trim(Setting::get('pay_espees_code')) !== '',
+                'available' => (bool) config('payments.espees.enabled')
+                    && trim((string) config('payments.espees.code')) !== '',
                 'href' => 'instructions?type=espees',
             ],
             'paypal' => [
                 'label' => 'PayPal',
                 'blurb' => "Card or PayPal balance — £{$amount} GBP.",
-                'available' => Setting::get('pay_paypal_enabled', '1') === '1'
+                'available' => (bool) config('payments.paypal_enabled')
                     && self::unavailableMessage() === null,
                 'href' => null, // handled by the checkout POST
             ],
             'bank' => [
                 'label' => 'Bank transfer',
                 'blurb' => "UK bank transfer of £{$amount} with your reference.",
-                'available' => Setting::get('pay_bank_enabled', '1') === '1'
-                    && trim(Setting::get('pay_bank_account_name')) !== ''
-                    && trim(Setting::get('pay_bank_number')) !== '',
+                'available' => (bool) config('payments.bank.enabled')
+                    && trim((string) config('payments.bank.account_name')) !== ''
+                    && trim((string) config('payments.bank.account_number')) !== '',
                 'href' => 'instructions?type=bank',
             ],
         ];
