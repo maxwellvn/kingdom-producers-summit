@@ -11,12 +11,12 @@ $methodLabel = ['espees' => 'Espees', 'bank' => 'bank transfer', 'paypal' => 'Pa
 
       <div class="pay__alert" role="note">
         <strong>Send your proof of payment.</strong>
-        <span>Message it to us with your reference <strong class="mono"><?= e($registration['reference']) ?></strong>:</span>
+        <span>Message it to us with your reference <strong class="mono"><?= e($registration['reference']) ?></strong> <button type="button" class="copy-btn" data-copy="<?= e($registration['reference']) ?>">Copy</button></span>
         <?php if ($kingschat !== ''): ?>
-          <span>&bull; KingsChat: <strong><?= e($kingschat) ?></strong></span>
+          <span>&bull; KingsChat: <strong><?= e($kingschat) ?></strong> <button type="button" class="copy-btn" data-copy="<?= e($kingschat) ?>">Copy</button></span>
         <?php endif; ?>
         <?php if ($proofEmail !== ''): ?>
-          <span>&bull; Email: <a href="mailto:<?= e($proofEmail) ?>?subject=<?= rawurlencode('Proof of payment ' . $registration['reference']) ?>"><?= e($proofEmail) ?></a></span>
+          <span>&bull; Email: <a href="mailto:<?= e($proofEmail) ?>?subject=<?= rawurlencode('Proof of payment ' . $registration['reference']) ?>"><?= e($proofEmail) ?></a> <button type="button" class="copy-btn" data-copy="<?= e($proofEmail) ?>">Copy</button></span>
         <?php endif; ?>
       </div>
 
