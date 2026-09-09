@@ -27,7 +27,7 @@ return [
     ],
 
     'proof' => [
-        'kingschat' => '', // leave empty to hide the KingsChat line
+        'kingschat' => 'lwconsul_uk',
         'email'     => 'unitedkingdom@loveworldconsulate.org',
     ],
 ];
