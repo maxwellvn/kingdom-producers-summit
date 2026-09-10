@@ -34,6 +34,16 @@ final class Session
         }
 
         session_name('producers_summit_session');
+
+        // An external service returning with a cross-site POST sends no session
+        // cookie. Starting a session there would issue a new one and overwrite
+        // whatever the browser already held, signing the organiser out. Such a
+        // request gets a scratch session that is never written back.
+        if (self::isCookielessCallback()) {
+            ini_set('session.use_cookies', '0');
+            ini_set('session.use_only_cookies', '0');
+        }
+
         session_set_cookie_params([
             'lifetime' => $lifetime,
             'path'     => '/',
@@ -58,6 +68,18 @@ final class Session
         // Age flash data: anything flashed on the previous request is available now, then gone.
         $_SESSION['_flash_now'] = $_SESSION['_flash_next'] ?? [];
         $_SESSION['_flash_next'] = [];
+    }
+
+    /** A callback from an external service, arriving without our session cookie. */
+    private static function isCookielessCallback(): bool
+    {
+        if (isset($_COOKIE['producers_summit_session'])) {
+            return false;
+        }
+
+        $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+
+        return str_ends_with(rtrim($path, '/'), '/admin/kingschat/callback');
     }
 
     public static function get(string $key, mixed $default = null): mixed
