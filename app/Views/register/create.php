@@ -221,51 +221,25 @@ $stageLabels = [
           <?php if ($err = error_for('age_band')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
 
-        <div class="church-hierarchy" data-church-hierarchy data-api-base="https://churches-api.rorportal.org/api/v1">
-          <input id="zone" name="zone" type="hidden" value="<?= old('zone') ?>" data-old-value="<?= old('zone') ?>">
-
+        <div class="form__row">
           <div class="field <?= error_for('zone') ? 'has-error' : '' ?>">
-            <span class="field__label">Church structure</span>
-            <div class="chips" role="radiogroup" aria-label="Choose Zone or Campus Ministry">
-              <label class="chip"><input type="radio" name="directory_type" value="zone" required><span>Zone</span></label>
-              <label class="chip"><input type="radio" name="directory_type" value="campus" required><span>Campus Ministry</span></label>
-            </div>
+            <label for="zone">Zone or Campus Ministry</label>
+            <input id="zone" name="zone" type="text" maxlength="120" required
+                   placeholder="e.g. UK Zone 1" value="<?= old('zone') ?>">
             <?php if ($err = error_for('zone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
-
-          <div class="field directory-choice" data-directory-choice="zone" hidden>
-            <label for="zone_directory">Zone</label>
-            <select id="zone_directory" disabled>
-              <option value="">Loading zones…</option>
-            </select>
-          </div>
-
-          <div class="field directory-choice" data-directory-choice="campus" hidden>
-            <label for="campus_directory">Campus Ministry</label>
-            <select id="campus_directory" disabled>
-              <option value="">Loading campus ministries…</option>
-            </select>
-          </div>
-
-          <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>" data-church-step="group" hidden>
+          <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>">
             <label for="group_name">Group</label>
-            <select id="group_name" name="group_name" required data-old-value="<?= old('group_name') ?>">
-              <option value="">Choose your zone first</option>
-            </select>
+            <input id="group_name" name="group_name" type="text" maxlength="120" required
+                   placeholder="e.g. Rainham Group" value="<?= old('group_name') ?>">
             <?php if ($err = error_for('group_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
-
-          <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>" data-church-step="church" hidden>
+          <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>">
             <label for="church_name">Church</label>
             <input id="church_name" name="church_name" type="text" maxlength="160" required
-                   placeholder="Type your church name" value="<?= old('church_name') ?>"
-                   list="church_options" autocomplete="off">
-            <datalist id="church_options"></datalist>
-            <p class="field__hint">Start typing to pick from the churches in your group, or type it in full.</p>
+                   placeholder="e.g. CE Rainham" value="<?= old('church_name') ?>">
             <?php if ($err = error_for('church_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
-
-          <p class="field__hint church-hierarchy__status" data-church-status aria-live="polite">Loading the Loveworld church directory…</p>
         </div>
 
         <div class="form__row">

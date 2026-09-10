@@ -659,6 +659,8 @@ body.menu-open { overflow: hidden; }
 .form__fine { color: var(--muted-2); }
 
 .field { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.4rem; min-width: 0; }
+/* An author display rule beats the hidden attribute, so state it once for everything. */
+[hidden] { display: none !important; }
 .form__row .field { margin-bottom: 0; }
 .form__row { margin-bottom: 1.4rem; }
 .field label, .field__label { font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
@@ -752,10 +754,6 @@ body.menu-open { overflow: hidden; }
 .initiative-enrolment h2 { margin: 0 0 1rem; color: var(--paper); font-size: var(--fs-h3); }
 .initiative-enrolment h3 { margin: 1.6rem 0 .6rem; color: var(--paper); font-size: 1rem; text-transform: uppercase; }
 .initiative-enrolment p { color: rgba(243,238,226,.88); }
-.church-hierarchy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.2rem; margin-bottom: 1.4rem; }
-.church-hierarchy > .field:first-of-type, .church-hierarchy__status { grid-column: 1 / -1; }
-.church-hierarchy__status { margin: -.7rem 0 1.2rem; }
-.directory-choice[hidden] { display: none; }
 
 /* onsite payment note + resume-payment page */
 .pay-note { display: flex; gap: 1.2rem; align-items: flex-start; padding: 1.2rem 1.3rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); }
@@ -938,8 +936,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .form__row { margin-bottom: 0; }
   .field--sm { max-width: none; }
   .stages, .confirmed__facts { grid-template-columns: 1fr; }
-  .church-hierarchy { grid-template-columns: 1fr; }
-  .church-hierarchy > .field, .church-hierarchy__status { grid-column: 1; }
   .process__steps, .pillars__grid { grid-template-columns: 1fr; }
   .step { min-height: 0; padding: 1.5rem 0; }
   .step + .step { border-left: 0; border-top: 1px solid var(--paper-line); }
