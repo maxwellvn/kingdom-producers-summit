@@ -19,17 +19,6 @@ final class RegistrationMail
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
 
-        $proof = [];
-        $kingschat = trim((string) config('payments.proof.kingschat'));
-        $proofEmail = trim((string) (config('payments.proof.email') ?: config('app.mail.reply_to')));
-        if ($kingschat !== '') {
-            $proof[] = 'KingsChat: ' . htmlspecialchars($kingschat, ENT_QUOTES, 'UTF-8');
-        }
-        if ($proofEmail !== '') {
-            $proof[] = 'Email: ' . htmlspecialchars($proofEmail, ENT_QUOTES, 'UTF-8');
-        }
-        $proofLine = $proof === [] ? '' : '<p style="margin:18px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Send your proof of payment, quoting reference <strong>' . $reference . '</strong>:<br>' . implode('<br>', $proof) . '</p>';
-
         $subject = 'Payment received — awaiting confirmation (' . (string) $registration['reference'] . ')';
         $html = '<!doctype html><html><head><meta charset="utf-8">'
             . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
@@ -46,8 +35,7 @@ final class RegistrationMail
             . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your registration is confirmed and your ' . $amount . ' Espees ' . htmlspecialchars($methodLabel, ENT_QUOTES, 'UTF-8') . ' payment has been logged. We are verifying it now.</p></td></tr>'
             . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
             . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
-            . '<p style="margin:0 0 18px;color:#6e6857;font-size:15px;line-height:1.6">Your QR access pass is emailed to you the moment your payment is confirmed — keep this reference safe in the meantime.</p>'
-            . $proofLine
+            . '<p style="margin:0 0 18px;color:#6e6857;font-size:15px;line-height:1.6">We verify every payment against our own records, so there is nothing for you to send us. Your QR access pass is emailed to you the moment your payment is confirmed — keep this reference safe in the meantime.</p>'
             . '</td></tr>'
             . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '<br><br>'
             . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
@@ -55,9 +43,8 @@ final class RegistrationMail
 
         $text = "Payment received, {$registration['first_name']}.\n\n"
             . "Your registration is confirmed and your {$amount} Espees {$methodLabel} payment has been logged for reference {$registration['reference']}.\n\n"
+            . "We verify every payment against our own records, so there is nothing for you to send us.\n"
             . "Your QR access pass is emailed to you the moment your payment is confirmed.\n"
-            . ($kingschat !== '' ? "Send proof of payment via KingsChat: {$kingschat}\n" : '')
-            . ($proofEmail !== '' ? "Or by email: {$proofEmail}\n" : '')
             . "\nThe Loveworld Consulate, United Kingdom";
 
         (new Mailer())->send((string) $registration['email'], $subject, $html, $text, [

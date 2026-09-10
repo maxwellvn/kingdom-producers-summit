@@ -18,6 +18,7 @@ return [
         'note'    => '',
     ],
 
+    // Contact details for enquiries. Delegates are never asked to send proof; organisers verify payments themselves.
     'proof' => [
         'kingschat' => 'lwconsul_uk',
         'email'     => 'unitedkingdom@loveworldconsulate.org',

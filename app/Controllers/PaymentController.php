@@ -115,7 +115,7 @@ final class PaymentController extends Controller
         return $this->redirect('/register/awaiting?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
     }
 
-    /** Claim received — payment pending organiser confirmation, proof requested. */
+    /** Claim received — payment pending organiser confirmation. Organisers verify it themselves. */
     public function awaiting(Request $request): Response
     {
         $registration = $this->sessionRegistration(false, $request);
@@ -136,8 +136,6 @@ final class PaymentController extends Controller
             'noIndex'   => true,
             'summit'    => config('app.summit'),
             'registration' => $registration,
-            'kingschat' => (string) config('payments.proof.kingschat'),
-            'proofEmail' => (string) (config('payments.proof.email') ?: config('app.mail.reply_to')),
         ]);
     }
 

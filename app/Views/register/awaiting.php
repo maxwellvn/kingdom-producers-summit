@@ -1,12 +1,7 @@
-<?php /** @var array $summit @var array $registration @var string $kingschat @var string $proofEmail */
+<?php /** @var array $summit @var array $registration */
 $methodLabel = ['espees' => 'Espees', 'revolut' => 'Revolut'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
 $amount = espees_price(price_pence((string) $registration['participation']));
 $reference = (string) $registration['reference'];
-$proofRows = array_filter([
-    ['Your reference', $reference, null],
-    $kingschat !== '' ? ['KingsChat', $kingschat, null] : null,
-    $proofEmail !== '' ? ['Email', $proofEmail, 'mailto:' . $proofEmail . '?subject=' . rawurlencode('Proof of payment ' . $reference)] : null,
-]);
 ?>
 <section class="reg">
   <div class="container pay">
@@ -14,26 +9,20 @@ $proofRows = array_filter([
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment received — pending confirmation</p>
       <h1 class="pay__title">Thank you — nearly there</h1>
 
-      <p class="pay__lede">We've logged your <?= e($amount) ?> <strong><?= e($methodLabel) ?></strong> payment. Our team is confirming it now.</p>
+      <p class="pay__lede">We've logged your <?= e($amount) ?> <strong><?= e($methodLabel) ?></strong> payment. Our team checks it against our records and confirms it from our end. There is nothing further for you to send.</p>
 
       <section class="proof" aria-labelledby="proofTitle">
-        <h2 class="proof__title" id="proofTitle">Send us your proof of payment</h2>
-        <p class="proof__lede">Send a screenshot or receipt to either address below, quoting your reference.</p>
+        <h2 class="proof__title" id="proofTitle">Your reference</h2>
+        <p class="proof__lede">Quote this if you ever need to contact us about your registration.</p>
 
         <dl class="proof__rows">
-          <?php foreach ($proofRows as [$label, $value, $href]): ?>
-            <div class="proof__row">
-              <dt class="mono"><?= e($label) ?></dt>
-              <dd>
-                <?php if ($href !== null): ?>
-                  <a class="proof__value" href="<?= e($href) ?>"><?= e($value) ?></a>
-                <?php else: ?>
-                  <span class="proof__value mono"><?= e($value) ?></span>
-                <?php endif; ?>
-                <button type="button" class="copy-btn" data-copy="<?= e($value) ?>">Copy</button>
-              </dd>
-            </div>
-          <?php endforeach; ?>
+          <div class="proof__row">
+            <dt class="mono">Reference</dt>
+            <dd>
+              <span class="proof__value mono"><?= e($reference) ?></span>
+              <button type="button" class="copy-btn" data-copy="<?= e($reference) ?>">Copy</button>
+            </dd>
+          </div>
         </dl>
       </section>
 

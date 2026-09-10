@@ -82,9 +82,10 @@ $row = static function (string $label, string $value): void {
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
-      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Proof of payment — shown after a claim</legend>
+      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Contact — for enquiries only</legend>
       <?php $row('KingsChat', trim((string) config('payments.proof.kingschat')) !== '' ? config('payments.proof.kingschat') : 'Not set'); ?>
       <?php $row('Email', trim((string) config('payments.proof.email')) !== '' ? config('payments.proof.email') : (string) config('app.mail.reply_to')); ?>
+      <p class="mono" style="margin:.8rem 0 0;font-size:.75rem;opacity:.7">Delegates are never asked to send proof of payment. Confirm each claim yourself under Registrations.</p>
     </fieldset>
 
     <div><button type="submit" class="adm-btn adm-btn--dark">Save switches</button></div>
