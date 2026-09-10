@@ -269,6 +269,16 @@ final class AdminController extends Controller
     /** KingsChat: connection status, and the controls to change it. */
     public function kingschat(Request $request): Response
     {
+        $handoff = $request->str('handoff');
+        if ($handoff !== '') {
+            $claimed = KingsChatClient::claimHandoff($handoff);
+            Session::flash('admin_flash', $claimed
+                ? 'KingsChat is connected.'
+                : 'That authorisation link had already been used or had expired. Try connecting again.');
+
+            return $this->redirect('/admin/kingschat');
+        }
+
         return $this->view('admin/kingschat', [
             'title'      => 'KingsChat',
             'configured' => KingsChatClient::isConfigured(),
@@ -284,13 +294,29 @@ final class AdminController extends Controller
 
     /**
      * Where KingsChat sends the organiser back after they grant access.
-     * The tokens arrive in the URL fragment, so a small page posts them here.
+     * It arrives as a cross-site POST, so no session cookie comes with it and
+     * this route cannot require a signed-in admin. The tokens are parked and
+     * collected on the redirect that follows, which is same-site and does.
      */
-    public function kingschatCallback(Request $request): Response
+    public function kingschatReturn(Request $request): Response
     {
-        $accessToken = $request->str('access_token');
-        $refreshToken = $request->str('refresh_token');
+        // KingsChat uses camelCase; the snake_case names cover the other flow.
+        $accessToken = $request->str('accessToken') ?: $request->str('access_token');
+        $refreshToken = $request->str('refreshToken') ?: $request->str('refresh_token');
+        $expiresInMillis = (int) ($request->input('expiresInMillis') ?? $request->input('expires_in_millis') ?? 0);
 
+        // Some flows deliver the tokens as a JSON body instead of form fields.
+        if ($accessToken === '') {
+            $body = json_decode((string) file_get_contents('php://input'), true);
+            if (is_array($body)) {
+                $accessToken = (string) ($body['accessToken'] ?? $body['access_token'] ?? '');
+                $refreshToken = (string) ($body['refreshToken'] ?? $body['refresh_token'] ?? '');
+                $expiresInMillis = (int) ($body['expiresInMillis'] ?? $body['expires_in_millis'] ?? 0);
+            }
+        }
+
+        // Nothing usable yet: the tokens may be in the URL fragment, which only
+        // the browser can read, so hand over to a page that forwards them.
         if ($accessToken === '') {
             return $this->view('admin/kingschat_callback', [
                 'title'  => 'Connecting KingsChat',
@@ -298,13 +324,10 @@ final class AdminController extends Controller
             ], 'layouts/admin');
         }
 
-        $expiresInMillis = (int) ($request->input('expires_in_millis') ?? 0);
         $seconds = $expiresInMillis > 0 ? (int) floor($expiresInMillis / 1000) : 3600;
-        KingsChatClient::storeTokens($accessToken, $refreshToken, $seconds);
+        $handoff = KingsChatClient::parkHandoff($accessToken, $refreshToken, $seconds);
 
-        Session::flash('admin_flash', 'KingsChat is connected.');
-
-        return $this->redirect('/admin/kingschat');
+        return $this->redirect('/admin/kingschat?handoff=' . $handoff);
     }
 
     public function kingschatDisconnect(Request $request): Response

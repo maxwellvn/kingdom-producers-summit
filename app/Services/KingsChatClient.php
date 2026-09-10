@@ -72,6 +72,53 @@ final class KingsChatClient
         }
     }
 
+    /**
+     * KingsChat returns to the site with a cross-site POST, which carries no
+     * session cookie, so the admin session is not available at that moment.
+     * The tokens are parked here under a one-time key and collected by the
+     * signed-in organiser on the next, same-site request.
+     */
+    public static function parkHandoff(string $accessToken, string $refreshToken, int $expiresInSeconds): string
+    {
+        $key = bin2hex(random_bytes(16));
+        Setting::set('kingschat_handoff_' . $key, json_encode([
+            'access_token'  => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in'    => $expiresInSeconds,
+            'created_at'    => time(),
+        ], JSON_THROW_ON_ERROR));
+
+        return $key;
+    }
+
+    /** Collect a parked authorisation. Single use, and expires in five minutes. */
+    public static function claimHandoff(string $key): bool
+    {
+        if (!preg_match('/^[a-f0-9]{32}$/', $key)) {
+            return false;
+        }
+
+        $settingKey = 'kingschat_handoff_' . $key;
+        $raw = Setting::get($settingKey, '');
+        Setting::set($settingKey, '');
+
+        $parked = json_decode($raw, true);
+        if (!is_array($parked) || empty($parked['access_token'])) {
+            return false;
+        }
+        if (time() - (int) ($parked['created_at'] ?? 0) > 300) {
+            return false;
+        }
+
+        self::storeTokens(
+            (string) $parked['access_token'],
+            (string) ($parked['refresh_token'] ?? ''),
+            (int) ($parked['expires_in'] ?? 3600)
+        );
+
+        return true;
+    }
+
     /** A usable access token, refreshed when the stored one is spent. */
     public function accessToken(): ?string
     {

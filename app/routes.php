@@ -46,7 +46,11 @@ $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/kingschat', [AdminController::class, 'kingschat'], [RequireAdmin::class]);
-$router->get('/admin/kingschat/callback', [AdminController::class, 'kingschatCallback'], [RequireAdmin::class]);
+// KingsChat returns here as a cross-site POST, so no session or CSRF token
+// arrives with it. The tokens are parked and claimed by the signed-in admin
+// on the same-site redirect that follows.
+$router->get('/admin/kingschat/callback', [AdminController::class, 'kingschatReturn']);
+$router->post('/admin/kingschat/callback', [AdminController::class, 'kingschatReturn']);
 $router->post('/admin/kingschat/disconnect', [AdminController::class, 'kingschatDisconnect'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/kingschat/test', [AdminController::class, 'kingschatTest'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/export.csv', [AdminController::class, 'exportCsv'], [RequireAdmin::class]);
