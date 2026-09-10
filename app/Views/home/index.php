@@ -148,10 +148,8 @@
         <div class="path__copy">
           <p>A livestream of the main sessions only. You can follow the day from anywhere, but you take no part in the room. Choose this if you cannot travel to Rainham.</p>
           <ul class="path__list path__list--no">
-            <li>Sessions that are not livestreamed</li>
             <li>1-to-1 facilitator engagement</li>
             <li>Working rooms and feedback on your suggestions</li>
-            <li>Networking and product-showcase participation</li>
           </ul>
         </div>
         <a href="<?= url('/register') ?>?mode=online" class="path__cta path__cta--online">Register to attend online <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
