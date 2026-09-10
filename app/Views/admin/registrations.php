@@ -27,6 +27,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
   <?php if (!$result['rows']): ?>
     <p class="adm-empty mono">Nothing matches.</p>
   <?php else: ?>
+    <div class="adm-table-wrap">
     <table class="adm-table">
       <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Payment</th><th>Attendance</th><th>Registered</th></tr></thead>
       <tbody>
@@ -62,6 +63,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
 
     <?php if ($result['pages'] > 1): ?>
       <nav class="adm-pager mono" aria-label="Pagination">

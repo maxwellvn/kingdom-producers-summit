@@ -58,6 +58,7 @@ $max = max(1, ...array_column($stages, 'count'));
       <?php if (!$recent): ?>
         <p class="adm-empty mono">No registrations yet.</p>
       <?php else: ?>
+        <div class="adm-table-wrap">
         <table class="adm-table">
           <thead><tr><th>Reference</th><th>Name</th><th>Path</th><th>Field</th><th>Country</th><th>When</th></tr></thead>
           <tbody>
@@ -73,6 +74,7 @@ $max = max(1, ...array_column($stages, 'count'));
             <?php endforeach; ?>
           </tbody>
         </table>
+        </div>
       <?php endif; ?>
     </section>
   </div>
