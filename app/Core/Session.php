@@ -43,12 +43,15 @@ final class Session
         ]);
         session_start();
 
-        // Rotate the session id periodically to limit fixation windows.
+        // Rotate the session id periodically to limit fixation windows. The old
+        // file is left for the garbage collector rather than deleted outright,
+        // so a request already in flight with the previous id is not thrown out
+        // mid-payment.
         $now = time();
         if (!isset($_SESSION['_rotated_at'])) {
             $_SESSION['_rotated_at'] = $now;
         } elseif ($now - $_SESSION['_rotated_at'] > 1800) {
-            session_regenerate_id(true);
+            session_regenerate_id(false);
             $_SESSION['_rotated_at'] = $now;
         }
 

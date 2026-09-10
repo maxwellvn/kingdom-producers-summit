@@ -17,7 +17,7 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
 
       <div class="pay__methods">
         <?php foreach ($methods as $id => $method): ?>
-          <a class="pay__method" href="<?= url('/register/instructions?type=' . $method['href']) ?>">
+          <a class="pay__method" href="<?= url('/register/instructions?type=' . $method['href'] . '&resume=' . rawurlencode($resume)) ?>">
             <div>
               <strong><?= e($method['label']) ?></strong>
               <span class="pay__method-blurb"><?= e($method['blurb']) ?></span>

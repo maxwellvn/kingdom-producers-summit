@@ -46,11 +46,11 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
 
       <p class="pay__lede" style="margin-top:18px"><strong>Already sent it?</strong></p>
 
-      <a class="btn btn--stamp btn--lg" style="display:inline-block;margin-top:6px" href="<?= url('/register/claim?type=' . $type) ?>">
+      <a class="btn btn--stamp btn--lg" style="display:inline-block;margin-top:6px" href="<?= url('/register/claim?type=' . $type . '&resume=' . rawurlencode($resume)) ?>">
         <span class="btn__label">I have paid</span>
       </a>
 
-      <p class="form__fine mono"><a href="<?= url('/register/method') ?>">Choose a different payment method</a></p>
+      <p class="form__fine mono"><a href="<?= url('/register/method?resume=' . rawurlencode($resume)) ?>">Choose a different payment method</a></p>
     </div>
   </div>
 </section>

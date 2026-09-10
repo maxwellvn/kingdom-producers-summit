@@ -103,6 +103,38 @@ final class PaymentService
         return true;
     }
 
+    /**
+     * A signed link back into the payment flow, so someone who leaves to pay
+     * and returns is not stopped by a lost session.
+     */
+    public static function resumeToken(string $reference): string
+    {
+        $reference = strtoupper(trim($reference));
+
+        return $reference . '.' . self::resumeSignature($reference);
+    }
+
+    public static function referenceFromResumeToken(string $token): ?string
+    {
+        if (!preg_match('/^(KPS26-[A-HJ-NP-Z2-9]{6})\.([a-f0-9]{32})$/i', trim($token), $matches)) {
+            return null;
+        }
+
+        $reference = strtoupper($matches[1]);
+
+        return hash_equals(self::resumeSignature($reference), strtolower($matches[2])) ? $reference : null;
+    }
+
+    private static function resumeSignature(string $reference): string
+    {
+        $key = (string) config('app.key');
+        if (strlen($key) < 32) {
+            throw new \RuntimeException('APP_KEY must be at least 32 characters to sign payment links.');
+        }
+
+        return substr(hash_hmac('sha256', 'KPSPAY1|' . $reference, $key), 0, 32);
+    }
+
     /** Find a pending unpaid registration by reference + email (resume payment). */
     public function findPayable(string $reference, string $email): ?array
     {

@@ -18,7 +18,7 @@ final class PaymentController extends Controller
     /** Method choice after registering, or after resuming payment. */
     public function methodPage(Request $request): Response
     {
-        $registration = $this->sessionRegistration(false);
+        $registration = $this->sessionRegistration(false, $request);
         if ($registration === null) {
             return $this->redirect('/register/pay?expired=1');
         }
@@ -27,6 +27,7 @@ final class PaymentController extends Controller
         }
 
         return $this->view('register/method', [
+            'resume'    => PaymentService::resumeToken((string) $registration['reference']),
             'title'     => 'Choose payment — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
@@ -40,7 +41,7 @@ final class PaymentController extends Controller
     public function instructions(Request $request): Response
     {
         $type = $request->str('type');
-        $registration = $this->sessionRegistration(true);
+        $registration = $this->sessionRegistration(true, $request);
         if ($registration === null) {
             return $this->redirect('/register/pay?expired=1');
         }
@@ -50,6 +51,7 @@ final class PaymentController extends Controller
         }
 
         return $this->view('register/instructions', [
+            'resume'    => PaymentService::resumeToken((string) $registration['reference']),
             'title'     => 'Payment details — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
@@ -63,7 +65,7 @@ final class PaymentController extends Controller
     public function claimForm(Request $request): Response
     {
         $type = $request->str('type');
-        $registration = $this->sessionRegistration(true);
+        $registration = $this->sessionRegistration(true, $request);
         if ($registration === null) {
             return $this->redirect('/register/pay?expired=1');
         }
@@ -73,6 +75,7 @@ final class PaymentController extends Controller
         }
 
         return $this->view('register/claim', [
+            'resume'    => PaymentService::resumeToken((string) $registration['reference']),
             'title'     => 'Confirm payment — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
@@ -86,7 +89,7 @@ final class PaymentController extends Controller
     public function claim(Request $request): Response
     {
         $type = $request->str('type');
-        $registration = $this->sessionRegistration(true);
+        $registration = $this->sessionRegistration(true, $request);
 
         if ($registration === null || !in_array($type, ['espees', 'revolut'], true)
             || !Registration::claimPayment((string) $registration['reference'], $type)) {
@@ -99,18 +102,19 @@ final class PaymentController extends Controller
             error_log('Payment claim email could not be sent: ' . $e->getMessage());
         }
 
-        return $this->redirect('/register/awaiting');
+        return $this->redirect('/register/awaiting?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
     }
 
     /** Claim received — payment pending organiser confirmation, proof requested. */
     public function awaiting(Request $request): Response
     {
-        $registration = $this->sessionRegistration(false);
+        $registration = $this->sessionRegistration(false, $request);
         if ($registration === null) {
             return $this->redirect('/register/pay?expired=1');
         }
 
         return $this->view('register/awaiting', [
+            'resume'    => PaymentService::resumeToken((string) $registration['reference']),
             'title'     => 'Payment awaiting confirmation — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
@@ -124,7 +128,7 @@ final class PaymentController extends Controller
     public function payForm(Request $request): Response
     {
         // Someone who already claimed should see their status, not a payment form.
-        $claimed = $this->sessionRegistration(false);
+        $claimed = $this->sessionRegistration(false, $request);
         if ($claimed !== null && $claimed['payment_status'] === 'claimed') {
             return $this->redirect('/register/awaiting');
         }
@@ -198,9 +202,19 @@ final class PaymentController extends Controller
     }
 
     /** A pending paid registration held by the current session. */
-    private function sessionRegistration(bool $unpaidOnly = true): ?array
+    private function sessionRegistration(bool $unpaidOnly = true, ?Request $request = null): ?array
     {
         $reference = Session::get('last_registration');
+
+        // Someone who left the site to pay may come back without their session.
+        // A signed resume link identifies them without asking for anything.
+        if ((!is_string($reference) || $reference === '') && $request !== null) {
+            $reference = PaymentService::referenceFromResumeToken($request->str('resume'));
+            if ($reference !== null) {
+                Session::put('last_registration', $reference);
+            }
+        }
+
         if (!is_string($reference) || $reference === '') {
             return null;
         }
@@ -225,5 +239,4 @@ final class PaymentController extends Controller
         }
         return $this->sessionRegistration(true);
     }
-
 }

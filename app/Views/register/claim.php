@@ -17,12 +17,13 @@ $label = $type === 'espees' ? 'Espees' : 'Revolut';
       <form method="post" action="<?= url('/register/claim') ?>">
         <?= csrf_field() ?>
         <input type="hidden" name="type" value="<?= e($type) ?>">
+        <input type="hidden" name="resume" value="<?= e($resume) ?>">
         <button type="submit" class="btn btn--stamp btn--lg">
           <span class="btn__label">Confirm — I have paid <?= e($amount) ?> Espees</span>
         </button>
       </form>
 
-      <p class="form__fine mono">Only confirm once the money has actually left your account. <a href="<?= url('/register/instructions?type=' . $type) ?>">Back to payment details</a></p>
+      <p class="form__fine mono">Only confirm once the money has actually left your account. <a href="<?= url('/register/instructions?type=' . $type . '&resume=' . rawurlencode($resume)) ?>">Back to payment details</a></p>
     </div>
   </div>
 </section>
