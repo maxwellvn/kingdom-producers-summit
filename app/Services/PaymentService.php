@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Models\Registration;
 use App\Models\Setting;
-use RuntimeException;
 
 final class PaymentService
 {
@@ -74,56 +73,6 @@ final class PaymentService
         }
 
         return null;
-    }
-
-    /**
-     * Create a PayPal order for an onsite registration, persist the order id,
-     * and return the approval link to redirect the payer to.
-     */
-    public function startCheckout(array $registration): string
-    {
-        if (self::unavailableMessage() !== null) {
-            throw new RuntimeException('Payments are disabled or PayPal credentials are not configured.');
-        }
-
-        $reference = (string) $registration['reference'];
-        $base = rtrim((string) config('app.url'), '/');
-        if ($base === '') {
-            $base = (string) \App\Core\Url::base();
-        }
-
-        $participation = (string) $registration['participation'];
-        $description = $participation === 'onsite'
-            ? 'Kingdom Producers Summit — onsite place (Essex Edition 2026)'
-            : 'Kingdom Producers Summit — online place (Essex Edition 2026)';
-
-        $order = (new PayPalClient())->createOrder([
-            'intent' => 'CAPTURE',
-            'purchase_units' => [[
-                'custom_id'   => $reference,
-                'description' => $description,
-                'amount'      => [
-                    'currency_code' => (string) config('paypal.currency'),
-                    'value'         => number_format(price_pence($participation) / 100, 2, '.', ''),
-                ],
-            ]],
-            'application_context' => [
-                'brand_name' => 'Kingdom Producers Summit',
-                'user_action' => 'PAY_NOW',
-                'return_url' => $base . '/register/paid',
-                'cancel_url' => $base . '/register/pay?ref=' . rawurlencode($reference) . '&cancelled=1',
-            ],
-        ]);
-
-        Registration::setPaymentSession($reference, (string) $order['id']);
-
-        foreach ($order['links'] ?? [] as $link) {
-            if (($link['rel'] ?? '') === 'approve') {
-                return (string) $link['href'];
-            }
-        }
-
-        throw new RuntimeException('PayPal order created without an approval link.');
     }
 
     /**

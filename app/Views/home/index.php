@@ -150,7 +150,7 @@
           <ul class="path__list path__list--no">
             <li>Sessions that are not livestreamed</li>
             <li>1-to-1 facilitator engagement</li>
-            <li>Working rooms and feedback on your idea</li>
+            <li>Working rooms and feedback on your suggestions</li>
             <li>Networking and product-showcase participation</li>
           </ul>
         </div>

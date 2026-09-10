@@ -138,7 +138,7 @@
 
 /* login */
 .adm-login { min-height: 100svh; display: grid; place-items: center; padding: 2rem; }
-.adm-login__card { position: relative; width: min(100%, 440px); padding: 2.6rem 2.2rem 2.2rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); box-shadow: 0 40px 80px -50px rgba(32,30,26,.7); }
+.adm-login__card { position: relative; width: min(100%, 440px); min-width: 0; padding: 2.6rem 2.2rem 2.2rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); box-shadow: 0 40px 80px -50px rgba(32,30,26,.7); }
 .adm-login__tape { left: 50%; top: -12px; margin-left: -60px; }
 .adm-login__title { font-size: 2.2rem; margin-bottom: 1.8rem; }
 .adm-login__fine { color: var(--muted-2); text-transform: none; letter-spacing: 0; margin-top: 1.4rem; }
@@ -161,6 +161,9 @@
 }
 
 @media (max-width: 640px) {
+  /* The sign-in card was wider than the screen once its padding was added. */
+  .adm-login { padding: 1.25rem; }
+  .adm-login__card { min-width: 0; padding: 2rem 1.25rem 1.5rem; }
   .adm-stats { grid-template-columns: 1fr; }
   .adm-scan__reader { min-height: 20rem; }
   .adm-scan__camera-head { flex-direction: column; }

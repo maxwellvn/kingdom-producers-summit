@@ -396,8 +396,14 @@ $stageLabels = [
             <div class="form__conditional" data-only="<?= $paidPath ?>">
               <div class="pay-note">
                 <span class="pay-note__stamp mono">Secure payment</span>
-                <p class="pay-note__amount">You pay <strong><?= e(espees_price(price_pence($paidPath))) ?></strong> for your <?= $paidPath === 'onsite' ? 'onsite' : 'online' ?> place.</p>
-                <p>The full price is <?= e(espees_price(standard_price_pence($paidPath))) ?>. This is the inaugural edition, so the price is reduced. On the next page you choose how to pay. Your place is held once payment is confirmed.</p>
+                <div class="pay-note__body">
+                  <p class="pay-note__amount">
+                    <span class="pay-note__due mono">You pay</span>
+                    <strong><?= e(espees_price(price_pence($paidPath))) ?></strong>
+                    <span class="pay-note__for">for your <?= $paidPath === 'onsite' ? 'onsite' : 'online' ?> place</span>
+                  </p>
+                  <p>Full price <?= e(espees_price(standard_price_pence($paidPath))) ?>, reduced for the inaugural edition. You choose how to pay on the next page, and your place is held once payment is confirmed.</p>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>

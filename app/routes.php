@@ -20,7 +20,6 @@ $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
 $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']);
 $router->get('/access/qr', [RegistrationController::class, 'qr']);
-$router->get('/register/paid', [PaymentController::class, 'paid']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
 $router->get('/register/method', [PaymentController::class, 'methodPage']);
@@ -28,10 +27,6 @@ $router->get('/register/instructions', [PaymentController::class, 'instructions'
 $router->get('/register/claim', [PaymentController::class, 'claimForm']);
 $router->post('/register/claim', [PaymentController::class, 'claim'], [VerifyCsrf::class]);
 $router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
-$router->post('/register/pay/checkout', [PaymentController::class, 'checkout'], [VerifyCsrf::class]);
-
-// PayPal webhook: verified against PayPal's signature API, no session/CSRF.
-$router->post('/paypal/webhook', [PaymentController::class, 'webhook']);
 
 // Cookie consent log: anonymous audit row only, no session/CSRF.
 $router->post('/api/consent', [ConsentController::class, 'store']);
