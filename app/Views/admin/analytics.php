@@ -62,6 +62,10 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
         </div>
       <?php endforeach; ?>
     </div>
+    <p class="adm-chart__axis mono">
+      <span><?= e(date('j M', strtotime($daily[0]['day'] ?? 'now'))) ?></span>
+      <span><?= e(date('j M', strtotime($daily[count($daily) - 1]['day'] ?? 'now'))) ?></span>
+    </p>
     <p class="adm-muted mono adm-chart__key">
       <span class="adm-chart__swatch"></span> views
       <span class="adm-chart__swatch adm-chart__swatch--visitors"></span> unique visitors
@@ -85,11 +89,12 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
           <p class="adm-empty mono">Nothing yet.</p>
         <?php else: ?>
           <ul class="adm-rank">
+            <?php $top = max(1, max(array_column($rows, 'count'))); ?>
             <?php foreach ($rows as $row): ?>
               <li class="adm-rank__row">
-                <span class="adm-rank__fill" style="width: <?= (int) round($row['count'] / $total * 100) ?>%"></span>
-                <span class="adm-rank__label"><?= e($row['label']) ?></span>
-                <span class="adm-rank__count mono"><?= number_format($row['count']) ?></span>
+                <span class="adm-rank__label" title="<?= e($row['label']) ?>"><?= e($row['label']) ?></span>
+                <span class="adm-rank__count mono"><?= number_format($row['count']) ?><span class="adm-rank__share"> · <?= (int) round($row['count'] / $total * 100) ?>%</span></span>
+                <span class="adm-rank__track"><span class="adm-rank__fill" style="width: <?= max(3, (int) round($row['count'] / $top * 100)) ?>%"></span></span>
               </li>
             <?php endforeach; ?>
           </ul>
