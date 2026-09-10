@@ -138,8 +138,9 @@ final class PaymentService
     }
 
     /** Find a pending unpaid registration by reference + email (resume payment). */
-    public function findPayable(string $reference, string $email): ?array
+    /** The unpaid registration behind an email address or KingsChat handle. */
+    public function findPayable(string $identifier): ?array
     {
-        return Registration::findPayable($reference, mb_strtolower(trim($email)));
+        return Registration::findPayableByIdentifier($identifier);
     }
 }

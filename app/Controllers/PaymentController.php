@@ -163,7 +163,7 @@ final class PaymentController extends Controller
             'noIndex'   => true,
             'summit'    => config('app.summit'),
             'reference' => $saved['reference'] ?? $request->str('ref'),
-            'email' => $saved['email'] ?? '',
+            'identifier' => $saved['email'] ?? '',
             'savedRegistration' => $saved !== null,
             'cancelled' => $request->str('cancelled') === '1',
             'expired'   => $request->str('expired') === '1',
@@ -171,38 +171,33 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /** Match a reference + email, then hand the registrant to the method choice. */
+    /** Identify the registrant by email or KingsChat handle, then hand them to the method choice. */
     public function payResume(Request $request): Response
     {
-        $reference = strtoupper($request->str('reference'));
-        // Accept harmless spacing, but never silently replace an incorrect prefix.
-        $reference = preg_replace('/\s+/', '', $reference) ?? '';
-        $email = mb_strtolower($request->str('email'));
+        $identifier = trim($request->str('identifier'));
 
-        $saved = $this->savedRegistration($reference);
+        // A resumed session already knows who this is; nothing needs typing.
+        $saved = $this->savedRegistration($request->str('reference'));
         if ($saved !== null) {
-            $reference = (string) $saved['reference'];
-            $email = (string) $saved['email'];
+            $identifier = (string) $saved['email'];
         }
 
-        $registration = $reference !== '' && $email !== ''
-            ? (new PaymentService())->findPayable($reference, $email)
-            : null;
+        $registration = $identifier !== '' ? (new PaymentService())->findPayable($identifier) : null;
 
         if ($registration === null) {
+            $known = $identifier !== '' ? Registration::findByIdentifier($identifier) : null;
+
             // Already-claimed registrations resume at the awaiting page, not the pay form.
-            $claimed = $reference !== '' ? Registration::findByReference($reference) : null;
-            if ($claimed !== null && mb_strtolower((string) $claimed['email']) === $email
-                && $claimed['payment_status'] === 'claimed') {
-                Session::put('last_registration', (string) $claimed['reference']);
+            if ($known !== null && $known['payment_status'] === 'claimed') {
+                Session::put('last_registration', (string) $known['reference']);
                 return $this->redirect('/register/awaiting');
             }
 
-            return $this->view('register/pay', $this->payViewData(
-                $request->str('reference'),
-                'No unpaid onsite registration matches that reference and email. Check your original registration details. If you have already paid, use your confirmation email.',
-                $email
-            ));
+            $message = $known === null
+                ? 'We could not find a registration with that email address or KingsChat username. Check what you registered with, or register first.'
+                : 'That registration has nothing outstanding to pay. Check your confirmation email for your details.';
+
+            return $this->view('register/pay', $this->payViewData('', $message, $identifier));
         }
 
         Session::put('last_registration', (string) $registration['reference']);
@@ -210,7 +205,7 @@ final class PaymentController extends Controller
         return $this->redirect('/register/method');
     }
 
-    private function payViewData(string $reference, string $error, string $email = ''): array
+    private function payViewData(string $reference, string $error, string $identifier = ''): array
     {
         return [
             'title'     => 'Complete payment — ' . config('app.name'),
@@ -220,7 +215,7 @@ final class PaymentController extends Controller
             'reference' => $reference,
             'cancelled' => false,
             'expired'   => false,
-            'email'     => $email,
+            'identifier' => $identifier,
             'savedRegistration' => $this->savedRegistration($reference) !== null,
             'error'     => $error,
         ];

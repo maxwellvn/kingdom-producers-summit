@@ -1,5 +1,5 @@
 <?php
-/** @var bool $live @var string $note @var string $reference @var array $errors @var array $summit */
+/** @var bool $live @var string $note @var array $errors @var array $summit */
 $errors = $errors ?: \App\Core\Session::get('_errors', []);
 ?>
 <section class="reg">
@@ -31,11 +31,6 @@ $errors = $errors ?: \App\Core\Session::get('_errors', []);
                  autocapitalize="off" autocorrect="off" autocomplete="email" required>
           <p class="field__hint">Whichever you gave when you registered.</p>
         </div>
-        <div class="field">
-          <label for="reference">Registration reference <span class="field__optional">optional</span></label>
-          <input id="reference" name="reference" type="text" placeholder="KPS26-XXXXXX"
-                 value="<?= e($reference) ?>" autocapitalize="characters" autocomplete="off">
-        </div>
         <button type="submit" class="btn btn--stamp btn--lg">
           <span class="btn__label">Enter the stream</span>
           <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
@@ -44,7 +39,7 @@ $errors = $errors ?: \App\Core\Session::get('_errors', []);
 
       <p class="pay__fine mono">
         <?= e($note) ?>
-        No reference? <a href="<?= url('/register') ?>">Register here</a>.
+        Not registered yet? <a href="<?= url('/register') ?>">Register here</a>.
       </p>
     </div>
   </div>

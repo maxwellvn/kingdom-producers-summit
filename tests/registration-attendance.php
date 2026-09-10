@@ -87,13 +87,13 @@ try {
     ], []), 'organiser@example.org')[1]);
 
     verify(App\Services\StreamService::mayWatch($watcher), 'a confirmed online place may watch');
-    verify(App\Services\StreamService::findViewer($watcher['reference'], $watcher['email']) !== null,
+    verify(App\Services\StreamService::findViewer($watcher['email']) !== null,
         'reference with the registered email opens the gate');
-    verify(App\Services\StreamService::findViewer($watcher['reference'], 'streamviewer') !== null,
+    verify(App\Services\StreamService::findViewer('streamviewer') !== null,
         'reference with the KingsChat handle opens the gate');
-    verify(App\Services\StreamService::findViewer($watcher['reference'], 'someone@else.org') === null,
+    verify(App\Services\StreamService::findViewer('someone@else.org') === null,
         'a reference alone is not enough');
-    verify(App\Services\StreamService::findViewer('KPS26-NOSUCH', $watcher['email']) === null,
+    verify(App\Services\StreamService::findViewer('KPS26-NOSUCH') === null,
         'an unknown reference is refused');
 
     // Initiative members did not register for the summit.
@@ -139,18 +139,25 @@ try {
     $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
         ->execute(['confirmed', 'paid', $watchRow['reference']]);
     $watchRef = (string) $watchRow['reference'];
-    $gate = fn(string $ref, string $ident) => App\Services\StreamService::findViewer($ref, $ident) !== null;
-    verify($gate('', $watchEmail), 'the email alone opens the gate');
-    verify($gate('', strtoupper($watchEmail)), 'the email is matched case insensitively');
-    verify($gate('', 'watchviewer'), 'the KingsChat handle alone opens the gate');
-    verify($gate('', '@watchviewer'), 'a handle typed with @ still matches');
-    verify($gate($watchRef, $watchEmail), 'an email with its own reference opens the gate');
-    verify($gate(strtolower($watchRef), $watchEmail), 'the reference is matched case insensitively');
-    verify(!$gate('KPS26-ZZZZZZ', $watchEmail), 'a reference belonging to someone else is refused');
-    verify(!$gate($watchRef, ''), 'a reference on its own is not enough');
-    verify(!$gate('', 'nobody-' . bin2hex(random_bytes(4)) . '@example.org'), 'an unknown email is refused');
-    $pdo->prepare('UPDATE registrations SET status = ? WHERE reference = ?')->execute(['pending', $watchRef]);
-    verify(!$gate('', $watchEmail), 'an unconfirmed registration cannot watch');
+    $gate = fn(string $ident) => App\Services\StreamService::findViewer($ident) !== null;
+    verify($gate($watchEmail), 'the email alone opens the gate');
+    verify($gate(strtoupper($watchEmail)), 'the email is matched case insensitively');
+    verify($gate('watchviewer'), 'the KingsChat handle alone opens the gate');
+    verify($gate('@watchviewer'), 'a handle typed with @ still matches');
+    verify(!$gate('nobody-' . bin2hex(random_bytes(4)) . '@example.org'), 'an unknown email is refused');
+    verify(!$gate(''), 'an empty identifier is refused');
+    // An onsite delegate watches too, including while their payment is still being verified.
+    $pdo->prepare('UPDATE registrations SET participation = ?, status = ?, payment_status = ? WHERE reference = ?')
+        ->execute(['onsite', 'confirmed', 'paid', $watchRef]);
+    verify($gate($watchEmail), 'a confirmed onsite delegate may watch online');
+    $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
+        ->execute(['pending', 'claimed', $watchRef]);
+    verify($gate($watchEmail), 'an onsite delegate awaiting payment confirmation may still watch');
+    $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')->execute(['unpaid', $watchRef]);
+    verify(!$gate($watchEmail), 'an unpaid registration still cannot watch');
+    $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
+        ->execute(['cancelled', 'paid', $watchRef]);
+    verify(!$gate($watchEmail), 'a cancelled registration cannot watch');
 
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [

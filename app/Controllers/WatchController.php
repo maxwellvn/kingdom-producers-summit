@@ -82,19 +82,18 @@ final class WatchController extends Controller
             return $this->gate($request, ['auth' => "Too many attempts. Try again in {$minutes} minute(s)."]);
         }
 
-        $reference = $request->str('reference');
         $identifier = $request->str('identifier');
 
         if ($identifier === '') {
-            return $this->gate($request, ['auth' => 'Enter the email address or KingsChat username you registered with.'], $reference);
+            return $this->gate($request, ['auth' => 'Enter the email address or KingsChat username you registered with.']);
         }
 
-        $viewer = StreamService::findViewer($reference, $identifier);
+        $viewer = StreamService::findViewer($identifier);
         if ($viewer === null) {
             LoginAttempt::record($throttleKey);
             usleep(random_int(200_000, 500_000)); // Slow down guessing.
 
-            return $this->gate($request, ['auth' => 'That does not match a confirmed registration for this summit. Check the email address or KingsChat username you registered with.'], $reference);
+            return $this->gate($request, ['auth' => 'That does not match a confirmed registration for this summit. Check the email address or KingsChat username you registered with.']);
         }
 
         LoginAttempt::clear($throttleKey);
@@ -322,7 +321,7 @@ final class WatchController extends Controller
         return $registration !== null && StreamService::mayWatch($registration) ? $registration : null;
     }
 
-    private function gate(Request $request, array $errors = [], string $reference = ''): Response
+    private function gate(Request $request, array $errors = []): Response
     {
         // Handed straight to the view: a flash would only appear on the next request.
         return $this->view('watch/gate', [
@@ -332,7 +331,6 @@ final class WatchController extends Controller
             'live'      => StreamService::isLive(),
             'note'      => StreamService::note(),
             'errors'    => $errors,
-            'reference' => $reference !== '' ? $reference : $request->str('reference'),
             'summit'    => config('app.summit'),
         ]);
     }

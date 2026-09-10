@@ -68,6 +68,22 @@ final class Registration
         return $stmt->fetch() ?: null;
     }
 
+    /**
+     * Find someone by the email address or KingsChat handle they registered
+     * with. References are easily forgotten, so this is how people identify
+     * themselves everywhere they have to.
+     */
+    public static function findByIdentifier(string $identifier): ?array
+    {
+        $identifier = trim($identifier);
+        if ($identifier === '') {
+            return null;
+        }
+
+        // An address that fails validation may still be a handle, and vice versa.
+        return self::findByEmail($identifier) ?? self::findByKingsChatUsername($identifier);
+    }
+
     /** Handles are stored without the leading @, but match either way. */
     public static function findByKingsChatUsername(string $username): ?array
     {
@@ -163,17 +179,17 @@ final class Registration
     }
 
     /** Pending registration awaiting payment, matched by reference + email. */
-    public static function findPayable(string $reference, string $email): ?array
+    /** The unpaid registration behind an email address or KingsChat handle. */
+    public static function findPayableByIdentifier(string $identifier): ?array
     {
-        $stmt = Database::connection()->prepare(
-            "SELECT * FROM registrations
-             WHERE reference = ? AND email = ?
-               AND payment_status = 'unpaid' AND status = 'pending'
-             LIMIT 1"
-        );
-        $stmt->execute([$reference, $email]);
-        $row = $stmt->fetch();
-        return $row ?: null;
+        $registration = self::findByIdentifier($identifier);
+        if ($registration === null) {
+            return null;
+        }
+
+        return $registration['payment_status'] === 'unpaid' && $registration['status'] === 'pending'
+            ? $registration
+            : null;
     }
 
     /** Onsite places already held: paid, claimed, or awaiting payment. Cancelled rows release their place. */

@@ -99,31 +99,13 @@ final class StreamService
 
     /**
      * Find the registration behind what someone typed at the gate.
-     * The email or KingsChat handle is enough on its own. A reference may be
-     * given as well, and then it has to belong to that same registration.
+     * The email address or KingsChat handle is the whole key: references are
+     * easily forgotten, so the gate never asks for one.
      */
-    public static function findViewer(string $reference, string $identifier): ?array
+    public static function findViewer(string $identifier): ?array
     {
-        $reference = strtoupper(preg_replace('/\s+/', '', $reference) ?? '');
-        $identifier = strtolower(trim($identifier));
-        if ($identifier === '') {
-            return null;
-        }
-
-        $registration = str_contains($identifier, '@') && filter_var($identifier, FILTER_VALIDATE_EMAIL)
-            ? Registration::findByEmail($identifier)
-            : Registration::findByKingsChatUsername($identifier);
-
-        // An email that is not a valid address may still be a handle, and vice versa.
-        $registration ??= Registration::findByKingsChatUsername($identifier);
-        $registration ??= Registration::findByEmail($identifier);
-
+        $registration = Registration::findByIdentifier($identifier);
         if ($registration === null) {
-            return null;
-        }
-
-        // A reference is optional, but a wrong one is still a wrong answer.
-        if ($reference !== '' && strtoupper((string) $registration['reference']) !== $reference) {
             return null;
         }
 
@@ -132,9 +114,12 @@ final class StreamService
 
     public static function mayWatch(array $registration): bool
     {
-        return $registration['status'] === 'confirmed'
+        // Someone whose payment is logged but not yet verified by an organiser
+        // still gets in. Being locked out on the day is worse than the risk of a
+        // false claim, which the one-viewer limit and cancellation already cover.
+        return $registration['status'] !== 'cancelled'
             && in_array($registration['participation'], self::allowedPaths(), true)
-            && in_array($registration['payment_status'], ['paid', 'not_required'], true);
+            && in_array($registration['payment_status'], ['paid', 'not_required', 'claimed'], true);
     }
 
     /**
