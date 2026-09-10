@@ -37,6 +37,13 @@ function asset(string $path): string
     return Url::to('assets/' . ltrim($path, '/')) . $version;
 }
 
+/** Public-facing onsite price, expressed in the event's Espees currency. */
+function espees_price(?int $amountPence = null, int $decimals = 0): string
+{
+    $amountPence ??= (int) config('paypal.price_pence');
+    return number_format($amountPence / 100, $decimals) . ' Espees';
+}
+
 function csrf_field(): string
 {
     return '<input type="hidden" name="_token" value="' . e(Session::csrfToken()) . '">';

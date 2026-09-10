@@ -49,6 +49,8 @@
     var introPlayer = intro.querySelector('video');
     if (introPlayer) introPlayer.play().catch(function () {});
     introTimer = window.setTimeout(closeIntro, reduce ? 500 : 5900);
+    // End with the clip rather than always sitting on the full timer.
+    if (introPlayer) introPlayer.addEventListener('ended', closeIntro);
     var skipIntro = intro.querySelector('[data-intro-skip]');
     if (skipIntro) skipIntro.addEventListener('click', closeIntro);
   } else {
@@ -128,7 +130,7 @@
         return;
       }
       if (note) note.textContent = 'Opening your email app to complete signup.';
-      window.location.href = 'mailto:lkps@loveworldconsulate.org?subject=' + encodeURIComponent('Producer dispatch signup') + '&body=' + encodeURIComponent('Please add ' + email.value + ' to the Producer Dispatches mailing list.');
+      window.location.href = 'mailto:unitedkingdom@loveworldconsulate.org?subject=' + encodeURIComponent('Producer dispatch signup') + '&body=' + encodeURIComponent('Please add ' + email.value + ' to the Producer Dispatches mailing list.');
     });
   }
 
@@ -222,6 +224,30 @@
     });
   });
 
+  /* ---------- Fields that open only when a specific choice is made ---------- */
+  // data-reveal-when="<input name>:<value>" — hidden until that input is checked.
+  document.querySelectorAll('[data-reveal-when]').forEach(function (panel) {
+    var parts = panel.getAttribute('data-reveal-when').split(':');
+    var controls = Array.prototype.slice.call(
+      document.querySelectorAll('[name="' + parts[0] + '"][value="' + parts[1] + '"]')
+    );
+    if (!controls.length) return;
+
+    var input = panel.querySelector('input, textarea, select');
+
+    function sync(focusOnOpen) {
+      var open = controls.some(function (c) { return c.checked; });
+      panel.hidden = !open;
+      if (!open && input) input.value = '';
+      if (open && focusOnOpen && input) input.focus();
+    }
+
+    controls.forEach(function (c) {
+      c.addEventListener('change', function () { sync(true); });
+    });
+    sync(false);
+  });
+
   /* ---------- Registration form: path switching + step indicator ---------- */
   var form = document.getElementById('regForm');
   if (form) {
@@ -230,14 +256,17 @@
     var onsiteHide = Array.prototype.slice.call(form.querySelectorAll('[data-onsite-hide]'));
     var steps = Array.prototype.slice.call(document.querySelectorAll('#regSteps li'));
 
-    var sectionOrder = ['path', 'you', 'produce', 'details', 'consent'];
+    // ponytail: derive from the rendered steps so paths that omit sections stay aligned
+    var sectionOrder = steps.length
+      ? steps.map(function (li) { return li.getAttribute('data-step'); })
+      : ['path', 'you', 'produce', 'details', 'consent'];
     var sections = sectionOrder.reduce(function (acc, key) {
       acc[key] = form.querySelector('[data-section="' + key + '"]');
       return acc;
     }, {});
 
     function currentPath() {
-      var checked = form.querySelector('input[name="participation"]:checked');
+      var checked = form.querySelector('input[name="participation"]:checked, input[name="participation"][type="hidden"]');
       return checked ? checked.value : null;
     }
 
@@ -275,6 +304,168 @@
     window.addEventListener('resize', stepFromScroll);
     stepFromScroll();
 
+    /* Zone or Campus Ministry → Group → Church directory. */
+    var churchHierarchy = form.querySelector('[data-church-hierarchy]');
+    if (churchHierarchy) {
+      var apiBase = churchHierarchy.getAttribute('data-api-base').replace(/\/$/, '');
+      var zoneValue = churchHierarchy.querySelector('#zone');
+      var zoneSelect = churchHierarchy.querySelector('#zone_directory');
+      var campusSelect = churchHierarchy.querySelector('#campus_directory');
+      var directoryTypeInputs = Array.prototype.slice.call(churchHierarchy.querySelectorAll('input[name="directory_type"]'));
+      var directoryChoices = Array.prototype.slice.call(churchHierarchy.querySelectorAll('[data-directory-choice]'));
+      var groupSelect = churchHierarchy.querySelector('#group_name');
+      var churchSelect = churchHierarchy.querySelector('#church_name');
+      var directoryStatus = churchHierarchy.querySelector('[data-church-status]');
+      var oldZone = zoneValue.getAttribute('data-old-value') || '';
+      var oldGroup = groupSelect.getAttribute('data-old-value') || '';
+      var oldChurch = churchSelect.getAttribute('data-old-value') || '';
+
+      function directoryUrl(path) {
+        return path.indexOf('http') === 0 ? path : new URL(path, apiBase + '/').toString();
+      }
+
+      function fetchDirectory(path) {
+        return fetch(directoryUrl(path), { headers: { Accept: 'application/json' } }).then(function (response) {
+          if (!response.ok) throw new Error('Directory request failed');
+          return response.json();
+        });
+      }
+
+      function resetDirectorySelect(select, label, disabled) {
+        select.innerHTML = '';
+        var option = document.createElement('option');
+        option.value = '';
+        option.textContent = label;
+        select.appendChild(option);
+        select.disabled = disabled;
+      }
+
+      function appendDirectoryOptions(select, items, oldValue) {
+        items.forEach(function (item) {
+          var option = document.createElement('option');
+          option.value = item.name;
+          option.textContent = item.name;
+          option.dataset.id = String(item.id);
+          option.dataset.link = item.links && (item.links.groups || item.links.churches) || '';
+          option.selected = item.name === oldValue;
+          select.appendChild(option);
+        });
+      }
+
+      function loadGroups(selected) {
+        resetDirectorySelect(groupSelect, 'Loading groups…', true);
+        resetDirectorySelect(churchSelect, 'Choose a group first', true);
+        var groupsPath = selected && selected.dataset.link;
+        if (!groupsPath) {
+          zoneValue.value = '';
+          resetDirectorySelect(groupSelect, 'Choose a zone or Campus Ministry first', true);
+          directoryStatus.textContent = 'Choose your zone or Campus Ministry, then your group and church.';
+          return;
+        }
+        zoneValue.value = selected.value;
+        directoryStatus.textContent = 'Loading groups…';
+        fetchDirectory(groupsPath).then(function (payload) {
+          var groups = Array.isArray(payload.data) ? payload.data : [];
+          resetDirectorySelect(groupSelect, groups.length ? 'Select your group' : 'No groups listed', false);
+          appendDirectoryOptions(groupSelect, groups, oldGroup);
+          directoryStatus.textContent = groups.length ? 'Now choose your group.' : 'No groups are currently listed for this zone.';
+          if (oldGroup && groupSelect.value === oldGroup) {
+            oldGroup = '';
+            groupSelect.dispatchEvent(new Event('change'));
+          }
+        }).catch(function () {
+          resetDirectorySelect(groupSelect, 'Could not load groups — refresh to try again', true);
+          directoryStatus.textContent = 'The church directory is temporarily unavailable. Please refresh and try again.';
+        });
+      }
+
+      zoneSelect.addEventListener('change', function () {
+        loadGroups(zoneSelect.options[zoneSelect.selectedIndex]);
+      });
+      campusSelect.addEventListener('change', function () {
+        loadGroups(campusSelect.options[campusSelect.selectedIndex]);
+      });
+
+      directoryTypeInputs.forEach(function (input) {
+        input.addEventListener('change', function () {
+          directoryChoices.forEach(function (choice) {
+            choice.hidden = choice.getAttribute('data-directory-choice') !== input.value;
+          });
+          zoneValue.value = '';
+          zoneSelect.value = '';
+          campusSelect.value = '';
+          resetDirectorySelect(groupSelect, 'Choose a zone or Campus Ministry first', true);
+          resetDirectorySelect(churchSelect, 'Choose a group first', true);
+          directoryStatus.textContent = input.value === 'campus'
+            ? 'Choose your Campus Ministry, then your group and church.'
+            : 'Choose your zone, then your group and church.';
+        });
+      });
+
+      groupSelect.addEventListener('change', function () {
+        resetDirectorySelect(churchSelect, 'Loading churches…', true);
+        var selected = groupSelect.options[groupSelect.selectedIndex];
+        var churchesPath = selected && selected.dataset.link;
+        if (!churchesPath) {
+          resetDirectorySelect(churchSelect, 'Choose a group first', true);
+          return;
+        }
+        directoryStatus.textContent = 'Loading churches…';
+        fetchDirectory(churchesPath).then(function (payload) {
+          var churches = Array.isArray(payload.data) ? payload.data : [];
+          resetDirectorySelect(churchSelect, 'Select your church', false);
+          appendDirectoryOptions(churchSelect, churches, oldChurch);
+          var notListed = document.createElement('option');
+          notListed.value = 'Church not listed';
+          notListed.textContent = 'My church is not listed';
+          notListed.selected = oldChurch === notListed.value || churches.length === 0;
+          churchSelect.appendChild(notListed);
+          directoryStatus.textContent = churches.length ? 'Choose your church, or select “My church is not listed”.' : 'No churches are listed for this group; “My church is not listed” has been selected.';
+          oldChurch = '';
+        }).catch(function () {
+          resetDirectorySelect(churchSelect, 'Could not load churches — refresh to try again', true);
+          directoryStatus.textContent = 'The church directory is temporarily unavailable. Please refresh and try again.';
+        });
+      });
+
+      fetchDirectory('/api/v1/regions').then(function (payload) {
+        var regions = Array.isArray(payload.data) ? payload.data : [];
+        return Promise.all(regions.map(function (region) {
+          return fetchDirectory(region.links.zones).then(function (zonesPayload) {
+            return (zonesPayload.data || []).map(function (zone) {
+              return Object.assign({}, zone, { isCampus: region.name === 'Campus Ministry' });
+            });
+          });
+        }));
+      }).then(function (regionZones) {
+        var zones = [].concat.apply([], regionZones);
+        zones.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        var mainZones = zones.filter(function (zone) { return !zone.isCampus; });
+        var campuses = zones.filter(function (zone) { return zone.isCampus; });
+        resetDirectorySelect(zoneSelect, 'Select your zone', false);
+        resetDirectorySelect(campusSelect, 'Select your Campus Ministry', false);
+        appendDirectoryOptions(zoneSelect, mainZones, oldZone);
+        appendDirectoryOptions(campusSelect, campuses, oldZone);
+        directoryStatus.textContent = 'Choose Zone or Campus Ministry to begin.';
+        var restoredSelect = zoneSelect.value === oldZone ? zoneSelect : (campusSelect.value === oldZone ? campusSelect : null);
+        if (restoredSelect) {
+          var restoredType = restoredSelect === campusSelect ? 'campus' : 'zone';
+          var typeInput = churchHierarchy.querySelector('input[name="directory_type"][value="' + restoredType + '"]');
+          typeInput.checked = true;
+          directoryChoices.forEach(function (choice) {
+            choice.hidden = choice.getAttribute('data-directory-choice') !== restoredType;
+          });
+          zoneValue.value = oldZone;
+          oldZone = '';
+          restoredSelect.dispatchEvent(new Event('change'));
+        }
+      }).catch(function () {
+        resetDirectorySelect(zoneSelect, 'Could not load directory — refresh to try again', true);
+        resetDirectorySelect(campusSelect, 'Could not load directory — refresh to try again', true);
+        directoryStatus.textContent = 'The church directory is temporarily unavailable. Please refresh and try again.';
+      });
+    }
+
     // Gentle live validation feedback on submit
     form.addEventListener('submit', function () {
       var btn = document.getElementById('submitBtn');
@@ -287,11 +478,9 @@
     });
   }
 
-  /* ---------- Video triggers: hover preview + click lightbox ---------- */
+  /* ---------- Video triggers: short hover preview only ---------- */
   var triggers = document.querySelectorAll('[data-video-trigger]');
   if (triggers.length) {
-    var modal = document.getElementById('videoModal');
-    var modalPlayer = document.getElementById('videoModalPlayer');
     var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     var preview = null;
     var previewPlayer = null;
@@ -344,6 +533,10 @@
         previewPlayer.loop = true;
         previewPlayer.playsInline = true;
         previewPlayer.preload = 'none';
+        previewPlayer.controls = false;
+        previewPlayer.disablePictureInPicture = true;
+        previewPlayer.setAttribute('controlslist', 'nodownload nofullscreen noremoteplayback');
+        previewPlayer.setAttribute('disableremoteplayback', '');
         preview.appendChild(previewPlayer);
         document.body.appendChild(preview);
       }
@@ -358,47 +551,12 @@
       }, 200);
     };
 
-    var openModal = function (src) {
-      if (!modal) return;
-      stopPreview();
-      if (modalPlayer.getAttribute('src') !== src) {
-        modalPlayer.setAttribute('src', src);
-      }
-      modal.hidden = false;
-      document.body.style.overflow = 'hidden';
-      var p = modalPlayer.play();
-      if (p && p.catch) p.catch(function () {});
-      modal.querySelector('.video-modal__close').focus();
-    };
-
-    var closeModal = function () {
-      if (!modal || modal.hidden) return;
-      modalPlayer.pause();
-      modal.hidden = true;
-      document.body.style.overflow = '';
-    };
-
     var currentTrigger = null;
     triggers.forEach(function (el) {
       currentTrigger = el;
       el.addEventListener('mouseenter', function () { currentTrigger = el; startPreview(el.getAttribute('data-video-src')); });
       el.addEventListener('mouseleave', stopPreview);
-      el.addEventListener('focus', function () { currentTrigger = el; startPreview(el.getAttribute('data-video-src')); });
-      el.addEventListener('blur', stopPreview);
-      el.addEventListener('click', function () { openModal(el.getAttribute('data-video-src')); });
-      el.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(el.getAttribute('data-video-src')); }
-      });
     });
-
-    if (modal) {
-      modal.querySelectorAll('[data-video-close]').forEach(function (el) {
-        el.addEventListener('click', closeModal);
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeModal();
-      });
-    }
   }
 
   /* ---------- GSAP motion ---------- */
@@ -499,35 +657,37 @@
 
   function wrapLines(el) {
     // Wrap each visual line in an overflow-hidden mask with an inner that slides up.
-    var html = el.innerHTML;
-    var raw = el.textContent.trim().split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
-    if (raw.length > 1) {
-      // Markup already provides line breaks via <br> or block children — wrap per top-level child.
-      el.innerHTML = '';
-      var children = Array.prototype.slice.call(parseToNodes(html)).filter(function (n) {
-        return n.nodeType === 1 || (n.nodeType === 3 && n.textContent.trim());
-      });
-      var inners = [];
-      children.forEach(function (child) {
-        var mask = document.createElement('span'); mask.className = 'split-line';
-        var inner = document.createElement('span'); inner.className = 'split-inner';
-        inner.appendChild(child);
-        mask.appendChild(inner);
-        el.appendChild(mask);
-        inners.push(inner);
-      });
-      return inners;
-    }
-    // Single line — wrap whole text.
-    el.innerHTML = '';
-    var mask = document.createElement('span'); mask.className = 'split-line';
-    var inner = document.createElement('span'); inner.className = 'split-inner'; inner.textContent = raw[0];
-    mask.appendChild(inner); el.appendChild(mask);
-    return [inner];
-  }
+    // Lines come from <br> separators or from block children; otherwise the whole text is one line.
+    var groups = [[]];
+    var sawBreak = false;
+    Array.prototype.slice.call(el.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && node.tagName === 'BR') {
+        sawBreak = true;
+        groups.push([]);
+        return;
+      }
+      if (node.nodeType === 3 && !node.textContent.trim()) return;
+      groups[groups.length - 1].push(node);
+    });
 
-  function parseToNodes(html) {
-    var tpl = document.createElement('template'); tpl.innerHTML = html; return tpl.content.childNodes;
+    if (!sawBreak) {
+      // Block children (e.g. .hero__line spans) already act as their own lines.
+      var elements = groups[0].filter(function (n) { return n.nodeType === 1; });
+      groups = elements.length > 1 ? elements.map(function (n) { return [n]; }) : [groups[0]];
+    }
+
+    groups = groups.filter(function (g) { return g.length; });
+    if (!groups.length) return [];
+
+    el.innerHTML = '';
+    return groups.map(function (nodes) {
+      var mask = document.createElement('span'); mask.className = 'split-line';
+      var inner = document.createElement('span'); inner.className = 'split-inner';
+      nodes.forEach(function (node) { inner.appendChild(node); });
+      mask.appendChild(inner);
+      el.appendChild(mask);
+      return inner;
+    });
   }
 
   /* ---------- Copy-to-clipboard buttons ---------- */

@@ -5,8 +5,8 @@ $methodLabels = ['espees' => 'Espees', 'paypal' => 'PayPal', 'bank' => 'Bank tra
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment step</p>
-      <h1 class="pay__title">Choose how to pay &pound;<?= e($amount) ?></h1>
-      <p class="pay__lede">Your place is held for <strong>&pound;<?= e($amount) ?></strong>. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
+      <h1 class="pay__title">Choose how to pay <?= e($amount) ?> Espees</h1>
+      <p class="pay__lede">The standard price is 100 Espees. Your 50 Espees discount leaves <strong><?= e($amount) ?> Espees</strong> due. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
 
       <?php if (!$methods): ?>
         <div class="pay__alert" role="alert">

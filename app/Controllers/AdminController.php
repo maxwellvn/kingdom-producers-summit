@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
+use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Services\AttendanceService;
@@ -33,15 +34,18 @@ final class AdminController extends Controller
 
     public function login(Request $request): Response
     {
-        $attempts = (int) Session::get('login_attempts', 0);
-        $lockedUntil = (int) Session::get('login_locked_until', 0);
+        $email = mb_strtolower($request->str('email'));
+        // Track by IP as well as email so neither a cookie reset nor email cycling clears the count.
+        $throttleKeys = array_unique([$request->ip(), $email . '|' . $request->ip()]);
 
-        if ($lockedUntil > time()) {
-            $mins = (int) ceil(($lockedUntil - time()) / 60);
-            return $this->back($request, ['auth' => "Too many attempts. Try again in {$mins} minute(s)."]);
+        foreach ($throttleKeys as $key) {
+            $lockedFor = LoginAttempt::lockedForSeconds($key, self::MAX_ATTEMPTS, self::LOCKOUT_SECONDS);
+            if ($lockedFor > 0) {
+                $mins = (int) ceil($lockedFor / 60);
+                return $this->back($request, ['auth' => "Too many attempts. Try again in {$mins} minute(s)."], ['email' => $email]);
+            }
         }
 
-        $email = mb_strtolower($request->str('email'));
         $password = (string) $request->input('password', '');
 
         $expectedEmail = mb_strtolower((string) config('app.admin.email'));
@@ -58,19 +62,17 @@ final class AdminController extends Controller
         }
 
         if (!$ok) {
-            $attempts++;
-            Session::put('login_attempts', $attempts);
-            if ($attempts >= self::MAX_ATTEMPTS) {
-                Session::put('login_locked_until', time() + self::LOCKOUT_SECONDS);
-                Session::put('login_attempts', 0);
+            foreach ($throttleKeys as $key) {
+                LoginAttempt::record($key);
             }
             usleep(random_int(150_000, 400_000));
             return $this->back($request, ['auth' => 'Those details did not match our records.'], ['email' => $email]);
         }
 
         Session::regenerate();
-        Session::forget('login_attempts');
-        Session::forget('login_locked_until');
+        foreach ($throttleKeys as $key) {
+            LoginAttempt::clear($key);
+        }
         Session::put('admin_authenticated', true);
         Session::put('admin_email', $email);
 

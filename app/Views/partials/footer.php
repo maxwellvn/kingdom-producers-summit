@@ -17,7 +17,7 @@
 
   <div class="container footer__grid">
     <div class="footer__col footer__col--brand">
-      <span class="footer__kicker mono">London Edition 2026</span>
+      <span class="footer__kicker mono">Essex Edition 2026</span>
       <p class="footer__office"><?= e($summit['office']) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
     </div>
@@ -33,20 +33,17 @@
     <div class="footer__col">
       <h4 class="footer__heading mono">Initiative</h4>
       <a href="<?= url('/about') ?>">Kingdom Producers</a>
-      <a href="<?= url('/') ?>#portal">The portal</a>
-      <a href="<?= url('/register') ?>?mode=initiative">Become a member</a>
+      <a href="<?= url('/register') ?>?mode=initiative">Join the initiative</a>
     </div>
 
     <div class="footer__col">
       <h4 class="footer__heading mono">Contact</h4>
       <a href="mailto:<?= e(config('app.mail.reply_to')) ?>"><?= e(config('app.mail.reply_to')) ?></a>
-      <span><?= e($summit['city']) ?></span>
     </div>
   </div>
 
   <div class="container footer__bottom">
     <span class="mono">© <?= date('Y') ?> <?= e($summit['organiser']) ?>. All rights reserved.</span>
-    <span class="mono"><?= e($summit['edition']) ?></span>
     <a class="mono footer__made" href="https://movortech.com" target="_blank" rel="noopener noreferrer">Made by Movor</a>
   </div>
 

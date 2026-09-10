@@ -20,7 +20,7 @@
       <?php elseif (!empty($savedRegistration)): ?>
         <p class="pay__lede">Your registration is saved. Continue below to complete payment for your onsite place.</p>
       <?php else: ?>
-        <p class="pay__lede">Your details are already with us. Enter the reference and email you registered with to pay the <strong>&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></strong> place and confirm your attendance in London.</p>
+        <p class="pay__lede">Your details are already with us. Enter the reference and email you registered with to pay the discounted <strong><?= e(espees_price()) ?></strong> and confirm your attendance in Essex.</p>
       <?php endif; ?>
 
       <form class="pay__form" method="post" action="<?= url('/register/pay') ?>">
@@ -39,7 +39,7 @@
         </div>
         <?php endif; ?>
         <button type="submit" class="btn btn--stamp btn--lg">
-          <span class="btn__label">Continue to payment &mdash; &pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></span>
+          <span class="btn__label">Continue to payment &mdash; <?= e(espees_price()) ?></span>
           <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
         </button>
         <p class="form__fine mono">Payments are processed securely by PayPal. We never see your card details.</p>

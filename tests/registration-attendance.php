@@ -16,16 +16,28 @@ function verify(bool $condition, string $label): void {
 $pdo = Database::connection();
 $pdo->beginTransaction();
 try {
+    $incomplete = new Request('POST', '/register', [], [
+        'participation' => 'online', 'first_name' => 'Missing', 'last_name' => 'Details',
+        'email' => 'required-' . bin2hex(random_bytes(8)) . '@example.org',
+        'country' => 'United Kingdom', 'age_band' => '25-34',
+        'field' => Registration::FIELDS[0], 'producer_stage' => 'emerge', 'consent_terms' => '1',
+    ], []);
+    $service = new RegistrationService();
+    [$requiredErrors] = $service->validate($incomplete);
+    verify(isset($requiredErrors['phone'], $requiredErrors['zone'], $requiredErrors['group_name'], $requiredErrors['church_name']), 'phone and church hierarchy are required');
+
     $request = new Request('POST', '/register', [], [
         'participation' => 'onsite', 'first_name' => 'Regression', 'last_name' => 'Test',
         'email' => 'attendance-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900123', 'country' => 'United Kingdom', 'age_band' => '25-34',
+        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
         'field' => Registration::FIELDS[0], 'producer_stage' => 'build',
+        'interests' => ['technology', 'other'], 'interest_other' => 'Sustainable transport',
         'consent_terms' => '1',
     ], []);
-    $service = new RegistrationService();
     [$errors, $clean] = $service->validate($request);
     verify($errors === [], 'test registration validates');
+    verify($clean['interest_other'] === 'Sustainable transport', 'other area of interest is retained');
     $row = $service->register($clean);
     $ref = $row['reference'];
     $token = AttendanceService::tokenFor($ref);
@@ -58,6 +70,38 @@ try {
     Session::forget('admin_authenticated');
     verify((new App\Middleware\RequireAdmin())->handle($request) !== null, 'attendance requires staff authentication');
     verify(!Session::verifyCsrf('incorrect'), 'incorrect CSRF token rejected');
+
+    // Initiative sign-ups collect personal details only: no field, no producer stage.
+    $initiative = new Request('POST', '/register', [], [
+        'participation' => 'initiative', 'first_name' => 'Initiative', 'last_name' => 'Only',
+        'email' => 'initiative-' . bin2hex(random_bytes(8)) . '@example.org',
+        'phone' => '+447700900321', 'country' => 'United Kingdom', 'age_band' => '25-34',
+        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'consent_terms' => '1',
+    ], []);
+    [$initiativeErrors, $initiativeClean] = $service->validate($initiative);
+    verify($initiativeErrors === [], 'initiative registration needs no field or stage');
+    verify($initiativeClean['field'] === null && $initiativeClean['producer_stage'] === null, 'initiative registration stores no field or stage');
+
+    // Onsite places are capped, and the cap is enforced on the server, not just in the markup.
+    $capacity = max(1, (int) config('app.summit.onsite_capacity'));
+    $pdo->exec("UPDATE registrations SET status = 'confirmed' WHERE participation = 'onsite'");
+    verify(Registration::onsiteSeatsTaken() < $capacity, 'onsite capacity is not already exhausted');
+    $filler = $pdo->prepare('INSERT INTO registrations (reference, participation, first_name, last_name, email, country, age_band, status, payment_status) '
+        . "VALUES (?, 'onsite', 'Seat', 'Filler', ?, 'United Kingdom', '25-34', 'confirmed', 'paid')");
+    for ($i = Registration::onsiteSeatsTaken(); $i < $capacity; $i++) {
+        $filler->execute(['KPS26-F' . str_pad((string) $i, 5, '0', STR_PAD_LEFT), "seat-{$i}-" . bin2hex(random_bytes(4)) . '@example.org']);
+    }
+    verify(!RegistrationService::onsitePlaceAvailable(), 'onsite capacity reports full');
+    $overflow = new Request('POST', '/register', [], [
+        'participation' => 'onsite', 'first_name' => 'One', 'last_name' => 'TooMany',
+        'email' => 'overflow-' . bin2hex(random_bytes(8)) . '@example.org',
+        'phone' => '+447700900999', 'country' => 'United Kingdom', 'age_band' => '25-34',
+        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
+    ], []);
+    [$overflowErrors] = $service->validate($overflow);
+    verify(str_contains($overflowErrors['participation'] ?? '', 'fully booked'), 'onsite registration is refused when full');
 } finally {
     $pdo->rollBack();
 }

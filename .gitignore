@@ -7,3 +7,7 @@
 .impeccable/
 storage/logs/*
 !storage/logs/.gitkeep
+
+# Local scratch: throwaway scripts, generated PDFs and exports (never deploy)
+tmp/
+output/

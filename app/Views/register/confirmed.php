@@ -1,7 +1,7 @@
 <?php
 /** @var array $registration @var array $summit @var string $accessToken */
 $r = $registration;
-$pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online — Rainham, Essex', 'initiative' => 'Kingdom Producers member'][$r['participation']] ?? $r['participation'];
+$pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Participating online — selected summit access', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
     'Join us on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
@@ -9,14 +9,14 @@ $next = [
     'The programme, travel notes and any invitation letter you requested will follow by email.',
   ],
   'online' => [
-    'Join the live stream from Rainham, Essex on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — your access link arrives by email.',
-    'Session recordings and producer resources will be sent after the summit.',
+    'Access some parts of the summit by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — your link arrives by email.',
+    'Your online registration provides selected summit access only.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
   'initiative' => [
-    'You are now on the register of Kingdom Producers. Your reference is your member reference.',
+    'You are now on the register of Kingdom Producers. Keep your initiative reference safe.',
     'You will be among the first to receive access to the portal as it opens — the repository, directory and opportunities.',
-    'Summit updates come to you too; if you want to attend in London, tell us by replying to any email.',
+    'Summit updates come to you too; if you want to attend in Essex, tell us by replying to any email.',
   ],
 ][$r['participation']] ?? [];
 ?>
@@ -57,10 +57,10 @@ $next = [
       <dl class="confirmed__facts mono">
         <div><dt>Name</dt><dd><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></dd></div>
         <div><dt>Email</dt><dd><?= e($r['email']) ?></dd></div>
-        <div><dt>Field</dt><dd><?= e($r['field']) ?></dd></div>
-        <div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div>
+        <?php if (!empty($r['field'])): ?><div><dt>Field</dt><dd><?= e($r['field']) ?></dd></div><?php endif; ?>
+        <?php if (!empty($r['producer_stage'])): ?><div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div><?php endif; ?>
         <?php if ($r['participation'] === 'onsite' && ($r['payment_status'] ?? '') === 'paid'): ?>
-          <div><dt>Paid</dt><dd>&pound;<?= number_format((int) $r['payment_amount'] / 100, 2) ?></dd></div>
+          <div><dt>Paid</dt><dd><?= e(espees_price((int) $r['payment_amount'], 2)) ?></dd></div>
         <?php endif; ?>
         <div><dt>Registered</dt><dd><?= e(date('j M Y, H:i', strtotime($r['created_at']))) ?></dd></div>
       </dl>

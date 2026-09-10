@@ -7,15 +7,20 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
+use App\Models\Registration;
 
 final class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
+        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
+
         return $this->view('home/index', [
-            'title'     => config('app.name') . ' — London Edition 2026',
+            'title'     => config('app.name') . ' — Essex Edition 2026',
             'bodyClass' => 'page-home',
             'summit'    => config('app.summit'),
+            'capacity'  => $capacity,
+            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
         ]);
     }
 

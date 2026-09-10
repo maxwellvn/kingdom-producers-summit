@@ -38,12 +38,11 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
   <div class="mobile-menu__inner">
     <div class="mobile-menu__meta mono">
       <span>Navigate</span>
-      <span>London Edition 2026</span>
+      <span>Essex Edition 2026</span>
     </div>
     <nav class="mobile-menu__links" aria-label="Mobile navigation">
       <a href="<?= url('/') ?>#summit" class="mobile-menu__link">The Summit</a>
       <a href="<?= url('/') ?>#pathways" class="mobile-menu__link">Ways to Join</a>
-      <a href="<?= url('/') ?>#portal" class="mobile-menu__link">The Portal</a>
       <a href="<?= url('/about') ?>" class="mobile-menu__link">The Initiative</a>
     </nav>
     <div class="mobile-menu__action">

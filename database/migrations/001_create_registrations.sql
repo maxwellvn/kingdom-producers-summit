@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS registrations (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
     reference           CHAR(12)     NOT NULL,
 
-    -- Path: onsite = attending in London; online = not attending, wants updates/online access;
+    -- Path: onsite = attending in Essex; online = access to some livestream sessions;
     -- initiative = not attending, joining the Kingdom Producers initiative & portal
     participation       ENUM('onsite','online','initiative') NOT NULL,
 

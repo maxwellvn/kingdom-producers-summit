@@ -34,11 +34,11 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
           <tr>
             <td class="mono"><?= e($r['reference']) ?></td>
             <td><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></td>
-            <td><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a><?php if ($r['phone']): ?><br><span class="adm-muted mono"><?= e($r['phone']) ?></span><?php endif; ?></td>
+            <td><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a><?php if ($r['phone']): ?><br><span class="adm-muted mono"><?= e($r['phone']) ?></span><?php endif; ?><?php if ($r['kingschat_username']): ?><br><span class="adm-muted mono">KC: @<?= e($r['kingschat_username']) ?></span><?php endif; ?></td>
             <td><span class="adm-pill adm-pill--<?= e($r['participation']) ?>"><?= e($pathLabel[$r['participation']] ?? $r['participation']) ?></span></td>
-            <td><?= e($r['field']) ?></td>
-            <td><?= e(ucfirst($r['producer_stage'])) ?></td>
-            <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?></td>
+            <td><?= e($r['field'] ?? '') ?></td>
+            <td><?= e(ucfirst((string) ($r['producer_stage'] ?? ''))) ?></td>
+            <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?><?php if ($r['zone']): ?><br><span class="adm-muted"><?= e(implode(' · ', array_filter([$r['zone'], $r['group_name'], $r['church_name']]))) ?></span><?php endif; ?></td>
             <td>
               <?php $payState = $r['participation'] === 'onsite' ? ($r['payment_status'] ?? 'unpaid') : 'not_required'; ?>
               <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) : '' ?></span>
@@ -46,7 +46,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>
                   <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm £<?= number_format(config('paypal.price_pence') / 100, 0) ?> received</button>
+                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm <?= e(espees_price()) ?> received</button>
                 </form>
               <?php endif; ?>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">

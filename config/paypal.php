@@ -10,5 +10,6 @@ return [
     'webhook_id' => env('PAYPAL_WEBHOOK_ID', ''),
 
     'currency'    => 'gbp',
-    'price_pence' => 5000, // place price
+    'standard_price_pence' => 10000,
+    'price_pence' => 5000, // 100 Espees less the 50 Espees attendance discount
 ];

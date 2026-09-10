@@ -14,16 +14,23 @@
 $errors = \App\Core\Session::get('_errors', []);
 $oldMode = \App\Core\Session::get('_old', [])['participation'] ?? null;
 $selectedMode = $oldMode ?: $mode;
+$isInitiative = $selectedMode === 'initiative';
 
 $ageLabels = [
   'under18' => 'Under 18', '18-24' => '18–24', '25-34' => '25–34', '35-44' => '35–44',
   '45-54' => '45–54', '55-64' => '55–64', '65plus' => '65+',
 ];
 $stageCopy = [
-  'emerge'    => 'I don\'t have anything yet — I\'m starting from scratch.',
-  'build'     => 'I\'m making the first version — prototype, pilot, first customers.',
-  'establish' => 'Something works. I\'m structuring it to last.',
-  'multiply'  => 'I\'m reproducing what I\'ve built through others.',
+  'emerge'    => 'I do not yet have a clear idea, product, service, project, business or creative work.',
+  'build'     => 'I have an idea or have started something, and I need help taking the next steps.',
+  'establish' => 'I already have something active and I want to improve or grow it.',
+  'multiply'  => 'What I do is established and I want to scale it or extend its reach.',
+];
+$stageLabels = [
+  'emerge' => 'Nothing yet',
+  'build' => 'Getting started',
+  'establish' => 'Growing',
+  'multiply' => 'Scaling',
 ];
 ?>
 
@@ -34,22 +41,29 @@ $stageCopy = [
     <aside class="reg__aside">
       <div class="reg__card">
         <div class="reg__card-inner">
-          <p class="reg__kicker mono">London Edition 2026</p>
+          <p class="reg__kicker mono">Essex Edition 2026</p>
           <h1 class="reg__title">Register</h1>
-          <p class="reg__lede">Choose how you will take part, then tell us a little about the work you want to produce.</p>
+          <p class="reg__lede"><?= $isInitiative ? 'Join the 30, 60 and 90 day production journey.' : 'Choose how you will attend, then tell us about your field and interests.' ?></p>
 
           <ol class="reg__steps mono" id="regSteps">
-            <li data-step="path" class="is-current"><span>01</span> Choose your path</li>
-            <li data-step="you"><span>02</span> About you</li>
-            <li data-step="produce"><span>03</span> What you produce</li>
-            <li data-step="details"><span>04</span> Details</li>
-            <li data-step="consent"><span>05</span> Confirm</li>
+            <?php
+            $steps = $isInitiative
+              ? ['path' => 'The initiative', 'you' => 'About you', 'consent' => 'Confirm']
+              : ['path' => 'Attendance', 'you' => 'About you', 'produce' => 'Where you are now', 'details' => 'Details', 'consent' => 'Confirm'];
+            $stepNo = 0;
+            foreach ($steps as $key => $label): $stepNo++; ?>
+              <li data-step="<?= $key ?>" class="<?= $stepNo === 1 ? 'is-current' : '' ?>"><span><?= str_pad((string) $stepNo, 2, '0', STR_PAD_LEFT) ?></span> <?= e($label) ?></li>
+            <?php endforeach; ?>
           </ol>
 
           <dl class="reg__facts mono">
             <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
             <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
+            <?php if (!$isInitiative): ?>
+              <div><dt>Onsite cost</dt><dd><?= e(espees_price()) ?> <span class="reg__facts-note">reduced from <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></span></dd></div>
+              <div><dt>Online cost</dt><dd>Free</dd></div>
+            <?php endif; ?>
           </dl>
         </div>
       </div>
@@ -72,36 +86,65 @@ $stageCopy = [
         </div>
       <?php endif; ?>
 
-      <!-- 01 Path -->
+      <!-- 01 Attendance or initiative entry -->
       <fieldset class="form__section" id="section-path" data-section="path">
-        <legend class="form__legend"><span class="mono">01</span> Choose your path</legend>
+        <legend class="form__legend"><span class="mono">01</span> <?= $isInitiative ? 'Join the initiative' : 'Choose how you will attend' ?></legend>
         <?php if ($err = error_for('participation')): ?><p class="form__error"><?= e($err) ?></p><?php endif; ?>
 
-        <div class="tickets" role="radiogroup" aria-label="How would you like to take part?">
+        <?php if ($isInitiative): ?>
+          <input type="hidden" name="participation" value="initiative">
+          <div class="initiative-enrolment">
+            <p class="initiative-enrolment__eyebrow mono">100 producers per edition</p>
+            <h2>Join the initiative</h2>
+            <p>The Kingdom Producers initiative develops 100 young people per edition into working producers. It is open to everyone in the United Kingdom, whether or not you attend the summit.</p>
+            <p>You enter a structured 30, 60 and 90 day journey: working out what you can produce, developing and testing it, then launching something real. A product, a service, a solution, an enterprise or a piece of intellectual property.</p>
+            <h3>What you receive</h3>
+            <ul class="initiative-benefits">
+              <li>Help turning your skills, ideas and opportunities into something of value</li>
+              <li>Practical business, entrepreneurship, technology, innovation and intellectual-property teaching</li>
+              <li>Mentorship, expert guidance and a network of producers and professionals</li>
+              <li>Your own 30, 60 and 90 day producers plan, and support to work it</li>
+              <li>Chances to showcase, pitch, collaborate and reach markets</li>
+              <li>A place in the ongoing Kingdom Producers network</li>
+            </ul>
+            <p>Give us your details below and we will keep you informed by email as the initiative unfolds: what is happening, what is available to you and how to take part.</p>
+          </div>
+        <?php else: ?>
+        <p class="field__label path-choice__label">Choose one</p>
+        <div class="tickets tickets--attendance" role="radiogroup" aria-label="How would you like to attend the summit?">
           <?php
           $paths = [
-            'onsite'     => ['A', 'Attend onsite', 'Onsite for the full summit.'],
-            'online'     => ['B', 'Attend online', 'Live stream from Rainham, Essex — programme, recordings and updates.'],
-            'initiative' => ['C', 'Join the initiative', 'Member of Kingdom Producers with portal access.'],
+            'onsite' => ['A', 'Attend onsite in Essex', 'The full day in the room: masterclasses, workshops, live mentoring, the business clinic, lunch and networking, a resource pack and a certificate.'],
+            'online' => ['B', 'Watch the livestream', 'The main sessions streamed to you, to follow from anywhere. You take no part in the room, so the workshops, mentoring, clinic and networking are not included.'],
           ];
           foreach ($paths as $value => [$letter, $label, $desc]): ?>
-            <label class="ticket ticket--<?= e($value) ?>">
-              <input type="radio" name="participation" value="<?= $value ?>" <?= $selectedMode === $value ? 'checked' : '' ?> required>
+            <?php $soldOut = $value === 'onsite' && $seatsLeft <= 0; ?>
+            <label class="ticket ticket--<?= e($value) ?> <?= $soldOut ? 'is-soldout' : '' ?>">
+              <input type="radio" name="participation" value="<?= $value ?>" <?= $selectedMode === $value && !$soldOut ? 'checked' : '' ?> <?= $soldOut ? 'disabled' : '' ?> required>
               <span class="ticket__body">
                 <span class="ticket__letter mono"><?= $letter ?></span>
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__price mono">&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?> <em>per place</em></span>
-                  <span class="ticket__seats mono"><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> places left</span>
+                  <span class="ticket__cost">
+                    <strong class="ticket__amount"><?= e(espees_price()) ?></strong>
+                    <span class="ticket__was mono">was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s> · 50 Espees off</span>
+                  </span>
+                  <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format($seatsLeft) . ' of ' . number_format((int) config('app.summit.onsite_capacity')) . ' places left' ?></span>
                 <?php else: ?>
-                  <span class="ticket__price mono"><em>Free</em></span>
+                  <span class="ticket__cost">
+                    <strong class="ticket__amount">Free</strong>
+                    <span class="ticket__was mono">no payment needed</span>
+                  </span>
+                  <span class="ticket__limit mono">Selected sessions only · no workshops, mentoring or networking</span>
                 <?php endif; ?>
                 <span class="ticket__punch" aria-hidden="true"></span>
               </span>
             </label>
           <?php endforeach; ?>
         </div>
+
+        <?php endif; ?>
       </fieldset>
 
       <!-- 02 About you -->
@@ -141,10 +184,14 @@ $stageCopy = [
             <?php endif; ?>
           </div>
           <div class="field <?= error_for('phone') ? 'has-error' : '' ?>">
-            <label for="phone">Phone <span class="field__opt" data-onsite-hide>optional</span></label>
-            <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+44" value="<?= old('phone') ?>">
-            <p class="field__hint" data-only="onsite">Required for onsite attendees so we can reach you on the day.</p>
+            <label for="phone">Phone number</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+44" value="<?= old('phone') ?>" required>
             <?php if ($err = error_for('phone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
+          <div class="field <?= error_for('kingschat_username') ? 'has-error' : '' ?>">
+            <label for="kingschat_username">KingsChat username <span class="field__opt">optional</span></label>
+            <input id="kingschat_username" name="kingschat_username" type="text" autocomplete="off" placeholder="@username" maxlength="80" value="<?= old('kingschat_username') ?>">
+            <?php if ($err = error_for('kingschat_username')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
         </div>
 
@@ -178,15 +225,43 @@ $stageCopy = [
           <?php if ($err = error_for('age_band')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
 
-        <div class="form__row">
-          <div class="field">
-            <label for="church_group">Church / group <span class="field__opt">optional</span></label>
-            <input id="church_group" name="church_group" type="text" value="<?= old('church_group') ?>">
+        <div class="church-hierarchy" data-church-hierarchy data-api-base="https://churches-api.rorportal.org/api/v1">
+          <input id="zone" name="zone" type="hidden" value="<?= old('zone') ?>" data-old-value="<?= old('zone') ?>">
+          <div class="field <?= error_for('zone') ? 'has-error' : '' ?>">
+            <span class="field__label">Church structure</span>
+            <div class="chips" role="radiogroup" aria-label="Choose Zone or Campus Ministry">
+              <label class="chip"><input type="radio" name="directory_type" value="zone" required><span>Zone</span></label>
+              <label class="chip"><input type="radio" name="directory_type" value="campus" required><span>Campus Ministry</span></label>
+            </div>
+            <?php if ($err = error_for('zone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
-          <div class="field">
-            <label for="zone">Zone / region <span class="field__opt">optional</span></label>
-            <input id="zone" name="zone" type="text" value="<?= old('zone') ?>">
+          <div class="field directory-choice" data-directory-choice="zone" hidden>
+            <label for="zone_directory">Zone</label>
+            <select id="zone_directory" disabled>
+              <option value="">Loading zones…</option>
+            </select>
           </div>
+          <div class="field directory-choice" data-directory-choice="campus" hidden>
+            <label for="campus_directory">Campus Ministry</label>
+            <select id="campus_directory" disabled>
+              <option value="">Loading BLW campuses…</option>
+            </select>
+          </div>
+          <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>">
+            <label for="group_name">Group</label>
+            <select id="group_name" name="group_name" required disabled data-old-value="<?= old('group_name') ?>">
+              <option value="">Choose a zone or campus first</option>
+            </select>
+            <?php if ($err = error_for('group_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
+          <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>">
+            <label for="church_name">Church</label>
+            <select id="church_name" name="church_name" required disabled data-old-value="<?= old('church_name') ?>">
+              <option value="">Choose a group first</option>
+            </select>
+            <?php if ($err = error_for('church_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
+          <p class="field__hint church-hierarchy__status" data-church-status aria-live="polite">Loading the Loveworld church directory…</p>
         </div>
 
         <div class="form__row">
@@ -201,9 +276,10 @@ $stageCopy = [
         </div>
       </fieldset>
 
-      <!-- 03 What you produce -->
+      <?php if (!$isInitiative): ?>
+      <!-- 03 Current producer stage -->
       <fieldset class="form__section" data-section="produce">
-        <legend class="form__legend"><span class="mono">03</span> What you produce</legend>
+        <legend class="form__legend"><span class="mono">03</span> Where you are now</legend>
 
         <div class="field <?= error_for('field') ? 'has-error' : '' ?>">
           <label for="field">Your field</label>
@@ -217,14 +293,14 @@ $stageCopy = [
         </div>
 
         <div class="field <?= error_for('producer_stage') ? 'has-error' : '' ?>">
-          <span class="field__label">Where are you on the producer's path?</span>
+          <span class="field__label">Which option sounds most like you?</span>
           <div class="stages" role="radiogroup">
             <?php foreach ($stages as $i => $s): ?>
               <label class="stage">
                 <input type="radio" name="producer_stage" value="<?= $s ?>" <?= old_checked('producer_stage', $s) ?> required>
                 <span class="stage__body">
                   <span class="stage__num mono"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
-                  <span class="stage__name"><?= e(ucfirst($s)) ?></span>
+                  <span class="stage__name"><?= e($stageLabels[$s]) ?></span>
                   <span class="stage__desc"><?= e($stageCopy[$s]) ?></span>
                 </span>
               </label>
@@ -233,10 +309,10 @@ $stageCopy = [
           <?php if ($err = error_for('producer_stage')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
 
-        <div class="field <?= error_for('what_to_produce') ? 'has-error' : '' ?>">
-          <label for="what_to_produce">What can you produce? <span class="field__opt">optional, but useful</span></label>
-          <textarea id="what_to_produce" name="what_to_produce" rows="4" maxlength="1200" placeholder="A sentence or two. What are you making, or what would you like to make?"><?= old('what_to_produce') ?></textarea>
-          <?php if ($err = error_for('what_to_produce')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+        <div class="field <?= error_for('producer_stage_detail') ? 'has-error' : '' ?>">
+          <label for="producer_stage_detail">Tell us more about where you are <span class="field__opt">optional</span></label>
+          <textarea id="producer_stage_detail" name="producer_stage_detail" rows="3" maxlength="500" placeholder="For example: what you have started, what is already working, or what you want help with."><?= old('producer_stage_detail') ?></textarea>
+          <?php if ($err = error_for('producer_stage_detail')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
 
         <div class="field <?= error_for('interests') ? 'has-error' : '' ?>">
@@ -248,6 +324,11 @@ $stageCopy = [
                 <span><?= e($label) ?></span>
               </label>
             <?php endforeach; ?>
+          </div>
+          <div class="field__reveal" data-reveal-when="interests[]:other">
+            <label for="interest_other" class="field__sub-label">Tell us which area <span class="field__opt">optional</span></label>
+            <input id="interest_other" name="interest_other" type="text" maxlength="160" placeholder="For example: sport, hospitality, logistics" value="<?= old('interest_other') ?>">
+            <?php if ($err = error_for('interest_other')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <?php if ($err = error_for('interests')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
@@ -283,25 +364,10 @@ $stageCopy = [
           </div>
         </div>
 
-        <div class="form__conditional" data-only="online">
-          <div class="field field--check">
-            <label class="check">
-              <input type="checkbox" name="wants_updates" value="1" <?= old_checked('wants_updates', '1') ?: (old('wants_updates') === '' ? 'checked' : '') ?>>
-              <span>Send me the programme, speaker announcements and session recordings</span>
-            </label>
-          </div>
-          <div class="field field--check">
-            <label class="check">
-              <input type="checkbox" name="wants_portal" value="1" <?= old_checked('wants_portal', '1') ?>>
-              <span>Notify me when the Kingdom Producers portal opens</span>
-            </label>
-          </div>
-        </div>
-
         <div class="form__conditional" data-only="initiative">
           <div class="portal-note">
-            <span class="portal-note__stamp" aria-hidden="true">Member</span>
-            <p>As a member you'll receive access to the Kingdom Producers portal as it opens — a detailed repository of methods, case files, capital pathways, a producer directory, and opportunities to work with other producers.</p>
+            <span class="portal-note__stamp" aria-hidden="true">Initiative</span>
+            <p>You are joining the Kingdom Producers initiative and its 30, 60 and 90 day production journey. You will receive access to methods, case files, capital pathways, mentoring, the producer directory and opportunities to work with other producers.</p>
           </div>
 
           <div class="field <?= error_for('contribute_as') ? 'has-error' : '' ?>">
@@ -330,10 +396,11 @@ $stageCopy = [
           </select>
         </div>
       </fieldset>
+      <?php endif; ?>
 
       <!-- 05 Consent -->
       <fieldset class="form__section" data-section="consent">
-        <legend class="form__legend"><span class="mono">05</span> Confirm</legend>
+        <legend class="form__legend"><span class="mono"><?= $isInitiative ? '03' : '05' ?></span> Confirm</legend>
 
         <div class="field field--check <?= error_for('consent_terms') ? 'has-error' : '' ?>">
           <label class="check">
@@ -353,11 +420,12 @@ $stageCopy = [
           <div class="form__conditional" data-only="onsite">
             <div class="pay-note">
               <span class="pay-note__stamp mono">Secure payment</span>
-              <p>Onsite attendance is <strong>&pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?></strong> per place. You'll complete payment on the next step via PayPal.</p>
+              <p class="pay-note__amount">You pay <strong><?= e(espees_price()) ?></strong> for your onsite place.</p>
+              <p>That is <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?> less a 50 Espees discount. On the next page you choose how to pay: Espees wallet, PayPal or bank transfer. Your place is held once payment is confirmed.</p>
             </div>
           </div>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
-            <span class="btn__label" data-pay-label="Continue to payment &mdash; &pound;<?= number_format(config('paypal.price_pence') / 100, 0) ?>" data-free-label="Complete registration">Complete registration</span>
+            <span class="btn__label" data-pay-label="Continue to payment &mdash; <?= e(espees_price()) ?>" data-free-label="Complete registration">Complete registration</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </button>
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>

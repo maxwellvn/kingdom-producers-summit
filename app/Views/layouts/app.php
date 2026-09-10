@@ -10,20 +10,29 @@ $summit = $summit ?? config('app.summit');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title) ?></title>
-  <meta name="description" content="The Loveworld Kingdom Producers Summit, London Edition 2026. From consumers to producers — whatever your age, whatever your field. Register to attend, follow online, or join the Kingdom Producers initiative.">
+  <meta name="description" content="The Loveworld Kingdom Producers Summit, Essex Edition 2026. From consumers to producers — whatever your age, whatever your field. Register to attend, follow online, or join the Kingdom Producers initiative.">
   <meta name="theme-color" content="#F3EEE3">
   <meta property="og:title" content="<?= e($title) ?>">
-  <meta property="og:description" content="From consumers to producers. 100 producers → 1,000 UK → 10,000 global. Organised by Loveworld Consulate UK.">
+  <meta property="og:description" content="From consumers to producers. Join the initiative and its 30, 60 and 90 day production journey. Organised by Loveworld Consulate UK.">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/png" href="<?= e(asset('img/favicon.png')) ?>">
   <link rel="apple-touch-icon" href="<?= e(asset('img/apple-touch-icon.png')) ?>">
 
+<?php $showIntro = $bodyClass === 'page-home'; ?>
+<?php if ($showIntro): ?>
   <script>
     (function () {
-      var reloaded = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]?.type === 'reload';
-      if (reloaded) document.documentElement.classList.add('intro-pending');
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      var firstVisit = !sessionStorage.getItem('introSeen');
+      // ponytail: hard reload bypasses cache, so the document is fetched fresh (transferSize > 0)
+      var hardReload = nav && nav.type === 'reload' && nav.transferSize > 0;
+      if (firstVisit || hardReload) {
+        document.documentElement.classList.add('intro-pending');
+        try { sessionStorage.setItem('introSeen', '1'); } catch (e) {}
+      }
     })();
   </script>
+<?php endif; ?>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,11 +43,14 @@ $summit = $summit ?? config('app.summit');
   <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 </head>
 <body class="<?= e($bodyClass) ?>">
-  <div class="site-intro" id="siteIntro" aria-label="Loveworld Kingdom Producers Summit introduction">
-    <video class="site-intro__video" autoplay muted playsinline preload="auto" aria-hidden="true">
-      <source src="<?= e(asset('media/producers-opening-ident-higgsfield-trimmed-v1.mp4')) ?>" type="video/mp4">
-    </video>
-  </div>
+  <?php if ($showIntro): ?>
+    <div class="site-intro" id="siteIntro" aria-label="Loveworld Kingdom Producers Summit introduction">
+      <video class="site-intro__video" autoplay muted playsinline preload="auto" aria-hidden="true">
+        <source src="<?= e(asset('media/producers-opening-ident-higgsfield-trimmed-v1.mp4')) ?>" type="video/mp4">
+      </video>
+      <button type="button" class="site-intro__skip mono" data-intro-skip>Skip</button>
+    </div>
+  <?php endif; ?>
 
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="grain" aria-hidden="true"></div>
@@ -91,16 +103,6 @@ $summit = $summit ?? config('app.summit');
       </div>
     </div>
   </aside>
-
-  <div class="video-modal" id="videoModal" hidden>
-    <div class="video-modal__backdrop" data-video-close></div>
-    <figure class="video-modal__frame" role="dialog" aria-modal="true" aria-label="Video player">
-      <video id="videoModalPlayer" controls preload="metadata"></video>
-      <button class="video-modal__close" type="button" data-video-close aria-label="Close video">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-      </button>
-    </figure>
-  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>

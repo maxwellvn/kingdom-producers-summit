@@ -22,14 +22,21 @@ final class Registration
     ];
 
     public const INTERESTS = [
-        'facilitators' => '1-to-1 engagement with facilitators',
-        'launch'       => 'Launch & networking',
-        'product'      => 'Product showcases',
-        'mentoring'    => 'Masterclasses & mentoring',
-        'capital'      => 'Funding & investment readiness',
-        'export'       => 'Export & international trade',
-        'youth'        => 'Youth & student producers',
-        'digital'      => 'Digital & software tools',
+        'technology'    => 'Technology & software',
+        'media'         => 'Media & film',
+        'music'         => 'Music & performing arts',
+        'fashion'       => 'Fashion & design',
+        'manufacturing' => 'Manufacturing & engineering',
+        'agriculture'   => 'Agriculture & food',
+        'finance'       => 'Finance & investment',
+        'property'      => 'Property & construction',
+        'health'        => 'Health & wellbeing',
+        'education'     => 'Education & training',
+        'publishing'    => 'Publishing & writing',
+        'retail'        => 'Retail & e-commerce',
+        'ministry'      => 'Ministry & community',
+        'public_service'=> 'Public service & policy',
+        'other'         => 'Another area not listed',
     ];
 
     public const CONTRIBUTE = [
@@ -146,6 +153,14 @@ final class Registration
         return $row ?: null;
     }
 
+    /** Onsite places already held: paid, claimed, or awaiting payment. Cancelled rows release their place. */
+    public static function onsiteSeatsTaken(): int
+    {
+        return (int) Database::connection()
+            ->query("SELECT COUNT(*) FROM registrations WHERE participation = 'onsite' AND status <> 'cancelled'")
+            ->fetchColumn();
+    }
+
     /** @return array{total:int, onsite:int, online:int, initiative:int, today:int, countries:int} */
     public static function stats(): array
     {
@@ -231,7 +246,8 @@ final class Registration
 
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $pdo->prepare(
-            "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone, r.country, r.city,
+            "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone,
+                    r.kingschat_username, r.country, r.city, r.zone, r.group_name, r.church_name,
                     r.field, r.producer_stage, r.payment_status, r.payment_method, r.created_at, a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}

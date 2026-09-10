@@ -17,7 +17,6 @@ return [
     'bank' => [
         'enabled'          => true,
         'account_name'     => 'LOVEWORLD CONSULATE LIMITED',
-        'account_address'  => '128 City Road, EC1V 2NX, London, United Kingdom',
         'account_number'   => '90500026',
         'sort_code'        => '23-01-63',
         'iban'             => 'GB61 REVO 2301 6390 5000 26',

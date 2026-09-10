@@ -26,7 +26,7 @@ final class PaymentService
             ],
             'paypal' => [
                 'label' => 'PayPal',
-                'blurb' => "Card or PayPal balance — £{$amount} GBP.",
+                'blurb' => "Card or PayPal balance — {$amount} Espees.",
                 'available' => (bool) config('payments.paypal_enabled')
                     && self::unavailableMessage() === null
                     && Setting::get('pay_paypal_enabled', '1') === '1',
@@ -34,7 +34,7 @@ final class PaymentService
             ],
             'bank' => [
                 'label' => 'Bank transfer',
-                'blurb' => "UK bank transfer of £{$amount} with your reference.",
+                'blurb' => "UK bank transfer of {$amount} Espees with your reference.",
                 'available' => (bool) config('payments.bank.enabled')
                     && trim((string) config('payments.bank.account_name')) !== ''
                     && trim((string) config('payments.bank.account_number')) !== ''
@@ -81,7 +81,7 @@ final class PaymentService
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'custom_id'   => $reference,
-                'description' => 'Kingdom Producers Summit — onsite place (London Edition 2026)',
+                'description' => 'Kingdom Producers Summit — onsite place (Essex Edition 2026)',
                 'amount'      => [
                     'currency_code' => (string) config('paypal.currency'),
                     'value'         => number_format((int) config('paypal.price_pence') / 100, 2, '.', ''),

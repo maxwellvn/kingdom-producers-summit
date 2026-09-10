@@ -16,15 +16,15 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> <?= $isEspees ? 'Pay with Espees' : 'Pay by bank transfer' ?></p>
-      <h1 class="pay__title">Send &pound;<?= e($amount) ?></h1>
+      <h1 class="pay__title">Send <?= e($amount) ?> Espees</h1>
 
       <?php if ($isEspees): ?>
-        <p class="pay__lede">Open your Espees wallet and send <strong>&pound;<?= e($amount) ?></strong> to this Espees code:</p>
+        <p class="pay__lede">Open your Espees wallet and send <strong><?= e($amount) ?> Espees</strong> to this Espees code:</p>
         <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
           <?php $row('Espees code', $code); ?>
         </table>
       <?php else: ?>
-        <p class="pay__lede">Transfer <strong>&pound;<?= e($amount) ?></strong> to:</p>
+        <p class="pay__lede">Transfer <strong><?= e($amount) ?> Espees</strong> to:</p>
         <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
           <?php $row('Recipient', (string) config('payments.bank.account_name')); ?>
         </table>

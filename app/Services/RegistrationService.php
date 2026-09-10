@@ -26,32 +26,35 @@ final class RegistrationService
             'first_name'    => 'required|min:2|max:80',
             'last_name'     => 'required|min:2|max:80',
             'email'         => 'required|email|max:190',
-            'phone'         => 'max:30|phone',
+            'phone'         => 'required|max:30|phone',
+            'kingschat_username' => 'max:80',
             'country'       => 'required|min:2|max:80',
             'city'          => 'max:80',
             'age_band'      => 'required|in:' . implode(',', Registration::AGE_BANDS),
-            'church_group'  => 'max:120',
-            'zone'          => 'max:120',
+            'zone'          => 'required|max:120',
+            'group_name'    => 'required|max:120',
+            'church_name'   => 'required|max:160',
             'organisation'  => 'max:120',
             'role_title'    => 'max:120',
-            'field'         => 'required|in:' . implode(',', Registration::FIELDS),
-            'producer_stage'=> 'required|in:' . implode(',', Registration::STAGES),
-            'what_to_produce'=> 'max:1200',
-            'interests'     => 'array|max_items:8|in:' . implode(',', array_keys(Registration::INTERESTS)),
+            'field'         => 'in:' . implode(',', Registration::FIELDS),
+            'producer_stage'=> 'in:' . implode(',', Registration::STAGES),
+            'producer_stage_detail' => 'max:500',
+            'interests'     => 'array|max_items:16|in:' . implode(',', array_keys(Registration::INTERESTS)),
+            'interest_other'=> 'max:160',
             'hear_about'    => 'in:' . implode(',', array_keys(Registration::HEAR_ABOUT)),
             'consent_terms' => 'required|accepted',
         ];
 
         if ($participation === 'onsite') {
-            $rules['phone'] = 'required|max:30|phone';
             $rules['dietary'] = 'max:160';
             $rules['accessibility'] = 'max:255';
             $rules['emergency_contact'] = 'max:160';
         }
 
-        if ($participation === 'initiative') {
-            $rules['contribute_as'] = 'array|max_items:6|in:' . implode(',', array_keys(Registration::CONTRIBUTE));
-            $rules['portal_interest'] = 'max:1200';
+        // ponytail: the initiative path collects personal details only
+        if ($participation !== 'initiative') {
+            $rules['field'] = 'required|' . $rules['field'];
+            $rules['producer_stage'] = 'required|' . $rules['producer_stage'];
         }
 
         $labels = [
@@ -60,11 +63,15 @@ final class RegistrationService
             'last_name'      => 'Surname',
             'email'          => 'Email address',
             'phone'          => 'Phone number',
+            'kingschat_username' => 'KingsChat username',
             'age_band'       => 'Age group',
+            'zone'           => 'Zone or BLW campus',
+            'group_name'     => 'Group',
+            'church_name'    => 'Church',
             'field'          => 'Field',
             'producer_stage' => 'Producer stage',
+            'interest_other' => 'Other area of interest',
             'consent_terms'  => 'the privacy notice',
-            'what_to_produce'=> 'Your answer',
         ];
 
         $data = $request->all();
@@ -72,11 +79,14 @@ final class RegistrationService
         $errors = $validator->passes() ? [] : $validator->errors();
 
         $email = mb_strtolower($request->str('email'));
-        if (!isset($errors['email']) && $email !== '') {
-            $duplicateMessage = self::duplicateMessage($email);
-            if ($duplicateMessage !== null) {
-                $errors['email'] = $duplicateMessage;
-            }
+        // One registration per email. Changing path is an organiser action until there is an event manager.
+        if (!isset($errors['email']) && $email !== '' && Registration::findByEmail($email) !== null) {
+            $errors['email'] = self::duplicateMessage($email) ?? 'This email is already registered.';
+        }
+
+        // Onsite places are finite; an upgrade needs a place just as a new registration does.
+        if (!isset($errors['participation']) && $participation === 'onsite' && !self::onsitePlaceAvailable()) {
+            $errors['participation'] = 'Onsite places are fully booked. You can still register to participate online or join the initiative.';
         }
 
         if ($errors) {
@@ -91,24 +101,29 @@ final class RegistrationService
             'last_name'         => $request->str('last_name'),
             'email'             => $email,
             'phone'             => $this->nullable($request->str('phone')),
+            'kingschat_username'=> $this->nullable(ltrim($request->str('kingschat_username'), '@')),
             'country'           => $request->str('country'),
             'city'              => $this->nullable($request->str('city')),
             'age_band'          => $request->str('age_band'),
-            'church_group'      => $this->nullable($request->str('church_group')),
+            'church_group'      => $this->nullable($request->str('church_name')),
             'zone'              => $this->nullable($request->str('zone')),
+            'group_name'        => $this->nullable($request->str('group_name')),
+            'church_name'       => $this->nullable($request->str('church_name')),
             'organisation'      => $this->nullable($request->str('organisation')),
             'role_title'        => $this->nullable($request->str('role_title')),
-            'field'             => $request->str('field'),
-            'producer_stage'    => $request->str('producer_stage'),
-            'what_to_produce'   => $this->nullable($request->str('what_to_produce')),
+            'field'             => $this->nullable($request->str('field')),
+            'producer_stage'    => $this->nullable($request->str('producer_stage')),
+            'producer_stage_detail' => $this->nullable($request->str('producer_stage_detail')),
+            'what_to_produce'   => null,
             'interests'         => $this->json($request->list('interests')),
+            'interest_other'    => $this->nullable($request->str('interest_other')),
             'hear_about'        => $this->nullable($request->str('hear_about')),
             'onsite_days'       => null,
             'dietary'           => $participation === 'onsite' ? $this->nullable($request->str('dietary')) : null,
             'accessibility'     => $participation === 'onsite' ? $this->nullable($request->str('accessibility')) : null,
             'needs_letter'      => $participation === 'onsite' && $request->str('needs_letter') === '1' ? 1 : 0,
             'emergency_contact' => $participation === 'onsite' ? $this->nullable($request->str('emergency_contact')) : null,
-            'wants_updates'     => $participation === 'onsite' ? 1 : ($request->str('wants_updates', '1') === '1' ? 1 : 0),
+            'wants_updates'     => 1,
             'wants_portal'      => $participation === 'initiative' ? 1 : ($request->str('wants_portal') === '1' ? 1 : 0),
             'contribute_as'     => $participation === 'initiative' ? $this->json($request->list('contribute_as')) : null,
             'portal_interest'   => $participation === 'initiative' ? $this->nullable($request->str('portal_interest')) : null,
@@ -129,6 +144,14 @@ final class RegistrationService
     {
         Registration::create($clean);
         return Registration::findByReference($clean['reference']) ?? $clean;
+    }
+
+    /** True while onsite capacity has not been reached. */
+    public static function onsitePlaceAvailable(): bool
+    {
+        // ponytail: a read-then-insert check, so a dead heat could seat one extra.
+        // Swap for a transaction with SELECT ... FOR UPDATE if that ever matters.
+        return Registration::onsiteSeatsTaken() < max(1, (int) config('app.summit.onsite_capacity'));
     }
 
     public static function duplicateMessage(string $email): ?string
