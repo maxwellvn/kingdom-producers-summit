@@ -1,7 +1,7 @@
 <?php
 /** @var array $registration @var array $summit @var string $accessToken */
 $r = $registration;
-$pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Participating online — selected summit access', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
+$pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
     'Join us on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',

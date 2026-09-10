@@ -137,7 +137,7 @@
       <article class="path" data-reveal data-reveal-delay="0.1">
         <div class="path__head">
           <h3 class="path__title">
-            Watch online
+            Attend online
             <span class="path__meta mono">Unlimited places</span>
           </h3>
           <p class="path__cost">
@@ -154,7 +154,7 @@
             <li>Networking and product-showcase participation</li>
           </ul>
         </div>
-        <a href="<?= url('/register') ?>?mode=online" class="path__cta path__cta--online">Register to participate online <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
+        <a href="<?= url('/register') ?>?mode=online" class="path__cta path__cta--online">Register to attend online <span class="path__cta-icon" aria-hidden="true"><?= icon_arrow() ?></span></a>
       </article>
     </div>
   </div>
@@ -268,7 +268,7 @@
         ['When exactly is it?', 'The summit is on 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
         ['Is there a cost to attend?', 'Onsite attendance is normally ' . espees_price((int) config('paypal.standard_price_pence')) . '. A 50 Espees discount reduces the amount due to ' . espees_price() . '. Online access and joining the initiative are free.'],
         ['Should I attend onsite or online?', 'Attend onsite if you want to be worked with: the 1-to-1 facilitator engagement, working rooms, networking and product showcases only happen in the room, and only part of the programme is livestreamed. Choose online if travelling to Rainham is genuinely not possible for you. There are only ' . number_format($capacity) . ' onsite seats and registration closes once they are taken.'],
-        ['I cannot travel to Essex. Can I still take part?', 'Yes. Choose "Watch online" for the livestreamed sessions, or use the separate "Join the initiative" path and take part in the 30, 60 and 90 day production journey from wherever you are.'],
+        ['I cannot travel to Essex. Can I still take part?', 'Yes. Choose "Attend online" for the livestreamed sessions, or use the separate "Join the initiative" path and take part in the 30, 60 and 90 day production journey from wherever you are.'],
         ['What is the Kingdom Producers portal?', 'A portal for initiative participants containing methods, case studies, capital pathways, a producer directory, summit resources and opportunities. Participants are notified as it opens.'],
         ['What happens after the summit?', 'Each edition develops 100 young people into working producers through a 30, 60 and 90 day journey, supported by mentorship, networks, marketplace access and expert help. The aim is 1,000 producers across the United Kingdom and 10,000 globally.'],
         ['How is my data used?', 'Only to administer the summit and the initiative. We do not sell or share your details. You can ask us to remove them at any time.'],

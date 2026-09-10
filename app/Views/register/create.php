@@ -115,7 +115,7 @@ $stageLabels = [
           <?php
           $paths = [
             'onsite' => ['A', 'Attend onsite in Essex', 'The full day in the room: masterclasses, workshops, live mentoring, the business clinic, lunch and networking, a resource pack and a certificate.'],
-            'online' => ['B', 'Watch the livestream', 'The main sessions streamed to you, to follow from anywhere. You take no part in the room, so the workshops, mentoring, clinic and networking are not included.'],
+            'online' => ['B', 'Attend online', 'The main sessions streamed to you, to follow from anywhere. You take no part in the room, so the workshops, mentoring, clinic and networking are not included.'],
           ];
           foreach ($paths as $value => [$letter, $label, $desc]): ?>
             <?php $soldOut = $value === 'onsite' && $seatsLeft <= 0; ?>
