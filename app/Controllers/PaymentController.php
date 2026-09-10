@@ -24,7 +24,9 @@ final class PaymentController extends Controller
             return $this->redirect('/register/pay?expired=1');
         }
         if ($registration['payment_status'] === 'claimed') {
-            return $this->redirect('/register/awaiting'); // already claimed — nothing left to choose
+            // Already claimed, so there is nothing left to choose.
+            return $this->redirect('/register/awaiting?resume='
+                . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
         }
 
         return $this->view('register/method', [
@@ -118,6 +120,12 @@ final class PaymentController extends Controller
             return $this->redirect('/register/pay?expired=1');
         }
 
+        // Nothing has been claimed yet, so there is nothing to await.
+        if ($registration['payment_status'] === 'unpaid') {
+            return $this->redirect('/register/method?resume='
+                . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
+        }
+
         return $this->view('register/awaiting', [
             'resume'    => PaymentService::resumeToken((string) $registration['reference']),
             'title'     => 'Payment awaiting confirmation — ' . config('app.name'),
@@ -135,7 +143,15 @@ final class PaymentController extends Controller
         // Someone who already claimed should see their status, not a payment form.
         $claimed = $this->sessionRegistration(false, $request);
         if ($claimed !== null && $claimed['payment_status'] === 'claimed') {
-            return $this->redirect('/register/awaiting');
+            return $this->redirect('/register/awaiting?resume='
+                . rawurlencode(PaymentService::resumeToken((string) $claimed['reference'])));
+        }
+
+        // A signed link from an email or a KingsChat message already identifies
+        // them, so send them straight to the payment methods.
+        if ($request->str('resume') !== '' && $claimed !== null && $claimed['payment_status'] === 'unpaid') {
+            return $this->redirect('/register/method?resume='
+                . rawurlencode(PaymentService::resumeToken((string) $claimed['reference'])));
         }
 
         $saved = $this->savedRegistration($request->str('ref'));
