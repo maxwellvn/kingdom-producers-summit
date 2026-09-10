@@ -30,31 +30,6 @@
   </div>
 </section>
 
-<section class="pillars section section--ink">
-  <div class="container">
-    <div class="section__head" data-reveal>
-      <p class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span>What the initiative does</p>
-      <h2 class="section__title">Four things it gives you</h2>
-    </div>
-    <div class="pillars__grid">
-      <?php
-      $pillars = [
-        ['Register',  'A list of every producer, by field and by city, so people can find each other.'],
-        ['Resources', 'One place for the playbooks, templates, case files and session recordings.'],
-        ['Rhythm',    'Cohorts, mentoring and showcases running through the year.'],
-        ['Reach',     'Essex first, then other UK cities, then the wider Loveworld community.'],
-      ];
-      foreach ($pillars as $i => [$name, $desc]): ?>
-        <article class="pillar" data-reveal>
-          <span class="pillar__num mono"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
-          <h3 class="pillar__title"><?= e($name) ?></h3>
-          <p><?= e($desc) ?></p>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
 <section class="perks section" id="journey">
   <div class="container">
     <div class="section__head" data-reveal>
