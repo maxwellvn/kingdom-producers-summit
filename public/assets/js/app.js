@@ -165,6 +165,128 @@
     });
   })();
 
+  /* ---------- The stream page ---------- */
+  (function () {
+    var stage = document.querySelector('[data-watch]');
+    if (!stage) return;
+
+    var sourceUrl = stage.getAttribute('data-source-url');
+    var beatUrl = stage.getAttribute('data-beat-url');
+    var video = stage.querySelector('[data-watch-video]');
+    var frame = stage.querySelector('[data-watch-frame]');
+    var placeholder = stage.querySelector('[data-watch-placeholder]');
+    var statusLabel = document.querySelector('[data-watch-status]');
+    var loaded = false;
+    var hls = null;
+
+    function say(message, note) {
+      placeholder.hidden = false;
+      video.hidden = true;
+      frame.hidden = true;
+      placeholder.innerHTML = '';
+      var line = document.createElement('p');
+      line.className = 'mono';
+      line.textContent = message;
+      placeholder.appendChild(line);
+      if (note) {
+        var second = document.createElement('p');
+        second.className = 'watch__note';
+        second.textContent = note;
+        placeholder.appendChild(second);
+      }
+    }
+
+    function stop(message, note) {
+      if (hls) { hls.destroy(); hls = null; }
+      video.removeAttribute('src');
+      loaded = false;
+      say(message, note);
+    }
+
+    function play(data) {
+      if (loaded) return;
+      loaded = true;
+
+      if (data.kind === 'iframe') {
+        frame.innerHTML = '';
+        var iframe = document.createElement('iframe');
+        iframe.src = data.source;
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.title = 'Live stream';
+        frame.appendChild(iframe);
+        frame.hidden = false;
+        placeholder.hidden = true;
+        return;
+      }
+
+      placeholder.hidden = true;
+      video.hidden = false;
+
+      if (data.kind === 'hls') {
+        // Safari plays HLS natively; everything else needs the library.
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = data.source;
+        } else if (window.Hls && window.Hls.isSupported()) {
+          hls = new window.Hls({ lowLatencyMode: true });
+          hls.loadSource(data.source);
+          hls.attachMedia(video);
+        } else {
+          stop('This browser cannot play the stream', 'Try Chrome, Safari or Edge.');
+          return;
+        }
+      } else {
+        video.src = data.source;
+      }
+
+      video.play().catch(function () { /* a viewer gesture will start it */ });
+    }
+
+    function check() {
+      fetch(sourceUrl, { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, body: d }; }); })
+        .then(function (res) {
+          if (res.status === 409) {
+            stop('Signed out', 'Your pass was opened on another device.');
+            window.setTimeout(function () { location.reload(); }, 2500);
+            return;
+          }
+          if (res.status === 403) { location.reload(); return; }
+
+          var data = res.body;
+          if (!data.ok) return;
+          if (!data.live) {
+            if (statusLabel) statusLabel.textContent = 'Not started yet';
+            stop('The stream has not started', 'This page will start it the moment it goes live.');
+            return;
+          }
+          if (statusLabel) statusLabel.textContent = 'Live now';
+          play(data);
+        })
+        .catch(function () {});
+    }
+
+    function beat() {
+      if (document.hidden) return;
+      fetch(beatUrl, { method: 'POST', keepalive: true })
+        .then(function (r) {
+          if (r.status === 409) {
+            stop('Signed out', 'Your pass was opened on another device.');
+            window.setTimeout(function () { location.reload(); }, 2500);
+          } else if (r.status === 403) {
+            location.reload();
+          }
+        })
+        .catch(function () {});
+    }
+
+    check();
+    beat();
+    window.setInterval(beat, 25000);
+    window.setInterval(function () { if (!loaded) check(); }, 15000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) beat(); });
+  })();
+
   /* ---------- Nav: scrolled state + mobile menu ---------- */
   var nav = document.getElementById('nav');
   if (nav) {

@@ -983,3 +983,28 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 
 .ticket.is-soldout { opacity: .45; }
 .ticket.is-soldout .ticket__body { cursor: not-allowed; }
+
+/* ---------- Watch ---------- */
+.page-watch { background: #0d1330; }
+.watch { padding-block: clamp(6.5rem, 12vh, 9rem) clamp(3rem, 6vw, 5rem); color: var(--paper); background: #0d1330; min-height: 100svh; }
+.watch__inner { display: grid; gap: 1.2rem; }
+.watch__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 1rem 2rem; }
+.watch__status { display: flex; align-items: center; gap: .55rem; margin: 0 0 .5rem; color: rgba(243,238,226,.75); }
+.watch__dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(243,238,226,.35); }
+.watch__dot.is-live { background: #e0384a; box-shadow: 0 0 0 0 rgba(224,56,74,.6); animation: watchPulse 2s ease-out infinite; }
+@keyframes watchPulse { to { box-shadow: 0 0 0 12px rgba(224,56,74,0); } }
+.watch__title { margin: 0; font-size: clamp(1.6rem, 3.2vw, 2.4rem); color: var(--paper); }
+.watch__viewer { display: flex; align-items: center; gap: 1rem; font-size: .8rem; color: rgba(243,238,226,.75); }
+.watch__ref { color: var(--paper); }
+.watch__leave { padding: .4rem .8rem; border: 1px solid rgba(243,238,226,.32); background: transparent; color: rgba(243,238,226,.85); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.watch__leave:hover { border-color: var(--paper); color: var(--paper); }
+
+.watch__stage { position: relative; aspect-ratio: 16 / 9; width: 100%; overflow: hidden; background: #070b1c; border: 1px solid rgba(243,238,226,.16); }
+.watch__video, .watch__frame, .watch__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.watch__video { object-fit: contain; background: #070b1c; }
+.watch__placeholder { position: absolute; inset: 0; display: grid; place-content: center; gap: .5rem; text-align: center; padding: 2rem; color: rgba(243,238,226,.8); }
+.watch__note { max-width: 44ch; margin: 0; color: rgba(243,238,226,.6); font-size: .95rem; }
+.watch__fine { color: rgba(243,238,226,.6); font-size: .78rem; line-height: 1.7; }
+.watch__fine a { color: rgba(243,238,226,.9); border-bottom: 1px solid rgba(243,238,226,.35); }
+
+.pay__dot.is-live { background: #e0384a; }

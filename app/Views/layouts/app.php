@@ -109,6 +109,10 @@ $summit = $summit ?? config('app.summit');
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <?php if (($presenceContext ?? '') === 'watch'): ?>
+    <!-- Only the stream page needs an HLS player. -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js" defer></script>
+  <?php endif; ?>
   <script src="<?= asset('js/app.js') ?>" defer></script>
 </body>
 </html>

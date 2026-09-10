@@ -72,6 +72,52 @@ try {
     verify((new App\Middleware\RequireAdmin())->handle($request) !== null, 'attendance requires staff authentication');
     verify(!Session::verifyCsrf('incorrect'), 'incorrect CSRF token rejected');
 
+    // ---- The protected stream ----
+    $watcher = $service->register($service->validateIssued(new Request('POST', '/admin/issue', [], [
+        'participation' => 'online', 'first_name' => 'Stream', 'last_name' => 'Viewer',
+        'email' => 'viewer-' . bin2hex(random_bytes(6)) . '@example.org',
+        'kingschat_username' => 'streamviewer',
+    ], []), 'organiser@example.org')[1]);
+
+    verify(App\Services\StreamService::mayWatch($watcher), 'a confirmed online place may watch');
+    verify(App\Services\StreamService::findViewer($watcher['reference'], $watcher['email']) !== null,
+        'reference with the registered email opens the gate');
+    verify(App\Services\StreamService::findViewer($watcher['reference'], 'streamviewer') !== null,
+        'reference with the KingsChat handle opens the gate');
+    verify(App\Services\StreamService::findViewer($watcher['reference'], 'someone@else.org') === null,
+        'a reference alone is not enough');
+    verify(App\Services\StreamService::findViewer('KPS26-NOSUCH', $watcher['email']) === null,
+        'an unknown reference is refused');
+
+    // Initiative members did not register for the summit.
+    $pdo->prepare('UPDATE registrations SET participation = ? WHERE reference = ?')
+        ->execute(['initiative', $watcher['reference']]);
+    verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
+        'an initiative place may not watch');
+    $pdo->prepare('UPDATE registrations SET participation = ?, payment_status = ? WHERE reference = ?')
+        ->execute(['online', 'unpaid', $watcher['reference']]);
+    verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
+        'an unpaid place may not watch');
+    $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')
+        ->execute(['paid', $watcher['reference']]);
+
+    // One viewer at a time: the newest device takes the pass.
+    $first = str_repeat('a', 32);
+    $second = str_repeat('b', 32);
+    App\Services\StreamService::claimPass($watcher['reference'], $first, 'desktop', 'hash');
+    verify(App\Services\StreamService::holdsPass($watcher['reference'], $first), 'the first device holds the pass');
+    $claim = App\Services\StreamService::claimPass($watcher['reference'], $second, 'mobile', 'hash');
+    verify($claim['takenOver'] === true, 'a second device reports the takeover');
+    verify(App\Services\StreamService::holdsPass($watcher['reference'], $second), 'the second device now holds it');
+    verify(!App\Services\StreamService::holdsPass($watcher['reference'], $first), 'the first device has lost it');
+    App\Services\StreamService::releasePass($watcher['reference'], $second);
+    verify(!App\Services\StreamService::holdsPass($watcher['reference'], $second), 'signing out releases the pass');
+
+    // The stream link is read for what it is.
+    verify(App\Services\StreamService::kind('https://cdn.example.org/live/index.m3u8') === 'hls', 'an m3u8 link is HLS');
+    verify(App\Services\StreamService::kind('https://youtu.be/abc123') === 'iframe', 'a YouTube link is embedded');
+    verify(App\Services\StreamService::kind('https://example.org/clip.mp4') === 'file', 'an mp4 link is a file');
+
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [
         'participation' => 'onsite', 'first_name' => 'Guest', 'last_name' => 'Speaker',

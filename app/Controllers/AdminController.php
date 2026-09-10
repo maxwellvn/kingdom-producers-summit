@@ -13,7 +13,9 @@ use App\Models\Analytics;
 use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
+use App\Services\Announcer;
 use App\Services\AttendanceService;
+use App\Services\StreamService;
 use App\Services\KingsChatNotifier;
 use App\Services\RegistrationMail;
 use App\Services\RegistrationService;
@@ -269,6 +271,92 @@ final class AdminController extends Controller
         Registration::delete((int) $request->input('id', 0));
 
         return $this->redirect('/admin/registrations');
+    }
+
+    /** The stream: switch it on, set the link, and tell people. */
+    public function stream(Request $request): Response
+    {
+        return $this->view('admin/stream', [
+            'title'     => 'Stream',
+            'live'      => StreamService::isLive(),
+            'url'       => StreamService::url(),
+            'kind'      => StreamService::url() !== '' ? StreamService::kind() : '',
+            'streamTitle' => StreamService::title(),
+            'note'      => StreamService::note(),
+            'proxy'     => StreamService::proxyEnabled(),
+            'watchers'  => Analytics::watchers(),
+            'audiences' => Announcer::audiences(),
+            'templates' => Announcer::TEMPLATES,
+            'counts'    => array_map(
+                static fn (string $key) => count(Announcer::recipients($key)),
+                array_combine(array_keys(Announcer::audiences()), array_keys(Announcer::audiences()))
+            ),
+            'flash'     => (string) Session::get('admin_flash', ''),
+        ], 'layouts/admin');
+    }
+
+    public function saveStream(Request $request): Response
+    {
+        $url = trim($request->str('stream_url'));
+        if ($url !== '' && !filter_var($url, FILTER_VALIDATE_URL)) {
+            Session::flash('admin_flash', 'That stream link is not a valid web address, so nothing was saved.');
+            return $this->redirect('/admin/stream');
+        }
+
+        Setting::set('stream_url', mb_substr($url, 0, 500));
+        Setting::set('stream_title', mb_substr(trim($request->str('stream_title')), 0, 160));
+        Setting::set('stream_note', mb_substr(trim($request->str('stream_note')), 0, 255));
+        Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');
+        Setting::set('stream_enabled', $request->input('stream_enabled') === '1' ? '1' : '0');
+
+        Session::flash('admin_flash', StreamService::isLive()
+            ? 'The stream is live. Registrants can watch now.'
+            : 'Saved. The stream is switched off.');
+
+        return $this->redirect('/admin/stream');
+    }
+
+    /** Tell a group of registrants something, by email and KingsChat. */
+    public function announce(Request $request): Response
+    {
+        $audience = $request->str('audience');
+        if (!array_key_exists($audience, Announcer::audiences())) {
+            Session::flash('admin_flash', 'Choose who the message is for.');
+            return $this->redirect('/admin/stream');
+        }
+
+        $template = $request->str('template');
+        $subject = trim($request->str('subject'));
+        $body = trim($request->str('body'));
+
+        if ($template !== '' && isset(Announcer::TEMPLATES[$template]) && $body === '') {
+            $subject = Announcer::TEMPLATES[$template]['subject'];
+            $body = Announcer::TEMPLATES[$template]['body'];
+        }
+
+        if ($subject === '' || $body === '') {
+            Session::flash('admin_flash', 'A message needs a subject and something to say.');
+            return $this->redirect('/admin/stream');
+        }
+
+        $result = Announcer::send(
+            $audience,
+            $subject,
+            $body,
+            $request->input('by_email') === '1',
+            $request->input('by_kingschat') === '1'
+        );
+
+        Session::flash('admin_flash', sprintf(
+            'Sent to %d of %d: %d emailed, %d messaged on KingsChat%s.',
+            $result['sent'],
+            $result['sent'] + $result['failed'],
+            $result['emailed'],
+            $result['messaged'],
+            $result['failed'] ? ', ' . $result['failed'] . ' could not be reached' : ''
+        ));
+
+        return $this->redirect('/admin/stream');
     }
 
     /** Traffic and who is connected, refreshed live. */

@@ -8,6 +8,7 @@ use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
 use App\Controllers\PresenceController;
 use App\Controllers\RegistrationController;
+use App\Controllers\WatchController;
 use App\Core\Router;
 use App\Middleware\RequireAdmin;
 use App\Middleware\VerifyCsrf;
@@ -20,6 +21,14 @@ $router->get('/about', [HomeController::class, 'about']);
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
 $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']);
+
+// The protected stream.
+$router->get('/watch', [WatchController::class, 'show']);
+$router->post('/watch', [WatchController::class, 'enter'], [VerifyCsrf::class]);
+$router->post('/watch/leave', [WatchController::class, 'leave'], [VerifyCsrf::class]);
+$router->get('/watch/source', [WatchController::class, 'source']);
+$router->post('/watch/beat', [WatchController::class, 'beat']);
+$router->get('/watch/hls', [WatchController::class, 'hls']);
 $router->get('/access/qr', [RegistrationController::class, 'qr']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
@@ -50,6 +59,9 @@ $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin:
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
+$router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/stream/announce', [AdminController::class, 'announce'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);
 $router->get('/admin/analytics/live', [AdminController::class, 'analyticsLive'], [RequireAdmin::class]);
 $router->get('/admin/issue', [AdminController::class, 'issueForm'], [RequireAdmin::class]);
