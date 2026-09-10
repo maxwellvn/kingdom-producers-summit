@@ -30,6 +30,8 @@ final class RegistrationController extends Controller
         return $this->view('register/create', [
             'title'     => 'Register — ' . config('app.name'),
             'bodyClass' => 'page-register',
+            'description' => 'Register for the Kingdom Producers Summit: attend in person in '
+                . config('app.summit.city') . ', watch online, or join the initiative.',
             'summit'    => config('app.summit'),
             'mode'      => $mode,
             'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
@@ -124,6 +126,7 @@ final class RegistrationController extends Controller
 
         return $this->view('register/confirmed', [
             'title'        => 'You are registered — ' . config('app.name'),
+            'noIndex'      => true,
             'bodyClass'    => 'page-confirmed',
             'summit'       => config('app.summit'),
             'registration' => $registration,

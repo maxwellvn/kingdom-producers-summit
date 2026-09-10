@@ -60,6 +60,7 @@ final class WatchController extends Controller
         return $this->view('watch/player', [
             'title'     => StreamService::title(),
             'bodyClass' => 'page-watch',
+            'noIndex'   => true,
             'presenceContext' => 'watch',
             'viewer'    => $viewer,
             'live'      => StreamService::isLive(),
@@ -327,6 +328,7 @@ final class WatchController extends Controller
         return $this->view('watch/gate', [
             'title'     => 'Watch — ' . config('app.name'),
             'bodyClass' => 'page-watch page-watch-gate',
+            'noIndex'   => true,
             'live'      => StreamService::isLive(),
             'note'      => StreamService::note(),
             'errors'    => $errors,

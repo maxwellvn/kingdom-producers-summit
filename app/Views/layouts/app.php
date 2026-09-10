@@ -10,13 +10,85 @@ $summit = $summit ?? config('app.summit');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title) ?></title>
-  <meta name="description" content="<?= e(config('app.summit.edition')) ?> of the Loveworld Kingdom Producers Summit. From consumers to producers — whatever your age, whatever your field. Register to attend, follow online, or join the Kingdom Producers initiative.">
+<?php
+  $summit = (array) config('app.summit');
+  $canonical = rtrim(site_url(), '/') . \App\Core\Url::currentPath();
+  $pageDescription = $description ?? (
+      $summit['edition'] . ' of the Loveworld Kingdom Producers Summit. '
+      . $summit['date_day'] . ' in ' . $summit['city'] . '. '
+      . 'From consumers to producers, whatever your age and whatever your field: attend in person, watch online, or join the Kingdom Producers initiative.'
+  );
+  // asset() already carries the base path, so only the scheme and host are added.
+  $origin = preg_replace('#(https?://[^/]+).*#', '$1', site_url()) ?: '';
+  $shareImage = $origin . asset('img/producers-hero-v3.jpg');
+  // Pages behind a gate or personal to one person should not be indexed.
+  $private = $noIndex ?? false;
+?>
+  <meta name="description" content="<?= e($pageDescription) ?>">
   <meta name="theme-color" content="#F3EEE3">
-  <meta property="og:title" content="<?= e($title) ?>">
-  <meta property="og:description" content="From consumers to producers. Join the initiative and its 30, 60 and 90 day production journey. Organised by Loveworld Consulate UK.">
+  <link rel="canonical" href="<?= e($canonical) ?>">
+  <?php if ($private): ?>
+    <meta name="robots" content="noindex, nofollow">
+  <?php else: ?>
+    <meta name="robots" content="index, follow, max-image-preview:large">
+  <?php endif; ?>
+
+  <meta property="og:site_name" content="<?= e(config('app.name')) ?>">
+  <meta property="og:locale" content="en_GB">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="<?= e($canonical) ?>">
+  <meta property="og:title" content="<?= e($title) ?>">
+  <meta property="og:description" content="<?= e($pageDescription) ?>">
+  <meta property="og:image" content="<?= e($shareImage) ?>">
+  <meta property="og:image:alt" content="Producers at work during the Loveworld Kingdom Producers Summit">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<?= e($title) ?>">
+  <meta name="twitter:description" content="<?= e($pageDescription) ?>">
+  <meta name="twitter:image" content="<?= e($shareImage) ?>">
+
   <link rel="icon" type="image/png" href="<?= e(asset('img/favicon.png')) ?>">
   <link rel="apple-touch-icon" href="<?= e(asset('img/apple-touch-icon.png')) ?>">
+
+  <?php if (($bodyClass ?? '') === 'page-home'): ?>
+    <?php
+    // Structured data lets search engines show the date, place and price.
+    $eventStart = '2026-09-19T12:00:00+01:00';
+    $schema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Event',
+        'name' => config('app.name') . ' — ' . $summit['edition'],
+        'description' => $pageDescription,
+        'startDate' => $eventStart,
+        'eventAttendanceMode' => 'https://schema.org/MixedEventAttendanceMode',
+        'eventStatus' => 'https://schema.org/EventScheduled',
+        'image' => [$shareImage],
+        'url' => $canonical,
+        'location' => [
+            ['@type' => 'Place', 'name' => $summit['city'],
+             'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Rainham',
+                           'addressRegion' => 'Essex', 'addressCountry' => 'GB']],
+            ['@type' => 'VirtualLocation', 'url' => $origin . url('/watch')],
+        ],
+        'organizer' => [
+            '@type' => 'Organization',
+            'name' => $summit['organiser'],
+            'url' => $origin . url('/'),
+        ],
+        'offers' => [
+            ['@type' => 'Offer', 'name' => 'Onsite place',
+             'price' => number_format(price_pence('onsite') / 100, 2, '.', ''),
+             'priceCurrency' => 'GBP', 'availability' => 'https://schema.org/InStock',
+             'url' => $origin . url('/register') . '?mode=onsite', 'validFrom' => '2026-01-01T00:00:00+00:00'],
+            ['@type' => 'Offer', 'name' => 'Online place',
+             'price' => number_format(price_pence('online') / 100, 2, '.', ''),
+             'priceCurrency' => 'GBP', 'availability' => 'https://schema.org/InStock',
+             'url' => $origin . url('/register') . '?mode=online', 'validFrom' => '2026-01-01T00:00:00+00:00'],
+        ],
+    ];
+    ?>
+    <script type="application/ld+json"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+  <?php endif; ?>
 
 <?php $showIntro = $bodyClass === 'page-home'; ?>
 <?php if ($showIntro): ?>
