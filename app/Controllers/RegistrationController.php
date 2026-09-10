@@ -11,6 +11,7 @@ use App\Core\Session;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
+use App\Services\KingsChatNotifier;
 use App\Services\RegistrationMail;
 use PDOException;
 
@@ -69,6 +70,8 @@ final class RegistrationController extends Controller
                 error_log('Registration acknowledgement email could not be sent: ' . $e->getMessage());
             }
 
+            (new KingsChatNotifier())->sendPaymentPending($registration);
+
             return $this->redirect('/register/method');
         }
 
@@ -79,6 +82,8 @@ final class RegistrationController extends Controller
         } catch (\Throwable $e) {
             error_log('Registration confirmation email could not be sent.');
         }
+
+        (new KingsChatNotifier())->sendConfirmation($registration);
 
         return $this->redirect('/register/confirmed');
     }

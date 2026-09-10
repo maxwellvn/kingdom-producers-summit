@@ -175,3 +175,9 @@
 @media (prefers-reduced-motion: reduce) {
   .adm-scan.is-scanning .adm-scan__reader::after, .adm-scan.is-scanning .adm-scan__live i, .adm-scan__result[data-state="loading"]::after, .adm-scan__result[data-state="checked_in"] { animation: none; }
 }
+
+/* Key/value rows on the settings pages. */
+.adm-kv { display: grid; gap: 0; margin: 0; }
+.adm-kv > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .3rem 1rem; padding: .5rem 0; border-top: 1px solid rgba(0,0,0,.12); }
+.adm-kv dt { font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; color: #5C5648; }
+.adm-kv dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }

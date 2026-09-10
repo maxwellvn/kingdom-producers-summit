@@ -45,4 +45,8 @@ $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin:
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/kingschat', [AdminController::class, 'kingschat'], [RequireAdmin::class]);
+$router->get('/admin/kingschat/callback', [AdminController::class, 'kingschatCallback'], [RequireAdmin::class]);
+$router->post('/admin/kingschat/disconnect', [AdminController::class, 'kingschatDisconnect'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/kingschat/test', [AdminController::class, 'kingschatTest'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/export.csv', [AdminController::class, 'exportCsv'], [RequireAdmin::class]);

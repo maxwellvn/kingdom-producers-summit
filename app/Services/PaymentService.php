@@ -98,6 +98,8 @@ final class PaymentService
             } catch (\Throwable $e) {
                 error_log('Registration confirmation email could not be sent: ' . $e->getMessage());
             }
+
+            (new KingsChatNotifier())->sendConfirmation($registration);
         }
 
         return true;

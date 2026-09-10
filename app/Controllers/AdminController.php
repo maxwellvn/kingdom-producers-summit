@@ -13,6 +13,7 @@ use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Services\AttendanceService;
+use App\Services\KingsChatClient;
 use App\Services\PaymentService;
 
 final class AdminController extends Controller
@@ -263,6 +264,76 @@ final class AdminController extends Controller
         Registration::delete((int) $request->input('id', 0));
 
         return $this->redirect('/admin/registrations');
+    }
+
+    /** KingsChat: connection status, and the controls to change it. */
+    public function kingschat(Request $request): Response
+    {
+        return $this->view('admin/kingschat', [
+            'title'      => 'KingsChat',
+            'configured' => KingsChatClient::isConfigured(),
+            'connected'  => KingsChatClient::isConnected(),
+            'sender'     => KingsChatClient::senderUsername(),
+            'clientId'   => (string) config('kingschat.client_id'),
+            'redirect'   => site_url() . '/admin/kingschat/callback',
+            'authorize'  => KingsChatClient::authorizeUrl(site_url() . '/admin/kingschat/callback'),
+            'contacts'   => KingsChatClient::isConnected() ? (new KingsChatClient())->contacts() : [],
+            'flash'      => (string) Session::get('admin_flash', ''),
+        ], 'layouts/admin');
+    }
+
+    /**
+     * Where KingsChat sends the organiser back after they grant access.
+     * The tokens arrive in the URL fragment, so a small page posts them here.
+     */
+    public function kingschatCallback(Request $request): Response
+    {
+        $accessToken = $request->str('access_token');
+        $refreshToken = $request->str('refresh_token');
+
+        if ($accessToken === '') {
+            return $this->view('admin/kingschat_callback', [
+                'title'  => 'Connecting KingsChat',
+                'target' => url('/admin/kingschat/callback'),
+            ], 'layouts/admin');
+        }
+
+        $expiresInMillis = (int) ($request->input('expires_in_millis') ?? 0);
+        $seconds = $expiresInMillis > 0 ? (int) floor($expiresInMillis / 1000) : 3600;
+        KingsChatClient::storeTokens($accessToken, $refreshToken, $seconds);
+
+        Session::flash('admin_flash', 'KingsChat is connected.');
+
+        return $this->redirect('/admin/kingschat');
+    }
+
+    public function kingschatDisconnect(Request $request): Response
+    {
+        KingsChatClient::forget();
+        Session::flash('admin_flash', 'KingsChat has been disconnected.');
+
+        return $this->redirect('/admin/kingschat');
+    }
+
+    /** Send a message to one username, to prove the connection works. */
+    public function kingschatTest(Request $request): Response
+    {
+        $recipient = trim($request->str('recipient'));
+        if ($recipient === '') {
+            Session::flash('admin_flash', 'Enter a username to send the test to.');
+            return $this->redirect('/admin/kingschat');
+        }
+
+        [$sent, $reason] = (new KingsChatClient())->send(
+            $recipient,
+            "Test message from the Kingdom Producers Summit site.\n\nIf you can read this, KingsChat notifications are working."
+        );
+
+        Session::flash('admin_flash', $sent
+            ? 'Test message sent to ' . $recipient . '.'
+            : 'Test message not sent: ' . $reason);
+
+        return $this->redirect('/admin/kingschat');
     }
 
     public function exportCsv(Request $request): Response
