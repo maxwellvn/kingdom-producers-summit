@@ -15,8 +15,8 @@
 .adm-nav__links a { flex: none; white-space: nowrap; font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .06em; text-transform: uppercase; color: rgba(243,238,226,.78); transition: color var(--dur-fast); }
 .adm-nav__links a:hover, .adm-nav__links a.is-active { color: var(--paper); }
 .adm-nav__logout { flex: none; margin-left: 1.25rem; }
-.adm-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1rem .5rem; border: 1px solid rgba(243,238,226,.3); border-radius: var(--radius); font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--paper); transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast), opacity var(--dur-fast); }
-.adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
+.adm-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1rem .5rem; border: 1px solid rgba(27,34,66,.3); border-radius: var(--radius); font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast), opacity var(--dur-fast); }
+.adm-btn:hover { background: rgba(27,34,66,.06); border-color: var(--ink); }
 .adm-btn:active { transform: translateY(1px); }
 .adm-btn--ghost { border-color: transparent; }
 
@@ -227,3 +227,8 @@
 
 .adm-table--comments { min-width: 44rem; }
 .adm-table--comments td:nth-child(4) { white-space: normal; min-width: 18rem; max-width: 34rem; }
+
+/* Pages sit on paper, so buttons are drawn in ink. The navigation bar is the
+   one dark surface, and its buttons keep the cream treatment. */
+.adm-nav .adm-btn { color: var(--paper); border-color: rgba(243,238,226,.3); }
+.adm-nav .adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
