@@ -10,6 +10,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
 use App\Models\Analytics;
+use App\Models\Comment;
 use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
@@ -292,8 +293,45 @@ final class AdminController extends Controller
                 static fn (string $key) => count(Announcer::recipients($key)),
                 array_combine(array_keys(Announcer::audiences()), array_keys(Announcer::audiences()))
             ),
+            'commentsOn'    => Comment::enabled(),
+            'commentCount'  => Comment::count(),
+            'comments'      => Comment::forModeration(),
             'flash'     => (string) Session::get('admin_flash', ''),
         ], 'layouts/admin');
+    }
+
+    /** Open or close the comment board. Closed is the default. */
+    public function saveComments(Request $request): Response
+    {
+        $on = $request->input('comments_enabled') === '1';
+        Setting::set('comments_enabled', $on ? '1' : '0');
+
+        Session::flash('admin_flash', $on
+            ? 'Comments are open. Viewers holding a pass can post.'
+            : 'Comments are closed. Nothing new can be posted.');
+
+        return $this->redirect('/admin/stream#comments');
+    }
+
+    /** Remove one comment, or clear the whole board. */
+    public function deleteComments(Request $request): Response
+    {
+        if ($request->str('all') === '1') {
+            $removed = Comment::clearAll();
+            Session::flash('admin_flash', $removed === 0
+                ? 'There were no comments to clear.'
+                : "Cleared {$removed} comment(s).");
+
+            return $this->redirect('/admin/stream#comments');
+        }
+
+        $id = (int) $request->str('id');
+        if ($id > 0) {
+            Comment::delete($id);
+            Session::flash('admin_flash', 'Comment removed.');
+        }
+
+        return $this->redirect('/admin/stream#comments');
     }
 
     public function saveStream(Request $request): Response

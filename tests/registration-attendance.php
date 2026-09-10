@@ -159,6 +159,30 @@ try {
         ->execute(['cancelled', 'paid', $watchRef]);
     verify(!$gate($watchEmail), 'a cancelled registration cannot watch');
 
+    // Comments: closed unless an organiser opens them, and clearable.
+    $wasOpen = App\Models\Setting::get('comments_enabled', '0');
+    App\Models\Setting::set('comments_enabled', '0');
+    verify(!App\Models\Comment::enabled(), 'the comment board is closed by default');
+    App\Models\Setting::set('comments_enabled', '1');
+    verify(App\Models\Comment::enabled(), 'an organiser can open the comment board');
+    // The board may already hold real comments, so measure against what is there.
+    $before = App\Models\Comment::count();
+    $firstComment = App\Models\Comment::add($watchRef, 'Ada Lovelace', 'First');
+    $secondComment = App\Models\Comment::add($watchRef, 'Grace Hopper', 'Second');
+    verify(App\Models\Comment::count() === $before + 2, 'comments are recorded');
+    $recent = App\Models\Comment::recent(100, $firstComment - 1);
+    verify($recent[0]['author_name'] === 'Ada Lovelace', 'comments read oldest first');
+    $newer = App\Models\Comment::recent(100, $firstComment);
+    verify(count($newer) === 1 && $newer[0]['author_name'] === 'Grace Hopper', 'only newer comments are fetched');
+    App\Models\Comment::add($watchRef, 'Verbose', str_repeat('x', 900));
+    verify(mb_strlen((string) App\Models\Comment::forModeration()[0]['body']) === App\Models\Comment::MAX_LENGTH,
+        'an over-long comment is cut to the limit');
+    App\Models\Comment::delete($firstComment);
+    verify(App\Models\Comment::count() === $before + 2, 'an organiser can remove one comment');
+    verify(App\Models\Comment::clearAll() === $before + 2 && App\Models\Comment::count() === 0,
+        'an organiser can clear the whole board');
+    App\Models\Setting::set('comments_enabled', $wasOpen);
+
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [
         'participation' => 'onsite', 'first_name' => 'Guest', 'last_name' => 'Speaker',

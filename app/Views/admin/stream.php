@@ -136,6 +136,58 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
   </div>
 </section>
 
+<section id="comments" style="margin-top:1.4rem">
+  <div class="adm-panel">
+    <h2 class="adm-panel__title">Comments</h2>
+
+    <form method="post" action="<?= url('/admin/comments') ?>" style="display:grid;gap:.8rem">
+      <?= csrf_field() ?>
+      <label style="display:flex;gap:.6rem;align-items:flex-start">
+        <input type="checkbox" name="comments_enabled" value="1" <?= $commentsOn ? 'checked' : '' ?>>
+        <span><strong>Open the comment board</strong> — only people signed in to the watch page can post.
+          Closed by default, and closing it hides the board and refuses new comments.</span>
+      </label>
+      <div><button type="submit" class="adm-btn adm-btn--dark">Save</button></div>
+    </form>
+
+    <p class="adm-muted" style="margin:1.2rem 0 .6rem">
+      <?= (int) $commentCount ?> comment(s) on the board.
+      <?= $commentsOn ? 'The board is open.' : 'The board is closed.' ?>
+    </p>
+
+    <?php if ($commentCount > 0): ?>
+      <form method="post" action="<?= url('/admin/comments/delete') ?>" style="margin-bottom:1rem">
+        <?= csrf_field() ?>
+        <input type="hidden" name="all" value="1">
+        <button type="submit" class="adm-btn">Clear every comment</button>
+      </form>
+
+      <div class="adm-table-wrap">
+        <table class="adm-table adm-table--comments">
+          <thead><tr><th>Time</th><th>Name</th><th>Reference</th><th>Comment</th><th></th></tr></thead>
+          <tbody>
+            <?php foreach ($comments as $c): ?>
+              <tr>
+                <td class="mono adm-muted"><?= e(date('d M H:i', strtotime((string) $c['created_at']))) ?></td>
+                <td><?= e((string) $c['author_name']) ?></td>
+                <td class="mono"><?= e((string) $c['reference']) ?></td>
+                <td><?= e((string) $c['body']) ?></td>
+                <td>
+                  <form method="post" action="<?= url('/admin/comments/delete') ?>">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
+                    <button type="submit" class="adm-btn">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+</section>
+
 <script>
 // Picking a ready-made message fills the fields, which stay editable.
 (function () {

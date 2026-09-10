@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Analytics;
+use App\Models\Comment;
 use App\Models\LoginAttempt;
 use App\Services\SafeUrl;
 use App\Services\StreamService;
@@ -66,6 +67,7 @@ final class WatchController extends Controller
             'live'      => StreamService::isLive(),
             'kind'      => StreamService::kind(),
             'note'      => StreamService::note(),
+            'commentsOn' => Comment::enabled(),
             'summit'    => config('app.summit'),
         ]);
     }
@@ -175,6 +177,88 @@ final class WatchController extends Controller
         );
 
         return Response::json(['ok' => true, 'live' => StreamService::isLive()]);
+    }
+
+    /** The comment board, for viewers holding a pass. */
+    public function comments(Request $request): Response
+    {
+        $viewer = $this->passHolder();
+        if ($viewer === null) {
+            return Response::json(['ok' => false, 'reason' => 'signed_out'], 403);
+        }
+        if (!Comment::enabled()) {
+            return Response::json(['ok' => true, 'enabled' => false, 'comments' => []]);
+        }
+
+        return Response::json([
+            'ok' => true,
+            'enabled' => true,
+            'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
+        ]);
+    }
+
+    /** Leave a comment. Only while an organiser has the board switched on. */
+    public function postComment(Request $request): Response
+    {
+        $viewer = $this->passHolder();
+        if ($viewer === null) {
+            return Response::json(['ok' => false, 'reason' => 'signed_out'], 403);
+        }
+        if (!Comment::enabled()) {
+            return Response::json(['ok' => false, 'reason' => 'closed',
+                'message' => 'Comments are closed.'], 403);
+        }
+
+        $body = trim($request->str('body'));
+        if ($body === '') {
+            return Response::json(['ok' => false, 'reason' => 'empty',
+                'message' => 'Write something first.'], 422);
+        }
+        if (mb_strlen($body) > Comment::MAX_LENGTH) {
+            return Response::json(['ok' => false, 'reason' => 'too_long',
+                'message' => 'Comments are limited to ' . Comment::MAX_LENGTH . ' characters.'], 422);
+        }
+
+        // One comment every few seconds, so nobody can flood the board.
+        $last = (int) Session::get('comment_at', 0);
+        $wait = Comment::COOLDOWN - (time() - $last);
+        if ($last > 0 && $wait > 0) {
+            return Response::json(['ok' => false, 'reason' => 'too_fast',
+                'message' => "Wait {$wait} second(s) before commenting again."], 429);
+        }
+
+        $name = trim((string) $viewer['first_name'] . ' ' . (string) $viewer['last_name']);
+        Comment::add((string) $viewer['reference'], $name, $body);
+        Session::put('comment_at', time());
+
+        return Response::json([
+            'ok' => true,
+            'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
+        ]);
+    }
+
+    /** The viewer only if they still hold the single pass for their registration. */
+    private function passHolder(): ?array
+    {
+        $viewer = $this->currentViewer();
+        if ($viewer === null) {
+            return null;
+        }
+
+        return StreamService::holdsPass((string) $viewer['reference'], VisitorTracker::sessionHash())
+            ? $viewer
+            : null;
+    }
+
+    /** Comments as the browser needs them. Escaping happens here, not in JS. */
+    private static function present(array $rows): array
+    {
+        return array_map(static fn (array $row) => [
+            'id'     => (int) $row['id'],
+            'author' => e((string) $row['author_name']),
+            'body'   => e((string) $row['body']),
+            'at'     => date('H:i', strtotime((string) $row['created_at'])),
+        ], $rows);
     }
 
     /**

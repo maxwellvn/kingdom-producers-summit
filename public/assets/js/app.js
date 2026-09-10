@@ -722,4 +722,108 @@
   } else {
     initGsap();
   }
+
+  /* ---------- Comment board on the watch page ---------- */
+  (function () {
+    var board = document.querySelector('[data-comments]');
+    if (!board || board.getAttribute('data-comments-open') !== '1') return;
+
+    var url = board.getAttribute('data-comments-url');
+    var list = board.querySelector('[data-comments-list]');
+    var empty = board.querySelector('[data-comments-empty]');
+    var count = board.querySelector('[data-comments-count]');
+    var form = board.querySelector('[data-comments-form]');
+    var input = board.querySelector('[data-comments-input]');
+    var hint = board.querySelector('[data-comments-hint]');
+    var token = form.querySelector('input[name="_token"]').value;
+    var defaultHint = hint.textContent;
+    var lastId = 0;
+    var total = 0;
+
+    function atBottom() {
+      return list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+    }
+
+    function render(comments) {
+      if (!comments.length) return;
+      var stick = atBottom();
+      comments.forEach(function (c) {
+        if (c.id <= lastId) return;
+        lastId = c.id;
+        total++;
+        var li = document.createElement('li');
+        li.className = 'chat__item';
+        // The server escapes author and body, so this markup is already safe.
+        li.innerHTML = '<p class="chat__meta"><span class="chat__author">' + c.author +
+                       '</span><span>' + c.at + '</span></p>' +
+                       '<p class="chat__body">' + c.body + '</p>';
+        list.appendChild(li);
+      });
+      if (empty && empty.parentNode) empty.remove();
+      count.textContent = total + (total === 1 ? ' comment' : ' comments');
+      if (stick) list.scrollTop = list.scrollHeight;
+    }
+
+    function closeBoard() {
+      board.hidden = true;
+    }
+
+    function load() {
+      fetch(url + '?after=' + lastId, { headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          if (!d.enabled) { closeBoard(); return; }
+          render(d.comments || []);
+        })
+        .catch(function () {});
+    }
+
+    function say(message, isError) {
+      hint.textContent = message;
+      hint.classList.toggle('is-error', !!isError);
+      if (message !== defaultHint) {
+        setTimeout(function () { hint.textContent = defaultHint; hint.classList.remove('is-error'); }, 4000);
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var body = input.value.trim();
+      if (!body) return;
+      var button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+
+      var data = new FormData();
+      data.append('_token', token);
+      data.append('body', body);
+      data.append('after', String(lastId));
+
+      fetch(url, { method: 'POST', body: data, headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+        .then(function (res) {
+          if (res.data && res.data.ok) {
+            input.value = '';
+            render(res.data.comments || []);
+            list.scrollTop = list.scrollHeight;
+            return;
+          }
+          if (res.data && res.data.reason === 'closed') closeBoard();
+          say((res.data && res.data.message) || 'That did not send. Try again.', true);
+        })
+        .catch(function () { say('That did not send. Try again.', true); })
+        .then(function () { button.disabled = false; });
+    });
+
+    // Enter sends, shift+enter starts a new line.
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+
+    load();
+    setInterval(load, 7000);
+  })();
 })();

@@ -29,6 +29,8 @@ $router->post('/watch', [WatchController::class, 'enter'], [VerifyCsrf::class]);
 $router->post('/watch/leave', [WatchController::class, 'leave'], [VerifyCsrf::class]);
 $router->get('/watch/source', [WatchController::class, 'source']);
 $router->post('/watch/beat', [WatchController::class, 'beat']);
+$router->get('/watch/comments', [WatchController::class, 'comments']);
+$router->post('/watch/comments', [WatchController::class, 'postComment'], [VerifyCsrf::class]);
 $router->get('/watch/hls', [WatchController::class, 'hls']);
 $router->get('/access/qr', [RegistrationController::class, 'qr']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
@@ -64,6 +66,8 @@ $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsr
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/stream/announce', [AdminController::class, 'announce'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);
 $router->get('/admin/analytics/live', [AdminController::class, 'analyticsLive'], [RequireAdmin::class]);
 $router->get('/admin/issue', [AdminController::class, 'issueForm'], [RequireAdmin::class]);
