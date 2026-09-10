@@ -61,8 +61,8 @@ $stageLabels = [
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
             <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
             <?php if (!$isInitiative): ?>
-              <div><dt>Onsite cost</dt><dd><?= e(espees_price()) ?> <span class="reg__facts-note">inaugural discount, was <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></span></dd></div>
-              <div><dt>Online cost</dt><dd>Free</dd></div>
+              <div><dt>Onsite cost</dt><dd><?= e(espees_price(price_pence('onsite'))) ?> <span class="reg__facts-note">inaugural edition price, was <?= e(espees_price(standard_price_pence('onsite'))) ?></span></dd></div>
+              <div><dt>Online cost</dt><dd><?= e(espees_price(price_pence('online'))) ?> <span class="reg__facts-note">inaugural edition price, was <?= e(espees_price(standard_price_pence('online'))) ?></span></dd></div>
             <?php endif; ?>
           </dl>
         </div>
@@ -125,17 +125,13 @@ $stageLabels = [
                 <span class="ticket__letter mono"><?= $letter ?></span>
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
+                <span class="ticket__cost">
+                  <strong class="ticket__amount"><?= e(espees_price(price_pence($value))) ?></strong>
+                  <span class="ticket__was mono">Inaugural edition · was <s><?= e(espees_price(standard_price_pence($value))) ?></s></span>
+                </span>
                 <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__cost">
-                    <strong class="ticket__amount"><?= e(espees_price()) ?></strong>
-                    <span class="ticket__was mono">Inaugural discount · was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s></span>
-                  </span>
                   <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format($seatsLeft) . ' of ' . number_format((int) config('app.summit.onsite_capacity')) . ' places left' ?></span>
                 <?php else: ?>
-                  <span class="ticket__cost">
-                    <strong class="ticket__amount">Free</strong>
-                    <span class="ticket__was mono">no payment needed</span>
-                  </span>
                   <span class="ticket__limit mono">Selected sessions only · no workshops, mentoring or networking</span>
                 <?php endif; ?>
                 <span class="ticket__punch" aria-hidden="true"></span>
@@ -227,6 +223,7 @@ $stageLabels = [
 
         <div class="church-hierarchy" data-church-hierarchy data-api-base="https://churches-api.rorportal.org/api/v1">
           <input id="zone" name="zone" type="hidden" value="<?= old('zone') ?>" data-old-value="<?= old('zone') ?>">
+
           <div class="field <?= error_for('zone') ? 'has-error' : '' ?>">
             <span class="field__label">Church structure</span>
             <div class="chips" role="radiogroup" aria-label="Choose Zone or Campus Ministry">
@@ -235,32 +232,39 @@ $stageLabels = [
             </div>
             <?php if ($err = error_for('zone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
+
           <div class="field directory-choice" data-directory-choice="zone" hidden>
             <label for="zone_directory">Zone</label>
             <select id="zone_directory" disabled>
               <option value="">Loading zones…</option>
             </select>
           </div>
+
           <div class="field directory-choice" data-directory-choice="campus" hidden>
             <label for="campus_directory">Campus Ministry</label>
             <select id="campus_directory" disabled>
-              <option value="">Loading BLW campuses…</option>
+              <option value="">Loading campus ministries…</option>
             </select>
           </div>
-          <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>">
+
+          <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>" data-church-step="group" hidden>
             <label for="group_name">Group</label>
-            <select id="group_name" name="group_name" required disabled data-old-value="<?= old('group_name') ?>">
-              <option value="">Choose a zone or campus first</option>
+            <select id="group_name" name="group_name" required data-old-value="<?= old('group_name') ?>">
+              <option value="">Choose your zone first</option>
             </select>
             <?php if ($err = error_for('group_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
-          <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>">
+
+          <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>" data-church-step="church" hidden>
             <label for="church_name">Church</label>
-            <select id="church_name" name="church_name" required disabled data-old-value="<?= old('church_name') ?>">
-              <option value="">Choose a group first</option>
-            </select>
+            <input id="church_name" name="church_name" type="text" maxlength="160" required
+                   placeholder="Type your church name" value="<?= old('church_name') ?>"
+                   list="church_options" autocomplete="off">
+            <datalist id="church_options"></datalist>
+            <p class="field__hint">Start typing to pick from the churches in your group, or type it in full.</p>
             <?php if ($err = error_for('church_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
+
           <p class="field__hint church-hierarchy__status" data-church-status aria-live="polite">Loading the Loveworld church directory…</p>
         </div>
 
@@ -355,17 +359,9 @@ $stageLabels = [
             </div>
           </div>
 
-          <div class="form__row">
-            <div class="field">
-              <label for="emergency_contact">Emergency contact <span class="field__opt">optional</span></label>
-              <input id="emergency_contact" name="emergency_contact" type="text" placeholder="Name and number" value="<?= old('emergency_contact') ?>">
-            </div>
-            <div class="field field--check">
-              <label class="check">
-                <input type="checkbox" name="needs_letter" value="1" <?= old_checked('needs_letter', '1') ?>>
-                <span>I need an invitation letter (e.g. for visa or employer)</span>
-              </label>
-            </div>
+          <div class="field">
+            <label for="emergency_contact">Emergency contact <span class="field__opt">optional</span></label>
+            <input id="emergency_contact" name="emergency_contact" type="text" placeholder="Name and number" value="<?= old('emergency_contact') ?>">
           </div>
         </div>
 
@@ -422,15 +418,20 @@ $stageLabels = [
         </div>
 
         <div class="form__submit">
-          <div class="form__conditional" data-only="onsite">
-            <div class="pay-note">
-              <span class="pay-note__stamp mono">Secure payment</span>
-              <p class="pay-note__amount">You pay <strong><?= e(espees_price()) ?></strong> for your onsite place.</p>
-              <p>The full price is <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?>. An inaugural discount takes 50 Espees off for this first edition. On the next page you choose how to pay: Espees wallet, PayPal or bank transfer. Your place is held once payment is confirmed.</p>
+          <?php foreach (['onsite', 'online'] as $paidPath): ?>
+            <div class="form__conditional" data-only="<?= $paidPath ?>">
+              <div class="pay-note">
+                <span class="pay-note__stamp mono">Secure payment</span>
+                <p class="pay-note__amount">You pay <strong><?= e(espees_price(price_pence($paidPath))) ?></strong> for your <?= $paidPath === 'onsite' ? 'onsite' : 'online' ?> place.</p>
+                <p>The full price is <?= e(espees_price(standard_price_pence($paidPath))) ?>. This is the inaugural edition, so the price is reduced. On the next page you choose how to pay. Your place is held once payment is confirmed.</p>
+              </div>
             </div>
-          </div>
+          <?php endforeach; ?>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
-            <span class="btn__label" data-pay-label="Continue to payment &mdash; <?= e(espees_price()) ?>" data-free-label="Complete registration">Complete registration</span>
+            <span class="btn__label"
+                  data-pay-label-onsite="Continue to payment &mdash; <?= e(espees_price(price_pence('onsite'))) ?>"
+                  data-pay-label-online="Continue to payment &mdash; <?= e(espees_price(price_pence('online'))) ?>"
+                  data-free-label="Complete registration">Complete registration</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </button>
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>

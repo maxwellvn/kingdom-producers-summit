@@ -1,8 +1,7 @@
-<?php /** @var array $flash @var bool $paypalLive */
+<?php /** @var array $flash @var bool $paymentsLive */
 use App\Models\Setting;
 $espeesOn = Setting::get('pay_espees_enabled', '1') === '1';
-$paypalOn = Setting::get('pay_paypal_enabled', '1') === '1';
-$bankOn = Setting::get('pay_bank_enabled', '1') === '1';
+$revolutOn = Setting::get('pay_revolut_enabled', '1') === '1';
 $toggle = static function (string $key, bool $on, string $label): void {
     $checked = $on ? ' checked' : '';
     echo '<label style="display:flex;gap:.6rem;align-items:center;font-size:.95rem">'
@@ -38,28 +37,15 @@ $row = static function (string $label, string $value): void {
     <?= csrf_field() ?>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
-      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Espees — order: Espees &rarr; PayPal &rarr; Bank</legend>
+      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Espees — shown first</legend>
       <?php $toggle('pay_espees_enabled', $espeesOn, $espeesOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
       <?php $row('Espees code', trim((string) config('payments.espees.code')) !== '' ? config('payments.espees.code') : 'Not set yet — add it in config/payments.php'); ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
-      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">PayPal — direct integration</legend>
-      <?php $toggle('pay_paypal_enabled', $paypalOn, $paypalOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
-      <?php $row('Credentials', $paypalLive ? 'Configured via env' : 'Missing — set PAYPAL_CLIENT_ID / PAYPAL_SECRET'); ?>
-      <?php $row('Mode', (string) config('paypal.mode')); ?>
-    </fieldset>
-
-    <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
-      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Bank transfer</legend>
-      <?php $toggle('pay_bank_enabled', $bankOn, $bankOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
-      <?php $row('Recipient', (string) config('payments.bank.account_name')); ?>
-      <?php $row('Address', (string) config('payments.bank.account_address')); ?>
-      <?php $row('Account number', (string) config('payments.bank.account_number')); ?>
-      <?php $row('Sort code', (string) config('payments.bank.sort_code')); ?>
-      <?php $row('IBAN', (string) config('payments.bank.iban')); ?>
-      <?php $row('BIC', (string) config('payments.bank.bic')); ?>
-      <?php $row('Intermediary BIC', (string) config('payments.bank.intermediary_bic')); ?>
+      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Revolut checkout</legend>
+      <?php $toggle('pay_revolut_enabled', $revolutOn, $revolutOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
+      <?php $row('Checkout link', trim((string) config('payments.revolut.url')) !== '' ? config('payments.revolut.url') : 'Not set yet — add it in config/payments.php'); ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">

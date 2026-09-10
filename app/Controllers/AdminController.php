@@ -208,12 +208,12 @@ final class AdminController extends Controller
         $registration = Registration::find((int) $request->input('id', 0));
 
         if ($registration !== null
-            && $registration['participation'] === 'onsite'
+            && is_paid_path((string) $registration['participation'])
             && in_array($registration['payment_status'], ['unpaid', 'claimed'], true)) {
             (new PaymentService())->markPaid(
                 (string) $registration['reference'],
                 'manual-' . date('Ymd-His'),
-                (int) config('paypal.price_pence')
+                price_pence((string) $registration['participation'])
             );
         }
 
@@ -226,13 +226,13 @@ final class AdminController extends Controller
         return $this->view('admin/payment_settings', [
             'title'      => 'Payment methods',
             'flash'      => (string) Session::get('admin_flash', ''),
-            'paypalLive' => PaymentService::unavailableMessage() === null,
+            'paymentsLive' => PaymentService::unavailableMessage() === null,
         ], 'layouts/admin');
     }
 
     public function savePaymentSettings(Request $request): Response
     {
-        foreach (['pay_espees_enabled', 'pay_paypal_enabled', 'pay_bank_enabled'] as $key) {
+        foreach (['pay_espees_enabled', 'pay_revolut_enabled'] as $key) {
             Setting::set($key, $request->input($key) === '1' ? '1' : '0');
         }
 

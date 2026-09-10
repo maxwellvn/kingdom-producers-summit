@@ -15,9 +15,14 @@ final class Session
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 
+        // Paying by transfer means leaving the site for a while; a 24-minute
+        // default would strand people mid-payment.
+        $lifetime = 4 * 60 * 60;
+        ini_set('session.gc_maxlifetime', (string) $lifetime);
+
         session_name('producers_summit_session');
         session_set_cookie_params([
-            'lifetime' => 0,
+            'lifetime' => $lifetime,
             'path'     => '/',
             'secure'   => $secure,
             'httponly' => true,

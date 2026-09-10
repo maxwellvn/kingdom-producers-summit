@@ -69,7 +69,7 @@ final class PaymentController extends Controller
     {
         $registration = $this->sessionRegistration(false);
         if ($registration === null) {
-            return $this->redirect('/register/pay');
+            return $this->redirect('/register/pay?expired=1');
         }
         if ($registration['payment_status'] === 'claimed') {
             return $this->redirect('/register/awaiting'); // already claimed — nothing left to choose
@@ -80,8 +80,8 @@ final class PaymentController extends Controller
             'bodyClass' => 'page-register',
             'summit'    => config('app.summit'),
             'registration' => $registration,
-            'methods'   => PaymentService::availableMethods(),
-            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+            'methods'   => PaymentService::availableMethods(price_pence((string) $registration['participation'])),
+            'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
         ]);
     }
 
@@ -90,9 +90,11 @@ final class PaymentController extends Controller
     {
         $type = $request->str('type');
         $registration = $this->sessionRegistration(true);
-        $methods = PaymentService::methods();
-
-        if ($registration === null || !isset($methods[$type]) || !$methods[$type]['available']) {
+        if ($registration === null) {
+            return $this->redirect('/register/pay?expired=1');
+        }
+        $methods = PaymentService::methods(price_pence((string) $registration['participation']));
+        if (!isset($methods[$type]) || !$methods[$type]['available']) {
             return $this->redirect('/register/method');
         }
 
@@ -102,7 +104,7 @@ final class PaymentController extends Controller
             'summit'    => config('app.summit'),
             'registration' => $registration,
             'type'      => $type,
-            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+            'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
         ]);
     }
 
@@ -111,9 +113,11 @@ final class PaymentController extends Controller
     {
         $type = $request->str('type');
         $registration = $this->sessionRegistration(true);
-        $methods = PaymentService::methods();
-
-        if ($registration === null || !isset($methods[$type]) || !$methods[$type]['available']) {
+        if ($registration === null) {
+            return $this->redirect('/register/pay?expired=1');
+        }
+        $methods = PaymentService::methods(price_pence((string) $registration['participation']));
+        if (!isset($methods[$type]) || !$methods[$type]['available']) {
             return $this->redirect('/register/method');
         }
 
@@ -123,7 +127,7 @@ final class PaymentController extends Controller
             'summit'    => config('app.summit'),
             'registration' => $registration,
             'type'      => $type,
-            'amount'    => number_format((int) config('paypal.price_pence') / 100, 2),
+            'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
         ]);
     }
 
@@ -133,7 +137,7 @@ final class PaymentController extends Controller
         $type = $request->str('type');
         $registration = $this->sessionRegistration(true);
 
-        if ($registration === null || !in_array($type, ['espees', 'bank'], true)
+        if ($registration === null || !in_array($type, ['espees', 'revolut'], true)
             || !Registration::claimPayment((string) $registration['reference'], $type)) {
             return $this->redirect('/register/pay');
         }
@@ -152,7 +156,7 @@ final class PaymentController extends Controller
     {
         $registration = $this->sessionRegistration(false);
         if ($registration === null) {
-            return $this->redirect('/register/pay');
+            return $this->redirect('/register/pay?expired=1');
         }
 
         return $this->view('register/awaiting', [
@@ -201,6 +205,7 @@ final class PaymentController extends Controller
             'email' => $saved['email'] ?? '',
             'savedRegistration' => $saved !== null,
             'cancelled' => $request->str('cancelled') === '1',
+            'expired'   => $request->str('expired') === '1',
             'error'     => $saved !== null ? (PaymentService::unavailableMessage() ?? '') : '',
         ]);
     }
@@ -227,7 +232,7 @@ final class PaymentController extends Controller
             // Already-claimed registrations resume at the awaiting page, not the pay form.
             $claimed = $reference !== '' ? Registration::findByReference($reference) : null;
             if ($claimed !== null && mb_strtolower((string) $claimed['email']) === $email
-                && $claimed['participation'] === 'onsite' && $claimed['payment_status'] === 'claimed') {
+                && $claimed['payment_status'] === 'claimed') {
                 Session::put('last_registration', (string) $claimed['reference']);
                 return $this->redirect('/register/awaiting');
             }
@@ -252,13 +257,14 @@ final class PaymentController extends Controller
             'summit'    => config('app.summit'),
             'reference' => $reference,
             'cancelled' => false,
+            'expired'   => false,
             'email'     => $email,
             'savedRegistration' => $this->savedRegistration($reference) !== null,
             'error'     => $error,
         ];
     }
 
-    /** A pending onsite registration held by the current session. */
+    /** A pending paid registration held by the current session. */
     private function sessionRegistration(bool $unpaidOnly = true): ?array
     {
         $reference = Session::get('last_registration');
@@ -266,7 +272,7 @@ final class PaymentController extends Controller
             return null;
         }
         $registration = Registration::findByReference($reference);
-        if ($registration === null || $registration['participation'] !== 'onsite'
+        if ($registration === null || !is_paid_path((string) $registration['participation'])
             || $registration['status'] !== 'pending') {
             return null;
         }

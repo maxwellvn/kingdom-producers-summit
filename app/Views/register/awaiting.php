@@ -1,5 +1,5 @@
 <?php /** @var array $summit @var array $registration @var string $kingschat @var string $proofEmail */
-$methodLabel = ['espees' => 'Espees', 'bank' => 'bank transfer', 'paypal' => 'PayPal'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
+$methodLabel = ['espees' => 'Espees', 'revolut' => 'Revolut'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
 ?>
 <section class="reg">
   <div class="container pay">

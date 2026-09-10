@@ -118,8 +118,8 @@
             <span class="path__meta mono"><?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> places left</span>
           </h3>
           <p class="path__cost">
-            <strong><?= e(espees_price()) ?></strong>
-            <span class="mono">Inaugural discount · was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s></span>
+            <strong><?= e(espees_price(price_pence('onsite'))) ?></strong>
+            <span class="mono">Inaugural edition · was <s><?= e(espees_price(standard_price_pence('onsite'))) ?></s></span>
           </p>
         </div>
         <div class="path__copy">
@@ -141,8 +141,8 @@
             <span class="path__meta mono">Unlimited places</span>
           </h3>
           <p class="path__cost">
-            <strong>Free</strong>
-            <span class="mono">no payment needed</span>
+            <strong><?= e(espees_price(price_pence('online'))) ?></strong>
+            <span class="mono">Inaugural edition · was <s><?= e(espees_price(standard_price_pence('online'))) ?></s></span>
           </p>
         </div>
         <div class="path__copy">
@@ -195,7 +195,7 @@
     </div>
 
     <div class="perks__foot" data-reveal>
-      <p class="mono"><?= e(espees_price()) ?> · <?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> places left</p>
+      <p class="mono"><?= e(espees_price(price_pence('onsite'))) ?> · <?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> places left</p>
       <a href="<?= url('/register') ?>?mode=onsite" class="btn btn--ink"><span class="btn__label">Register to attend onsite</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
     </div>
   </div>
@@ -265,8 +265,8 @@
       <?php
       $faqs = [
         ['Who is the summit for?', 'Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet.'],
-        ['When exactly is it?', 'The summit is on 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
-        ['Is there a cost to attend?', 'Onsite attendance is ' . espees_price((int) config('paypal.standard_price_pence')) . '. For this first edition an inaugural discount takes 50 Espees off, so you pay ' . espees_price() . '. Attending online and joining the initiative are free.'],
+        ['When exactly is it?', 'The summit is on Saturday 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
+        ['Is there a cost to attend?', 'Onsite is ' . espees_price(standard_price_pence('onsite')) . ' and online is ' . espees_price(standard_price_pence('online')) . '. This is the inaugural edition, so they come down to ' . espees_price(price_pence('onsite')) . ' and ' . espees_price(price_pence('online')) . '. Joining the initiative is free.'],
         ['Should I attend onsite or online?', 'Attend onsite if you want to be worked with: the 1-to-1 facilitator engagement, working rooms, networking and product showcases only happen in the room, and only part of the programme is livestreamed. Choose online if travelling to Rainham is genuinely not possible for you. There are only ' . number_format($capacity) . ' onsite seats and registration closes once they are taken.'],
         ['I cannot travel to Essex. Can I still take part?', 'Yes. Choose "Attend online" for the livestreamed sessions, or use the separate "Join the initiative" path and take part in the 30, 60 and 90 day production journey from wherever you are.'],
         ['What is the Kingdom Producers portal?', 'A portal for initiative participants containing methods, case studies, capital pathways, a producer directory, summit resources and opportunities. Participants are notified as it opens.'],

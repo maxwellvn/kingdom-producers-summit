@@ -287,8 +287,8 @@
       onsiteHide.forEach(function (el) { el.style.display = path === 'onsite' ? 'none' : ''; });
       var submitLabel = document.querySelector('#submitBtn .btn__label');
       if (submitLabel) {
-        var paid = path === 'onsite' ? submitLabel.getAttribute('data-pay-label') : submitLabel.getAttribute('data-free-label');
-        if (paid) submitLabel.innerHTML = paid;
+        var label = submitLabel.getAttribute('data-pay-label-' + path) || submitLabel.getAttribute('data-free-label');
+        if (label) submitLabel.innerHTML = label;
       }
     }
 
@@ -319,14 +319,20 @@
     /* Zone or Campus Ministry → Group → Church directory. */
     var churchHierarchy = form.querySelector('[data-church-hierarchy]');
     if (churchHierarchy) {
+      // Only the regions outside Africa are relevant to a UK summit.
+      var ABROAD_REGIONS = ['Region 2 - UK', 'Region 2 - EUROPE', 'Region 2 - USA', 'Region 2 - CANADA'];
+
       var apiBase = churchHierarchy.getAttribute('data-api-base').replace(/\/$/, '');
       var zoneValue = churchHierarchy.querySelector('#zone');
       var zoneSelect = churchHierarchy.querySelector('#zone_directory');
       var campusSelect = churchHierarchy.querySelector('#campus_directory');
       var directoryTypeInputs = Array.prototype.slice.call(churchHierarchy.querySelectorAll('input[name="directory_type"]'));
       var directoryChoices = Array.prototype.slice.call(churchHierarchy.querySelectorAll('[data-directory-choice]'));
+      var groupStep = churchHierarchy.querySelector('[data-church-step="group"]');
+      var churchStep = churchHierarchy.querySelector('[data-church-step="church"]');
       var groupSelect = churchHierarchy.querySelector('#group_name');
       var churchSelect = churchHierarchy.querySelector('#church_name');
+      var churchOptions = churchHierarchy.querySelector('#church_options');
       var directoryStatus = churchHierarchy.querySelector('[data-church-status]');
       var oldZone = zoneValue.getAttribute('data-old-value') || '';
       var oldGroup = groupSelect.getAttribute('data-old-value') || '';
@@ -364,18 +370,39 @@
         });
       }
 
+      // Each step appears only once the step above it has an answer.
+      function showStep(step, visible) {
+        if (step) step.hidden = !visible;
+      }
+
+      function clearChurch() {
+        churchSelect.value = '';
+        churchOptions.innerHTML = '';
+      }
+
+      function clearFromGroup() {
+        resetDirectorySelect(groupSelect, 'Choose your zone first', true);
+        clearChurch();
+        showStep(groupStep, false);
+        showStep(churchStep, false);
+      }
+
       function loadGroups(selected) {
-        resetDirectorySelect(groupSelect, 'Loading groups…', true);
-        resetDirectorySelect(churchSelect, 'Choose a group first', true);
         var groupsPath = selected && selected.dataset.link;
         if (!groupsPath) {
           zoneValue.value = '';
-          resetDirectorySelect(groupSelect, 'Choose a zone or Campus Ministry first', true);
+          clearFromGroup();
           directoryStatus.textContent = 'Choose your zone or Campus Ministry, then your group and church.';
           return;
         }
+
         zoneValue.value = selected.value;
+        resetDirectorySelect(groupSelect, 'Loading groups…', true);
+        clearChurch();
+        showStep(groupStep, true);
+        showStep(churchStep, false);
         directoryStatus.textContent = 'Loading groups…';
+
         fetchDirectory(groupsPath).then(function (payload) {
           var groups = Array.isArray(payload.data) ? payload.data : [];
           resetDirectorySelect(groupSelect, groups.length ? 'Select your group' : 'No groups listed', false);
@@ -406,8 +433,7 @@
           zoneValue.value = '';
           zoneSelect.value = '';
           campusSelect.value = '';
-          resetDirectorySelect(groupSelect, 'Choose a zone or Campus Ministry first', true);
-          resetDirectorySelect(churchSelect, 'Choose a group first', true);
+          clearFromGroup();
           directoryStatus.textContent = input.value === 'campus'
             ? 'Choose your Campus Ministry, then your group and church.'
             : 'Choose your zone, then your group and church.';
@@ -415,52 +441,61 @@
       });
 
       groupSelect.addEventListener('change', function () {
-        resetDirectorySelect(churchSelect, 'Loading churches…', true);
         var selected = groupSelect.options[groupSelect.selectedIndex];
         var churchesPath = selected && selected.dataset.link;
         if (!churchesPath) {
-          resetDirectorySelect(churchSelect, 'Choose a group first', true);
+          clearChurch();
+          showStep(churchStep, false);
           return;
         }
+
+        clearChurch();
+        showStep(churchStep, true);
+        churchSelect.value = oldChurch || '';
         directoryStatus.textContent = 'Loading churches…';
+
         fetchDirectory(churchesPath).then(function (payload) {
           var churches = Array.isArray(payload.data) ? payload.data : [];
-          resetDirectorySelect(churchSelect, 'Select your church', false);
-          appendDirectoryOptions(churchSelect, churches, oldChurch);
-          var notListed = document.createElement('option');
-          notListed.value = 'Church not listed';
-          notListed.textContent = 'My church is not listed';
-          notListed.selected = oldChurch === notListed.value || churches.length === 0;
-          churchSelect.appendChild(notListed);
-          directoryStatus.textContent = churches.length ? 'Choose your church, or select “My church is not listed”.' : 'No churches are listed for this group; “My church is not listed” has been selected.';
+          churchOptions.innerHTML = '';
+          churches.forEach(function (church) {
+            var option = document.createElement('option');
+            option.value = church.name;
+            churchOptions.appendChild(option);
+          });
+          directoryStatus.textContent = churches.length
+            ? 'Type your church name — suggestions from your group will appear.'
+            : 'No churches are listed for this group, so type your church name in full.';
           oldChurch = '';
         }).catch(function () {
-          resetDirectorySelect(churchSelect, 'Could not load churches — refresh to try again', true);
-          directoryStatus.textContent = 'The church directory is temporarily unavailable. Please refresh and try again.';
+          directoryStatus.textContent = 'Church suggestions are unavailable, so type your church name in full.';
         });
       });
 
       fetchDirectory('/api/v1/regions').then(function (payload) {
-        var regions = Array.isArray(payload.data) ? payload.data : [];
+        var regions = (Array.isArray(payload.data) ? payload.data : []).filter(function (region) {
+          return ABROAD_REGIONS.indexOf(region.name) !== -1;
+        });
         return Promise.all(regions.map(function (region) {
           return fetchDirectory(region.links.zones).then(function (zonesPayload) {
-            return (zonesPayload.data || []).map(function (zone) {
-              return Object.assign({}, zone, { isCampus: region.name === 'Campus Ministry' });
-            });
+            return zonesPayload.data || [];
           });
         }));
       }).then(function (regionZones) {
         var zones = [].concat.apply([], regionZones);
         zones.sort(function (a, b) { return a.name.localeCompare(b.name); });
-        var mainZones = zones.filter(function (zone) { return !zone.isCampus; });
-        var campuses = zones.filter(function (zone) { return zone.isCampus; });
+        // BLW entries are the campus ministries; everything else is a zone.
+        var isCampus = function (zone) { return /^BLW\b/i.test(zone.name); };
+        var mainZones = zones.filter(function (zone) { return !isCampus(zone); });
+        var campuses = zones.filter(isCampus);
+
         resetDirectorySelect(zoneSelect, 'Select your zone', false);
         resetDirectorySelect(campusSelect, 'Select your Campus Ministry', false);
         appendDirectoryOptions(zoneSelect, mainZones, oldZone);
         appendDirectoryOptions(campusSelect, campuses, oldZone);
         directoryStatus.textContent = 'Choose Zone or Campus Ministry to begin.';
+
         var restoredSelect = zoneSelect.value === oldZone ? zoneSelect : (campusSelect.value === oldZone ? campusSelect : null);
-        if (restoredSelect) {
+        if (oldZone && restoredSelect) {
           var restoredType = restoredSelect === campusSelect ? 'campus' : 'zone';
           var typeInput = churchHierarchy.querySelector('input[name="directory_type"][value="' + restoredType + '"]');
           typeInput.checked = true;

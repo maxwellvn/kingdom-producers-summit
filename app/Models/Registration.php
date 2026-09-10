@@ -49,8 +49,8 @@ final class Registration
     ];
 
     public const HEAR_ABOUT = [
-        'church' => 'Church / Zone announcement', 'social' => 'Social media', 'friend' => 'A friend or colleague',
-        'email' => 'Email', 'poster' => 'Poster or flyer', 'other' => 'Other',
+        'church' => 'Church / Zone announcement', 'kingschat' => 'KingsChat', 'social' => 'Social media',
+        'friend' => 'A friend or colleague', 'email' => 'Email', 'poster' => 'Poster or flyer', 'other' => 'Other',
     ];
 
     public static function findByEmail(string $email): ?array
@@ -139,12 +139,12 @@ final class Registration
         return $stmt->rowCount() > 0;
     }
 
-    /** Pending onsite registration awaiting payment, matched by reference + email. */
+    /** Pending registration awaiting payment, matched by reference + email. */
     public static function findPayable(string $reference, string $email): ?array
     {
         $stmt = Database::connection()->prepare(
             "SELECT * FROM registrations
-             WHERE reference = ? AND email = ? AND participation = 'onsite'
+             WHERE reference = ? AND email = ?
                AND payment_status = 'unpaid' AND status = 'pending'
              LIMIT 1"
         );

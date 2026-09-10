@@ -987,11 +987,14 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .supporters__inner { width: 100%; grid-template-columns: 1fr; }
   .supporters__heading { padding: .9rem var(--gutter); border-right: 0; border-bottom: 1px solid var(--paper-line); }
   .supporters__title { max-width: none; }
+  /* Stack the ministries rather than running them off the side of the screen. */
   .supporters__list {
-    display: flex; width: max-content; min-width: 100%; overflow: visible;
-    padding-inline: calc(var(--gutter) - 1rem);
+    display: grid; grid-template-columns: 1fr; width: 100%; overflow: visible;
+    padding-inline: var(--gutter);
   }
-  .supporters__org { flex: 0 0 min(78vw, 18rem); padding: 1rem; }
+  .supporters__list.is-overflowing { animation: none; transform: none; }
+  .supporters__org { padding: .9rem 0; }
+  .supporters__org + .supporters__org { border-left: 0; border-top: 1px solid var(--paper-line); }
 }
 
 @media (prefers-reduced-motion: reduce) {

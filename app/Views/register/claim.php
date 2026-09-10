@@ -1,5 +1,5 @@
 <?php /** @var array $summit @var array $registration @var string $type @var string $amount */
-$label = $type === 'espees' ? 'Espees' : 'bank transfer';
+$label = $type === 'espees' ? 'Espees' : 'Revolut';
 ?>
 <section class="reg">
   <div class="container pay">

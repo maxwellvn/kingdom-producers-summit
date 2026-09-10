@@ -4,13 +4,13 @@ $r = $registration;
 $pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
-    'Join us on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
+    'Join us on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
     'Your reference code is your ticket reference. Keep it — you will be asked for it at registration on the day.',
-    'The programme, travel notes and any invitation letter you requested will follow by email.',
+    'The programme and travel notes will follow by email.',
   ],
   'online' => [
-    'Access some parts of the summit by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? '19th September 2026, 12 noon') . ' — your link arrives by email.',
-    'Your online registration provides selected summit access only.',
+    'Watch the main sessions by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — your link arrives by email.',
+    'The workshops, mentoring, clinic and networking happen in the room and are not part of online access.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
   'initiative' => [
@@ -43,7 +43,10 @@ $next = [
 
       <div class="confirmed__pass">
         <div class="confirmed__qr-wrap">
-          <div class="confirmed__qr" id="accessQr" data-qr-value="<?= e($accessToken) ?>" aria-label="QR access code for <?= e($r['reference']) ?>"></div>
+          <div class="confirmed__qr">
+            <img src="<?= e(url('/access/qr?token=' . rawurlencode($accessToken))) ?>"
+                 width="196" height="196" alt="QR access code for <?= e($r['reference']) ?>">
+          </div>
           <span class="mono">Scan once at entry</span>
         </div>
         <div class="confirmed__pass-copy">
@@ -59,7 +62,7 @@ $next = [
         <div><dt>Email</dt><dd><?= e($r['email']) ?></dd></div>
         <?php if (!empty($r['field'])): ?><div><dt>Field</dt><dd><?= e(field_label($r)) ?></dd></div><?php endif; ?>
         <?php if (!empty($r['producer_stage'])): ?><div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div><?php endif; ?>
-        <?php if ($r['participation'] === 'onsite' && ($r['payment_status'] ?? '') === 'paid'): ?>
+        <?php if (($r['payment_status'] ?? '') === 'paid'): ?>
           <div><dt>Paid</dt><dd><?= e(espees_price((int) $r['payment_amount'], 2)) ?></dd></div>
         <?php endif; ?>
         <div><dt>Registered</dt><dd><?= e(date('j M Y, H:i', strtotime($r['created_at']))) ?></dd></div>
@@ -88,11 +91,4 @@ $next = [
   </div>
 </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-(function () {
-  var el = document.getElementById('accessQr');
-  if (!el || !window.QRCode) return;
-  new QRCode(el, {text: el.dataset.qrValue, width: 196, height: 196, colorDark: '#1b2242', colorLight: '#f3eee2', correctLevel: QRCode.CorrectLevel.H});
-})();
-</script>
+

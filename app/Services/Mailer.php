@@ -8,8 +8,11 @@ use RuntimeException;
 
 final class Mailer
 {
-    /** @param array<string,string> $headers */
-    public function send(string $to, string $subject, string $html, string $text, array $headers = []): void
+    /**
+     * @param array<string,string> $headers
+     * @param array<string,array{data:string,type:string}> $inlineImages keyed by content id
+     */
+    public function send(string $to, string $subject, string $html, string $text, array $headers = [], array $inlineImages = []): void
     {
         $cfg = config('app.mail');
         $host = (string) ($cfg['host'] ?? '');
@@ -48,6 +51,9 @@ final class Mailer
             $this->command($socket, 'DATA', [354]);
 
             $boundary = '=_producers_' . bin2hex(random_bytes(12));
+            $relatedBoundary = '=_producers_rel_' . bin2hex(random_bytes(12));
+            $hasInline = $inlineImages !== [];
+
             $messageHeaders = [
                 'Date: ' . date(DATE_RFC2822),
                 'From: ' . $this->mailbox((string) $cfg['from_name'], (string) $cfg['from']),
@@ -55,19 +61,40 @@ final class Mailer
                 'Subject: ' . $this->encoded($subject),
                 'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $host . '>',
                 'MIME-Version: 1.0',
-                'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
+                'Content-Type: multipart/' . ($hasInline ? 'related' : 'alternative') . '; boundary="'
+                    . ($hasInline ? $relatedBoundary : $boundary) . '"'
+                    . ($hasInline ? '; type="multipart/alternative"' : ''),
             ];
 
             foreach ($headers as $name => $value) {
                 $messageHeaders[] = $this->header($name) . ': ' . $this->header($value);
             }
 
-            $body = implode("\r\n", $messageHeaders) . "\r\n\r\n"
-                . '--' . $boundary . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n"
+            // The readable part is always text + HTML; inline images wrap it in multipart/related.
+            $alternative = '--' . $boundary . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n"
                 . quoted_printable_encode($text) . "\r\n"
                 . '--' . $boundary . "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n"
                 . quoted_printable_encode($html) . "\r\n"
                 . '--' . $boundary . "--\r\n";
+
+            if (!$hasInline) {
+                $body = implode("\r\n", $messageHeaders) . "\r\n\r\n" . $alternative;
+            } else {
+                $parts = '--' . $relatedBoundary . "\r\nContent-Type: multipart/alternative; boundary=\"" . $boundary . "\"\r\n\r\n"
+                    . $alternative;
+
+                foreach ($inlineImages as $cid => $image) {
+                    $parts .= '--' . $relatedBoundary . "\r\n"
+                        . 'Content-Type: ' . $this->header((string) $image['type']) . "\r\n"
+                        . "Content-Transfer-Encoding: base64\r\n"
+                        . 'Content-ID: <' . $this->header((string) $cid) . ">\r\n"
+                        . 'Content-Disposition: inline; filename="' . $this->header((string) $cid) . ".png\"\r\n\r\n"
+                        . chunk_split(base64_encode((string) $image['data']), 76, "\r\n");
+                }
+
+                $parts .= '--' . $relatedBoundary . "--\r\n";
+                $body = implode("\r\n", $messageHeaders) . "\r\n\r\n" . $parts;
+            }
 
             $body = preg_replace('/(?m)^\./', '..', $body) ?? $body;
             fwrite($socket, $body . ".\r\n");

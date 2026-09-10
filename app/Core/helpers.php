@@ -37,11 +37,29 @@ function asset(string $path): string
     return Url::to('assets/' . ltrim($path, '/')) . $version;
 }
 
-/** Public-facing onsite price, expressed in the event's Espees currency. */
+/** An amount expressed in the event's Espees currency. Defaults to the onsite price. */
 function espees_price(?int $amountPence = null, int $decimals = 0): string
 {
-    $amountPence ??= (int) config('paypal.price_pence');
+    $amountPence ??= price_pence('onsite');
     return number_format($amountPence / 100, $decimals) . ' Espees';
+}
+
+/** What a participation path costs after the inaugural discount, in pence. */
+function price_pence(string $participation): int
+{
+    return (int) (config('paypal.prices')[$participation]['due'] ?? 0);
+}
+
+/** A path's full price before the inaugural discount, in pence. */
+function standard_price_pence(string $participation): int
+{
+    return (int) (config('paypal.prices')[$participation]['standard'] ?? 0);
+}
+
+/** True when a path has something to pay, so it needs the payment flow. */
+function is_paid_path(string $participation): bool
+{
+    return price_pence($participation) > 0;
 }
 
 /** A registration's field, with the typed answer when they chose "Other". */

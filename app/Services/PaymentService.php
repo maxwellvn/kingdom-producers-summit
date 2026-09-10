@@ -10,10 +10,10 @@ use RuntimeException;
 
 final class PaymentService
 {
-    /** The pay methods shown to the registrant, Espees first, in display order. */
-    public static function methods(): array
+    /** The pay methods shown to the registrant, in display order. */
+    public static function methods(int $amountPence = 0): array
     {
-        $amount = number_format((int) config('paypal.price_pence') / 100, 2);
+        $amount = number_format(($amountPence ?: price_pence('onsite')) / 100, 2);
 
         return [
             'espees' => [
@@ -24,38 +24,27 @@ final class PaymentService
                     && Setting::get('pay_espees_enabled', '1') === '1',
                 'href' => 'espees',
             ],
-            'paypal' => [
-                'label' => 'PayPal',
-                'blurb' => "Card or PayPal balance — {$amount} Espees.",
-                'available' => (bool) config('payments.paypal_enabled')
-                    && self::unavailableMessage() === null
-                    && Setting::get('pay_paypal_enabled', '1') === '1',
-                'href' => null, // handled by the checkout POST
-            ],
-            'bank' => [
-                'label' => 'Bank transfer',
-                'blurb' => "UK bank transfer of {$amount} Espees with your reference.",
-                'available' => (bool) config('payments.bank.enabled')
-                    && trim((string) config('payments.bank.account_name')) !== ''
-                    && trim((string) config('payments.bank.account_number')) !== ''
-                    && Setting::get('pay_bank_enabled', '1') === '1',
-                'href' => 'bank',
+            'revolut' => [
+                'label' => 'Card or bank via Revolut',
+                'blurb' => "Pay {$amount} Espees on Revolut's secure checkout page.",
+                'available' => (bool) config('payments.revolut.enabled')
+                    && trim((string) config('payments.revolut.url')) !== ''
+                    && Setting::get('pay_revolut_enabled', '1') === '1',
+                'href' => 'revolut',
             ],
         ];
     }
 
     /** Only the methods an actual registrant may use right now. */
-    public static function availableMethods(): array
+    public static function availableMethods(int $amountPence = 0): array
     {
-        return array_filter(self::methods(), static fn (array $m) => $m['available']);
+        return array_filter(self::methods($amountPence), static fn (array $m) => $m['available']);
     }
 
     public static function unavailableMessage(): ?string
     {
-        if (!filter_var(config('paypal.enabled'), FILTER_VALIDATE_BOOL)
-            || trim((string) config('paypal.client_id')) === ''
-            || trim((string) config('paypal.secret')) === '') {
-            return 'Online payment is not available yet. Your registration is saved. Please contact the organisers to complete payment; you do not need to register again.';
+        if (self::availableMethods() === []) {
+            return 'Payment is not available yet. Your registration is saved. Please contact the organisers to complete payment; you do not need to register again.';
         }
 
         return null;
@@ -77,14 +66,19 @@ final class PaymentService
             $base = (string) \App\Core\Url::base();
         }
 
+        $participation = (string) $registration['participation'];
+        $description = $participation === 'onsite'
+            ? 'Kingdom Producers Summit — onsite place (Essex Edition 2026)'
+            : 'Kingdom Producers Summit — online place (Essex Edition 2026)';
+
         $order = (new PayPalClient())->createOrder([
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'custom_id'   => $reference,
-                'description' => 'Kingdom Producers Summit — onsite place (Essex Edition 2026)',
+                'description' => $description,
                 'amount'      => [
                     'currency_code' => (string) config('paypal.currency'),
-                    'value'         => number_format((int) config('paypal.price_pence') / 100, 2, '.', ''),
+                    'value'         => number_format(price_pence($participation) / 100, 2, '.', ''),
                 ],
             ]],
             'application_context' => [
@@ -113,7 +107,8 @@ final class PaymentService
     public function markPaid(string $reference, string $sessionId, int $amountPence = 0): bool
     {
         if ($amountPence <= 0) {
-            $amountPence = (int) config('paypal.price_pence');
+            $existing = Registration::findByReference($reference);
+            $amountPence = price_pence((string) ($existing['participation'] ?? 'onsite'));
         }
 
         $updated = Registration::markPaid($reference, $sessionId, $amountPence);
@@ -133,7 +128,7 @@ final class PaymentService
         return true;
     }
 
-    /** Find a pending unpaid onsite registration by reference + email (resume payment). */
+    /** Find a pending unpaid registration by reference + email (resume payment). */
     public function findPayable(string $reference, string $email): ?array
     {
         return Registration::findPayable($reference, mb_strtolower(trim($email)));

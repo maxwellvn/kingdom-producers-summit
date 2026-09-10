@@ -60,8 +60,8 @@ final class RegistrationController extends Controller
             throw $e;
         }
 
-        // Onsite is a paid path: save as pending, acknowledge by email, then offer payment methods.
-        if ($registration['participation'] === 'onsite') {
+        // Paid paths save as pending, acknowledge by email, then offer payment methods.
+        if (is_paid_path((string) $registration['participation'])) {
             Session::put('last_registration', $registration['reference']);
             try {
                 (new RegistrationMail())->sendAcknowledgement($registration);
@@ -96,10 +96,10 @@ final class RegistrationController extends Controller
         }
 
         // Unpaid onsite registrations have no access pass yet; claimed ones await confirmation.
-        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'unpaid') {
+        if ($registration['payment_status'] === 'unpaid') {
             return $this->redirect('/register/pay?ref=' . rawurlencode((string) $registration['reference']));
         }
-        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'claimed') {
+        if ($registration['payment_status'] === 'claimed') {
             return $this->redirect('/register/awaiting');
         }
 

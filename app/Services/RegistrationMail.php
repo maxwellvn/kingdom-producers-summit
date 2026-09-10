@@ -12,8 +12,10 @@ final class RegistrationMail
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
         $site = rtrim((string) config('app.url'), '/');
-        $amount = number_format((int) config('paypal.price_pence') / 100, 2);
-        $methodLabel = ['espees' => 'Espees', 'bank' => 'bank transfer'][ (string) ($registration['payment_method'] ?? '') ] ?? 'offline';
+        $participation = (string) $registration['participation'];
+        $amount = number_format(price_pence($participation) / 100, 2);
+        $standard = espees_price(standard_price_pence($participation));
+        $methodLabel = ['espees' => 'Espees', 'revolut' => 'Revolut'][ (string) ($registration['payment_method'] ?? '') ] ?? 'offline';
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
 
@@ -29,20 +31,26 @@ final class RegistrationMail
         $proofLine = $proof === [] ? '' : '<p style="margin:18px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Send your proof of payment, quoting reference <strong>' . $reference . '</strong>:<br>' . implode('<br>', $proof) . '</p>';
 
         $subject = 'Payment received — awaiting confirmation (' . (string) $registration['reference'] . ')';
-        $html = '<!doctype html><html><body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+        $html = '<!doctype html><html><head><meta charset="utf-8">'
+            . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
+            . '<style>:root{color-scheme:light only;supported-color-schemes:light only}'
+            . '[data-ogsc] .dark-safe-ink{color:#1b2242!important}[data-ogsc] .dark-safe-paper{color:#f3eee2!important}'
+            . '</style></head>'
+            . '<body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
             . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
-            . '<tr><td background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
             . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">Essex Edition 2026 &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
-            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase">Payment received,<br>' . $firstName . '.</h1>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">Payment received,<br>' . $firstName . '.</h1>'
             . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your registration is confirmed and your ' . $amount . ' Espees ' . htmlspecialchars($methodLabel, ENT_QUOTES, 'UTF-8') . ' payment has been logged. We are verifying it now.</p></td></tr>'
             . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
             . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
             . '<p style="margin:0 0 18px;color:#6e6857;font-size:15px;line-height:1.6">Your QR access pass is emailed to you the moment your payment is confirmed — keep this reference safe in the meantime.</p>'
             . $proofLine
             . '</td></tr>'
-            . '<tr><td style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026</td></tr>'
+            . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026<br><br>'
+            . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
             . '</table></td></tr></table></body></html>';
 
         $text = "Payment received, {$registration['first_name']}.\n\n"
@@ -63,30 +71,38 @@ final class RegistrationMail
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
         $site = rtrim((string) config('app.url'), '/');
-        $amount = number_format((int) config('paypal.price_pence') / 100, 2);
+        $participation = (string) $registration['participation'];
+        $amount = number_format(price_pence($participation) / 100, 2);
+        $standard = espees_price(standard_price_pence($participation));
         $payUrl = $site . '/register/pay?ref=' . rawurlencode((string) $registration['reference']);
         $pay = htmlspecialchars($payUrl, ENT_QUOTES, 'UTF-8');
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
 
         $subject = 'You are on the list — complete your place payment (' . (string) $registration['reference'] . ')';
-        $html = '<!doctype html><html><body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+        $html = '<!doctype html><html><head><meta charset="utf-8">'
+            . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
+            . '<style>:root{color-scheme:light only;supported-color-schemes:light only}'
+            . '[data-ogsc] .dark-safe-ink{color:#1b2242!important}[data-ogsc] .dark-safe-paper{color:#f3eee2!important}'
+            . '</style></head>'
+            . '<body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
             . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
-            . '<tr><td background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
             . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">Essex Edition 2026 &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
-            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase">You are on the list,<br>' . $firstName . '.</h1>'
-            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your onsite place is held. The full price is 100 Espees; the inaugural discount takes 50 Espees off, leaving ' . $amount . ' Espees to pay.</p></td></tr>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">You are on the list,<br>' . $firstName . '.</h1>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your place is held. The full price is ' . $standard . '; the inaugural edition price leaves ' . $amount . ' Espees to pay.</p></td></tr>'
             . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
             . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
             . '<p style="margin:28px 0 8px"><a href="' . $pay . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">Complete payment</a></p>'
             . '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Your QR access pass is issued by email as soon as your payment is confirmed.</p></td></tr>'
-            . '<tr><td style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026</td></tr>'
+            . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026<br><br>'
+            . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
             . '</table></td></tr></table></body></html>';
 
         $text = "You are on the list, {$registration['first_name']}.\n\n"
-            . "Your onsite place is held. The full price is 100 Espees; the inaugural discount takes 50 Espees off, leaving {$amount} Espees to pay.\n\n"
+            . "Your place is held. The full price is {$standard}; the inaugural edition price leaves {$amount} Espees to pay.\n\n"
             . "Registration reference: {$registration['reference']}\n"
             . "Complete payment: {$payUrl}\n\n"
             . "Your QR access pass is issued by email as soon as your payment is confirmed.\n\n"
@@ -97,16 +113,40 @@ final class RegistrationMail
         ]);
     }
     /** @param array<string,mixed> $registration */
+    /** The attendee's QR pass as raw PNG bytes, for embedding in the email itself. */
+    private static function qrPng(string $token): ?string
+    {
+        try {
+            $old = error_reporting(E_ALL & ~E_DEPRECATED); // vendored phpqrcode predates 8.3 signatures
+            require_once BASE_PATH . '/lib/phpqrcode.php';
+            ob_start();
+            \QRcode::png($token, false, \QR_ECLEVEL_M, 6, 3, false, 0xFFFFFF, 0x000000);
+            $png = (string) ob_get_clean();
+            error_reporting($old);
+
+            $signature = chr(0x89) . 'PNG';
+            if (!str_starts_with($png, $signature)) {
+                $pos = strpos($png, $signature);
+                $png = $pos === false ? '' : substr($png, $pos);
+            }
+
+            return $png === '' ? null : $png;
+        } catch (\Throwable $e) {
+            error_log('QR pass could not be rendered for the email: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function send(array $registration): void
     {
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
         $path = [
             'onsite' => 'Attending onsite',
-            'online' => 'Attending online — Rainham, Essex',
+            'online' => 'Attending online',
             'initiative' => 'Joined the Kingdom Producers initiative',
         ][(string) $registration['participation']] ?? 'Registered producer';
-        if ($registration['participation'] === 'onsite' && ($registration['payment_status'] ?? '') === 'paid') {
+        if (($registration['payment_status'] ?? '') === 'paid') {
             $amount = number_format((int) $registration['payment_amount'] / 100, 2);
             $path .= " \u{00B7} {$amount} Espees paid";
         }
@@ -117,24 +157,34 @@ final class RegistrationMail
         $accessToken = AttendanceService::tokenFor((string) $registration['reference']);
         $confirmationUrl = $site . '/register/confirmed?access=' . rawurlencode($accessToken);
         $confirmation = htmlspecialchars($confirmationUrl, ENT_QUOTES, 'UTF-8');
-        $qrUrl = htmlspecialchars($site . '/access/qr?token=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
+        $qrPng = self::qrPng($accessToken);
+        $qrCid = 'access-pass';
+        $qrUrl = $qrPng !== null
+            ? 'cid:' . $qrCid
+            : htmlspecialchars($site . '/access/qr?token=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
 
         $subject = 'Registration confirmed — ' . (string) $registration['reference'];
-        $html = '<!doctype html><html><body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+        $html = '<!doctype html><html><head><meta charset="utf-8">'
+            . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
+            . '<style>:root{color-scheme:light only;supported-color-schemes:light only}'
+            . '[data-ogsc] .dark-safe-ink{color:#1b2242!important}[data-ogsc] .dark-safe-paper{color:#f3eee2!important}'
+            . '</style></head>'
+            . '<body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
             . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
-            . '<tr><td background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
             . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">Essex Edition 2026 &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
-            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase">You are registered,<br>' . $firstName . '.</h1>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">You are registered,<br>' . $firstName . '.</h1>'
             . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your place in the Loveworld Kingdom Producers Summit has been recorded.</p></td></tr>'
-            . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
-            . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
+            . '<tr><td style="padding:32px"><p style="margin:0 0 10px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference — keep this</p>'
+            . '<p style="margin:0 0 28px;padding:16px 20px;background:#1b2242;color:#ffffff;font:700 40px/1.1 Arial Black,Arial Narrow,Arial,sans-serif;letter-spacing:3px;text-align:center">' . $reference . '</p>'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:15px 0;border-top:1px solid #d4ccbb;color:#756f60;font:12px monospace;text-transform:uppercase">Your path</td><td align="right" style="padding:15px 0;border-top:1px solid #d4ccbb;color:#1b2242;font-size:15px">' . $path . '</td></tr></table>'
             . '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
             . '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe. Onsite attendees can present the QR access pass shown on the confirmation page when arriving at the attendance desk.</p>'
             . '<p style="margin:28px 0 8px"><a href="' . $confirmation . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">View your registration</a></p></td></tr>'
-            . '<tr><td style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026</td></tr>'
+            . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · Essex Edition 2026<br><br>'
+            . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
             . '</table></td></tr></table></body></html>';
 
         $text = "You are registered, {$registration['first_name']}.\n\n"
@@ -145,6 +195,6 @@ final class RegistrationMail
 
         (new Mailer())->send((string) $registration['email'], $subject, $html, $text, [
             'Reply-To' => (string) config('app.mail.reply_to'),
-        ]);
+        ], $qrPng !== null ? [$qrCid => ['data' => $qrPng, 'type' => 'image/png']] : []);
     }
 }

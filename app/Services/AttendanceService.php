@@ -47,9 +47,8 @@ final class AttendanceService
             return ['ok' => false, 'status' => 'invalid', 'message' => 'No active registration matches this code.'];
         }
 
-        if ($registration['participation'] === 'onsite'
-            && !in_array($registration['payment_status'], ['paid', 'not_required'], true)) {
-            return ['ok' => false, 'status' => 'invalid', 'message' => 'Payment is outstanding. Complete onsite payment before check-in.'];
+        if (!in_array($registration['payment_status'], ['paid', 'not_required'], true)) {
+            return ['ok' => false, 'status' => 'invalid', 'message' => 'Payment is outstanding. Complete payment before check-in.'];
         }
         if ($registration['status'] !== 'confirmed') {
             return ['ok' => false, 'status' => 'invalid', 'message' => 'This registration is not confirmed. Please contact the organisers.'];

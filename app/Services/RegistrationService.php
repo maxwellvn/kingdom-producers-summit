@@ -124,7 +124,7 @@ final class RegistrationService
             'onsite_days'       => null,
             'dietary'           => $participation === 'onsite' ? $this->nullable($request->str('dietary')) : null,
             'accessibility'     => $participation === 'onsite' ? $this->nullable($request->str('accessibility')) : null,
-            'needs_letter'      => $participation === 'onsite' && $request->str('needs_letter') === '1' ? 1 : 0,
+            'needs_letter'      => 0,
             'emergency_contact' => $participation === 'onsite' ? $this->nullable($request->str('emergency_contact')) : null,
             'wants_updates'     => 1,
             'wants_portal'      => $participation === 'initiative' ? 1 : ($request->str('wants_portal') === '1' ? 1 : 0),
@@ -134,9 +134,9 @@ final class RegistrationService
             'consent_marketing' => $request->str('consent_marketing') === '1' ? 1 : 0,
             'ip_address'        => @inet_pton($request->ip()) ?: null,
             'user_agent'        => $this->nullable($request->userAgent()),
-            'status'            => $participation === 'onsite' ? 'pending' : 'confirmed',
-            'payment_status'    => $participation === 'onsite' ? 'unpaid' : 'not_required',
-            'payment_amount'    => $participation === 'onsite' ? (int) config('paypal.price_pence') : null,
+            'status'            => is_paid_path($participation) ? 'pending' : 'confirmed',
+            'payment_status'    => is_paid_path($participation) ? 'unpaid' : 'not_required',
+            'payment_amount'    => is_paid_path($participation) ? price_pence($participation) : null,
             'payment_session_id' => null,
         ];
 
@@ -166,11 +166,11 @@ final class RegistrationService
         if ($registration['status'] === 'cancelled') {
             return 'This email has a cancelled registration. Please contact the organisers before registering again.';
         }
-        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'unpaid') {
-            return 'This email is already registered for onsite attendance, but payment is still outstanding. Use Complete payment with your saved reference and email; you do not need to register again.';
+        if ($registration['payment_status'] === 'unpaid') {
+            return 'This email is already registered, but payment is still outstanding. Use Complete payment with your saved reference and email; you do not need to register again.';
         }
-        if ($registration['participation'] === 'onsite' && $registration['payment_status'] === 'claimed') {
-            return 'This email is already registered for onsite attendance and your payment is awaiting confirmation. You do not need to register or pay again.';
+        if ($registration['payment_status'] === 'claimed') {
+            return 'This email is already registered and your payment is awaiting confirmation. You do not need to register or pay again.';
         }
         if ($registration['payment_status'] === 'paid') {
             return 'This email is already registered and payment is complete. Check your confirmation email for your access pass; you do not need to register or pay again.';
