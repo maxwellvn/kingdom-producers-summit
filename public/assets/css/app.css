@@ -771,6 +771,20 @@ body.menu-open { overflow: hidden; }
 .pay__method:hover { border-color: var(--ink); background: rgba(27,34,66,.04); }
 .pay__method strong { display: block; font-size: 1.05rem; }
 .pay__method-blurb { display: block; color: var(--muted); font-size: .88rem; margin-top: .15rem; }
+/* ---------- Proof of payment ---------- */
+.proof { padding: clamp(1.25rem, 3vw, 1.6rem); background: var(--paper-2); border: 1px solid rgba(27,34,66,.18); }
+.proof__title { font-size: 1.15rem; margin: 0 0 .3rem; color: var(--ink); }
+.proof__lede { margin: 0 0 1rem; color: var(--muted); font-size: .95rem; line-height: 1.5; }
+.proof__rows { display: grid; margin: 0; }
+.proof__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .35rem 1rem; padding: .75rem 0; border-top: 1px solid rgba(27,34,66,.16); }
+.proof__row dt { flex: none; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.proof__row dd { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0; min-width: 0; }
+.proof__value { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+/* Handles and codes are case-sensitive, so keep them exactly as issued. */
+.proof__value.mono { text-transform: none; letter-spacing: .03em; font-size: .95rem; }
+a.proof__value { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(27,34,66,.35); }
+a.proof__value:hover { text-decoration-color: var(--ink); }
+
 .copy-btn { display: inline-block; margin-left: .5rem; padding: .15rem .55rem; border: 1px solid rgba(27,34,66,.35); border-radius: 3px; background: transparent; color: var(--ink); font: 500 .68rem/1.4 var(--font-mono, monospace); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background .12s ease, border-color .12s ease; vertical-align: middle; }
 .copy-btn:hover { background: rgba(27,34,66,.06); border-color: var(--ink); }
 .copy-btn.is-copied { color: #1e7d3c; border-color: #1e7d3c; }
@@ -907,6 +921,7 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 
 @media (max-width: 640px) {
   :root { --fs-hero: clamp(2.75rem, 13vw, 4.5rem); }
+  .proof__row { flex-direction: column; align-items: flex-start; }
   .pay-note { grid-template-columns: 1fr; gap: .9rem; padding: 1.25rem; }
   .pay-note__stamp { justify-self: start; }
   .hero { padding-top: 6.5rem; padding-bottom: 3.5rem; }
