@@ -41,7 +41,9 @@ $next = [
         <div class="confirmed__stamp" aria-hidden="true"><span>Registered</span></div>
       </header>
 
-      <div class="confirmed__pass">
+      <?php $onsite = $r['participation'] === 'onsite'; ?>
+      <div class="confirmed__pass<?= $onsite ? '' : ' confirmed__pass--noqr' ?>">
+        <?php if ($onsite): ?>
         <div class="confirmed__qr-wrap">
           <div class="confirmed__qr">
             <img src="<?= e(url('/access/qr?token=' . rawurlencode($accessToken))) ?>"
@@ -49,11 +51,18 @@ $next = [
           </div>
           <span class="mono">Scan once at entry</span>
         </div>
+        <?php endif; ?>
         <div class="confirmed__pass-copy">
           <span class="mono">Registration reference</span>
           <strong class="confirmed__ref-code" id="refCode"><?= e($r['reference']) ?></strong>
           <button type="button" class="confirmed__copy mono" data-copy="#refCode">Copy reference</button>
-          <p>Present this QR code to the attendance team. It confirms your arrival without exposing your registration details.</p>
+          <?php if ($onsite): ?>
+            <p>Present this QR code to the attendance team. It confirms your arrival without exposing your registration details.</p>
+          <?php elseif ($r['participation'] === 'online'): ?>
+            <p>Your live viewing link is sent to this email address before the programme begins. There is no pass to bring, and nothing further to do until then.</p>
+          <?php else: ?>
+            <p>Keep this reference for any correspondence with us about the initiative.</p>
+          <?php endif; ?>
         </div>
       </div>
 

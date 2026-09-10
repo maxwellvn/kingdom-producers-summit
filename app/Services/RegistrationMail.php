@@ -149,11 +149,21 @@ final class RegistrationMail
         $accessToken = AttendanceService::tokenFor((string) $registration['reference']);
         $confirmationUrl = $site . '/register/confirmed?access=' . rawurlencode($accessToken);
         $confirmation = htmlspecialchars($confirmationUrl, ENT_QUOTES, 'UTF-8');
-        $qrPng = self::qrPng($accessToken);
+
+        // Only onsite delegates are checked in at the door, so only they get a pass.
+        $onsite = (string) $registration['participation'] === 'onsite';
+        $qrPng = $onsite ? self::qrPng($accessToken) : null;
         $qrCid = 'access-pass';
         $qrUrl = $qrPng !== null
             ? 'cid:' . $qrCid
             : htmlspecialchars($site . '/access/qr?token=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
+
+        $passBlock = $onsite
+            ? '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
+              . '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe and present the QR access pass at the attendance desk when you arrive.</p>'
+            : ((string) $registration['participation'] === 'online'
+                ? '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Your live viewing link is sent to this email address before the programme begins. There is no pass to bring, and nothing further to do until then — just keep this reference safe.</p>'
+                : '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe for any correspondence with us about the initiative.</p>');
 
         $subject = 'Registration confirmed — ' . (string) $registration['reference'];
         $html = '<!doctype html><html><head><meta charset="utf-8">'
@@ -172,8 +182,7 @@ final class RegistrationMail
             . '<tr><td style="padding:32px"><p style="margin:0 0 10px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference — keep this</p>'
             . '<p style="margin:0 0 28px;padding:16px 20px;background:#1b2242;color:#ffffff;font:700 40px/1.1 Arial Black,Arial Narrow,Arial,sans-serif;letter-spacing:3px;text-align:center">' . $reference . '</p>'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:15px 0;border-top:1px solid #d4ccbb;color:#756f60;font:12px monospace;text-transform:uppercase">Your path</td><td align="right" style="padding:15px 0;border-top:1px solid #d4ccbb;color:#1b2242;font-size:15px">' . $path . '</td></tr></table>'
-            . '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
-            . '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe. Onsite attendees can present the QR access pass shown on the confirmation page when arriving at the attendance desk.</p>'
+            . $passBlock
             . '<p style="margin:28px 0 8px"><a href="' . $confirmation . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">View your registration</a></p></td></tr>'
             . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '<br><br>'
             . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
@@ -182,6 +191,11 @@ final class RegistrationMail
         $text = "You are registered, {$registration['first_name']}.\n\n"
             . "Registration reference: {$registration['reference']}\n"
             . "Your path: " . html_entity_decode($path) . "\n\n"
+            . ($onsite
+                ? "Present your QR access pass at the attendance desk when you arrive.\n"
+                : ((string) $registration['participation'] === 'online'
+                    ? "Your live viewing link is sent to this email address before the programme begins.\n"
+                    : ''))
             . "Keep this reference safe. View your registration: {$confirmationUrl}\n\n"
             . "The Loveworld Consulate, United Kingdom";
 

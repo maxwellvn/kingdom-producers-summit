@@ -54,6 +54,11 @@ final class AttendanceService
             return ['ok' => false, 'status' => 'invalid', 'message' => 'This registration is not confirmed. Please contact the organisers.'];
         }
 
+        // Only onsite delegates hold a place in the room; online and initiative do not.
+        if ($registration['participation'] !== 'onsite') {
+            return ['ok' => false, 'status' => 'invalid', 'message' => 'This is an ' . $registration['participation'] . ' registration, not an onsite place. It cannot be checked in at the door.'];
+        }
+
         $attendance = Registration::recordAttendance((int) $registration['id'], $staffEmail, $ipAddress);
         $name = trim($registration['first_name'] . ' ' . $registration['last_name']);
 

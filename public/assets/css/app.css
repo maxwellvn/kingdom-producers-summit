@@ -1022,3 +1022,5 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .legal__body ul { margin: 0 0 1.4rem; padding-left: 1.1rem; display: grid; gap: .55rem; max-width: 68ch; }
 .legal__body a { border-bottom: 1px solid var(--paper-line); }
 .legal__body a:hover { border-color: var(--stamp); color: var(--stamp); }
+
+.confirmed__pass--noqr { grid-template-columns: minmax(0, 1fr); }

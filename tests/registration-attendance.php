@@ -68,6 +68,13 @@ try {
     verify($scan($token)['ok'] === true, 'legacy free onsite pass remains valid');
     $update->execute(['confirmed', 'not_required', 'online', $ref]);
     verify(str_contains(RegistrationService::duplicateMessage($row['email']), 'No payment is required'), 'free online duplicate message');
+    // Online and initiative places are not places in the room, so they never check in.
+    $update->execute(['confirmed', 'paid', 'online', $ref]);
+    verify($scan($token)['ok'] === false, 'an online pass is refused at the door');
+    verify(str_contains($scan($token)['message'], 'not an onsite place'), 'the door says why an online pass is refused');
+    $update->execute(['confirmed', 'not_required', 'initiative', $ref]);
+    verify($scan($token)['ok'] === false, 'an initiative pass is refused at the door');
+    $update->execute(['confirmed', 'paid', 'onsite', $ref]);
     Session::forget('admin_authenticated');
     verify((new App\Middleware\RequireAdmin())->handle($request) !== null, 'attendance requires staff authentication');
     verify(!Session::verifyCsrf('incorrect'), 'incorrect CSRF token rejected');
