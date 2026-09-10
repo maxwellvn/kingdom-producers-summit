@@ -68,7 +68,9 @@
     <div class="supporters__list">
     <?php foreach ($summit['partners'] as $partner): ?>
       <div class="supporters__org">
-        <img src="<?= e(asset('img/crest.png')) ?>" alt="" width="44" height="32">
+        <?php if ($partner === 'Loveworld Consulate UK'): ?>
+          <img src="<?= e(asset('img/crest.png')) ?>" alt="" width="44" height="32">
+        <?php endif; ?>
         <span><?= e($partner) ?></span>
       </div>
     <?php endforeach; ?>
