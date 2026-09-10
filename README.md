@@ -18,12 +18,8 @@ Create a new Coolify resource from this repository and select **Docker Compose**
 - `MAIL_FROM_NAME` — optional sender name
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_ENCRYPTION` — SMTP connection settings
 - `MAIL_USERNAME`, `MAIL_PASSWORD` — authenticated mailbox credentials
-- `PAYPAL_ENABLED` — `true` to enable onsite payments
-- `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET` — PayPal REST app credentials, set privately in Coolify (required for checkout)
-- `PAYPAL_MODE` — `sandbox` while testing, `live` for real payments
-- `PAYPAL_WEBHOOK_ID` — id of the webhook you create in the PayPal dashboard pointing to `/paypal/webhook`; it listens for `PAYMENT.CAPTURE.COMPLETED`
 
-Redeploy after changing payment settings so the app container receives them. For local testing use sandbox credentials from the PayPal developer dashboard (sandbox buyer accounts let you pay without real money); never commit keys. Without credentials, registrations are saved but checkout cannot start.
+Payment methods, the Espees code and the Revolut links are edited in Admin > Payments and take effect immediately.
 
 The application container waits for MySQL and runs outstanding migrations whenever it starts. Database data is retained in the `producers_db` volume.
 

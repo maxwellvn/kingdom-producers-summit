@@ -9,6 +9,8 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Analytics;
+use App\Models\LoginAttempt;
+use App\Services\SafeUrl;
 use App\Services\StreamService;
 use App\Services\VisitorTracker;
 
@@ -16,6 +18,13 @@ use App\Services\VisitorTracker;
 final class WatchController extends Controller
 {
     private const SESSION_KEY = 'watch_reference';
+
+    /** Wrong guesses allowed at the gate before it closes for a while. */
+    private const MAX_ATTEMPTS = 8;
+    private const LOCKOUT_SECONDS = 900;
+
+    /** A single stream file should never be larger than this. */
+    private const MAX_FETCH_BYTES = 24 * 1024 * 1024;
 
     public function show(Request $request): Response
     {
@@ -63,6 +72,15 @@ final class WatchController extends Controller
     /** Check what was typed at the gate and hand over the single pass. */
     public function enter(Request $request): Response
     {
+        // A reference is short, so guessing has to be made expensive.
+        $throttleKey = 'watch|' . $request->ip();
+        $lockedFor = LoginAttempt::lockedForSeconds($throttleKey, self::MAX_ATTEMPTS, self::LOCKOUT_SECONDS);
+        if ($lockedFor > 0) {
+            $minutes = (int) ceil($lockedFor / 60);
+
+            return $this->gate($request, ['auth' => "Too many attempts. Try again in {$minutes} minute(s)."]);
+        }
+
         $reference = $request->str('reference');
         $identifier = $request->str('identifier');
 
@@ -72,9 +90,13 @@ final class WatchController extends Controller
 
         $viewer = StreamService::findViewer($reference, $identifier);
         if ($viewer === null) {
+            LoginAttempt::record($throttleKey);
             usleep(random_int(200_000, 500_000)); // Slow down guessing.
+
             return $this->gate($request, ['auth' => 'Those details do not match a confirmed registration for this summit.'], $reference);
         }
+
+        LoginAttempt::clear($throttleKey);
 
         $session = VisitorTracker::sessionHash();
         $claim = StreamService::claimPass(
@@ -265,13 +287,21 @@ final class WatchController extends Controller
     /** @return array{0:int,1:?string,2:string} */
     private static function fetch(string $url): array
     {
+        if (!SafeUrl::isPublicHttp($url)) {
+            error_log('Stream fetch refused, not a public address: ' . $url);
+
+            return [0, null, ''];
+        }
+
         $ch = curl_init($url);
-        curl_setopt_array($ch, [
+        curl_setopt_array($ch, SafeUrl::curlGuards() + [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 20,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS      => 3,
             CURLOPT_HTTPHEADER     => ['Accept: */*'],
+            // A stream segment is a few megabytes; anything larger is not ours.
+            CURLOPT_BUFFERSIZE     => 65536,
+            CURLOPT_NOPROGRESS     => false,
+            CURLOPT_PROGRESSFUNCTION => static fn ($ch, $expected, $downloaded) => $downloaded > self::MAX_FETCH_BYTES ? 1 : 0,
         ]);
         $body = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);

@@ -87,6 +87,11 @@ final class Session
         return $_SESSION['_flash_now'][$key] ?? $_SESSION[$key] ?? $default;
     }
 
+    public static function has(string $key): bool
+    {
+        return isset($_SESSION['_flash_now'][$key]) || isset($_SESSION[$key]);
+    }
+
     public static function put(string $key, mixed $value): void
     {
         $_SESSION[$key] = $value;

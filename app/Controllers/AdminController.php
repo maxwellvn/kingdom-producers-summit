@@ -21,6 +21,7 @@ use App\Services\RegistrationMail;
 use App\Services\RegistrationService;
 use App\Services\KingsChatClient;
 use App\Services\PaymentService;
+use App\Services\SafeUrl;
 use PDOException;
 
 final class AdminController extends Controller
@@ -300,6 +301,11 @@ final class AdminController extends Controller
         $url = trim($request->str('stream_url'));
         if ($url !== '' && !filter_var($url, FILTER_VALIDATE_URL)) {
             Session::flash('admin_flash', 'That stream link is not a valid web address, so nothing was saved.');
+            return $this->redirect('/admin/stream');
+        }
+        // The server fetches this link, so it must point at the public web.
+        if ($url !== '' && !SafeUrl::isPublicHttp($url)) {
+            Session::flash('admin_flash', 'That link points at this machine or a private network, so it was not saved.');
             return $this->redirect('/admin/stream');
         }
 

@@ -85,6 +85,8 @@
 
     function saveConsent(prefs, action) {
       try { localStorage.setItem('producers_cookie_choice', JSON.stringify(prefs)); } catch (e) {}
+      // Declining analytics must actually stop the counting, not just the banner.
+      applyAnalyticsChoice(prefs.analytics !== false);
       var endpoint = cookieBanner.getAttribute('data-consent-endpoint');
       if (!endpoint) return;
       try {
@@ -141,13 +143,50 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) startVideo(); });
   });
 
+  /* ---------- A note for anyone registering under 18 ---------- */
+  (function () {
+    var note = document.querySelector('[data-under-18-note]');
+    if (!note) return;
+    var bands = Array.prototype.slice.call(document.querySelectorAll('input[name="age_band"]'));
+    function sync() {
+      var chosen = bands.filter(function (b) { return b.checked; })[0];
+      note.hidden = !chosen || chosen.value !== 'under18';
+    }
+    bands.forEach(function (b) { b.addEventListener('change', sync); });
+    sync();
+  })();
+
+  /* ---------- Honour an analytics refusal ---------- */
+  function analyticsAllowed() {
+    try {
+      var stored = localStorage.getItem('producers_cookie_choice');
+      if (!stored) return true; // Nothing declined yet.
+      var prefs = JSON.parse(stored);
+      return prefs.analytics !== false;
+    } catch (e) { return true; }
+  }
+
+  function applyAnalyticsChoice(allowed) {
+    document.documentElement.classList.toggle('no-analytics', !allowed);
+    var url = document.body.getAttribute('data-analytics-choice');
+    if (!url) return;
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'analytics=' + (allowed ? '1' : '0'),
+      keepalive: true
+    }).catch(function () {});
+  }
+
+  applyAnalyticsChoice(analyticsAllowed());
+
   /* ---------- Presence: keep the live counts honest ---------- */
   (function () {
     if (document.body.classList.contains('page-admin')) return;
 
     var context = document.body.getAttribute('data-presence') || 'site';
     var url = document.body.getAttribute('data-presence-url');
-    if (!url) return;
+    if (!url || !analyticsAllowed()) return;
 
     function beat() {
       if (document.hidden) return;

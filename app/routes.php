@@ -17,6 +17,7 @@ use App\Middleware\VerifyCsrf;
 
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/about', [HomeController::class, 'about']);
+$router->get('/privacy', [HomeController::class, 'privacy']);
 
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
@@ -44,6 +45,7 @@ $router->post('/api/consent', [ConsentController::class, 'store']);
 // Presence heartbeat: no personal data, so no CSRF ceremony.
 $router->post('/api/presence', [PresenceController::class, 'beat']);
 $router->post('/api/presence/leave', [PresenceController::class, 'leave']);
+$router->post('/api/analytics-choice', [PresenceController::class, 'choice']);
 
 $router->get('/admin/login', [AdminController::class, 'loginForm']);
 $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::class]);

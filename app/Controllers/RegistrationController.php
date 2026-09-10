@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
@@ -42,14 +43,27 @@ final class RegistrationController extends Controller
         ]);
     }
 
+    /** One address should not be able to fill the room or the mailbox. */
+    private const MAX_REGISTRATIONS = 5;
+    private const REGISTRATION_WINDOW = 3600;
+
     public function store(Request $request): Response
     {
+        $throttleKey = 'register|' . $request->ip();
+        if (LoginAttempt::lockedForSeconds($throttleKey, self::MAX_REGISTRATIONS, self::REGISTRATION_WINDOW) > 0) {
+            return $this->back($request, [
+                'email' => 'That is several registrations from this connection in a short time. Wait an hour, or contact us if you are registering a group.',
+            ], $request->all());
+        }
+
         $service = new RegistrationService();
         [$errors, $clean] = $service->validate($request);
 
         if ($errors) {
             return $this->back($request, $errors, $request->all());
         }
+
+        LoginAttempt::record($throttleKey);
 
         try {
             $registration = $service->register($clean);

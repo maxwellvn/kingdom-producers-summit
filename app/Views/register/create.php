@@ -218,6 +218,10 @@ $stageLabels = [
               </label>
             <?php endforeach; ?>
           </div>
+          <p class="field__hint" data-under-18-note hidden>
+            If you are under 16, please register with a parent or guardian and ask them to email
+            <a href="mailto:<?= e(contact_email()) ?>"><?= e(contact_email()) ?></a> so we have their agreement.
+          </p>
           <?php if ($err = error_for('age_band')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>
 
@@ -332,6 +336,11 @@ $stageLabels = [
               <input id="accessibility" name="accessibility" type="text" placeholder="Step-free access, BSL, hearing loop…" value="<?= old('accessibility') ?>">
             </div>
           </div>
+          <p class="field__hint">
+            These two can say something about your health or beliefs, so give them only if you want us to act on
+            them. We use them for the day itself and nothing else. See the
+            <a href="<?= url('/privacy') ?>" target="_blank" rel="noopener">privacy notice</a>.
+          </p>
 
           <div class="field">
             <label for="emergency_contact">Emergency contact <span class="field__opt">optional</span></label>
@@ -380,7 +389,7 @@ $stageLabels = [
         <div class="field field--check <?= error_for('consent_terms') ? 'has-error' : '' ?>">
           <label class="check">
             <input type="checkbox" name="consent_terms" value="1" <?= old_checked('consent_terms', '1') ?> required>
-            <span>I understand my details will be used by Loveworld Consulate UK to administer the summit and the Kingdom Producers initiative, and I can ask for them to be removed at any time.</span>
+            <span>I understand my details will be used by Loveworld Consulate UK to administer the summit and the Kingdom Producers initiative, as set out in the <a href="<?= url('/privacy') ?>" target="_blank" rel="noopener">privacy notice</a>, and I can ask for them to be removed at any time.</span>
           </label>
           <?php if ($err = error_for('consent_terms')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
         </div>

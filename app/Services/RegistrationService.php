@@ -132,8 +132,6 @@ final class RegistrationService
             'portal_interest'   => $participation === 'initiative' ? $this->nullable($request->str('portal_interest')) : null,
             'consent_terms'     => 1,
             'consent_marketing' => $request->str('consent_marketing') === '1' ? 1 : 0,
-            'ip_address'        => @inet_pton($request->ip()) ?: null,
-            'user_agent'        => $this->nullable($request->userAgent()),
             'status'            => is_paid_path($participation) ? 'pending' : 'confirmed',
             'payment_status'    => is_paid_path($participation) ? 'unpaid' : 'not_required',
             'payment_amount'    => is_paid_path($participation) ? price_pence($participation) : null,
@@ -224,8 +222,6 @@ final class RegistrationService
             'portal_interest'   => $this->nullable($request->str('note')),
             'consent_terms'     => 1,
             'consent_marketing' => 0,
-            'ip_address'        => null,
-            'user_agent'        => null,
             'issued_by'         => mb_substr($issuedBy, 0, 190),
             // Issued places are settled: nothing to pay and no pending state.
             'status'            => 'confirmed',

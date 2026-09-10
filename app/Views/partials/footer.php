@@ -40,6 +40,7 @@
       <h4 class="footer__heading mono">Contact</h4>
       <a href="mailto:<?= e(contact_email()) ?>"><?= e(contact_email()) ?></a>
       <a href="https://kingschat.online/user/<?= e(contact_kingschat()) ?>" target="_blank" rel="noopener">KingsChat @<?= e(contact_kingschat()) ?></a>
+      <a href="<?= url('/privacy') ?>">Privacy notice</a>
     </div>
   </div>
 

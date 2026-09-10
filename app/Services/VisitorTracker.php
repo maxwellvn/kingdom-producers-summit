@@ -24,6 +24,10 @@ final class VisitorTracker
         if ($request->method !== 'GET' || self::isIgnored($request->path)) {
             return;
         }
+        // A visitor who declined measurement is not measured.
+        if (Session::get('_no_analytics') === true) {
+            return;
+        }
 
         try {
             $device = Analytics::device($request->userAgent());

@@ -7,8 +7,9 @@ namespace App\Models;
 use App\Core\Database;
 
 /**
- * Failed admin sign-ins, stored server-side so a discarded session cookie
- * cannot reset the lockout counter.
+ * Failed attempts at anything worth guessing: admin sign-in, the stream gate,
+ * repeated registrations. Stored server-side, so discarding a session cookie
+ * cannot reset the counter.
  */
 final class LoginAttempt
 {

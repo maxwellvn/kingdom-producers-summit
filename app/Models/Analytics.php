@@ -206,9 +206,16 @@ final class Analytics
         );
     }
 
-    /** Old rows are not useful and should not pile up. */
+    /**
+     * Retention, enforced rather than merely promised: traffic for six months,
+     * presence for a day, consent records for two years.
+     */
     public static function prune(int $keepDays = 180): void
     {
+        Database::connection()->exec(
+            'DELETE FROM cookie_consents WHERE created_at < (NOW() - INTERVAL 2 YEAR)'
+        );
+
         Database::connection()->exec(
             'DELETE FROM page_views WHERE viewed_at < (NOW() - INTERVAL ' . $keepDays . ' DAY)'
         );

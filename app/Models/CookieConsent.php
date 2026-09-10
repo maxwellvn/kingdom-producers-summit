@@ -19,11 +19,12 @@ final class CookieConsent
         bool $analytics,
         bool $marketing,
         ?string $ipHash,
-        string $userAgent,
+        string $userAgent = '',
     ): void {
+        // The browser string is not kept: the choice and its time are the record.
         $stmt = Database::connection()->prepare(
-            'INSERT INTO cookie_consents (action, preferences, analytics, marketing, policy_version, ip_hash, user_agent)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO cookie_consents (action, preferences, analytics, marketing, policy_version, ip_hash)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $action,
@@ -32,7 +33,6 @@ final class CookieConsent
             (int) $marketing,
             self::POLICY_VERSION,
             $ipHash,
-            $userAgent,
         ]);
     }
 }

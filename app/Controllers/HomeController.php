@@ -24,6 +24,16 @@ final class HomeController extends Controller
         ]);
     }
 
+    public function privacy(Request $request): Response
+    {
+        return $this->view('home/privacy', [
+            'title'     => 'Privacy — ' . config('app.name'),
+            'bodyClass' => 'page-legal',
+            'summit'    => config('app.summit'),
+            'updated'   => '10 September 2026',
+        ]);
+    }
+
     public function about(Request $request): Response
     {
         return $this->view('home/about', [

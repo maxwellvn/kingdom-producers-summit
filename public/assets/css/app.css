@@ -1008,3 +1008,17 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .watch__fine a { color: rgba(243,238,226,.9); border-bottom: 1px solid rgba(243,238,226,.35); }
 
 .pay__dot.is-live { background: #e0384a; }
+
+/* ---------- Legal pages ---------- */
+.legal { padding-block: clamp(7rem, 13vh, 10rem) var(--section); }
+.legal__inner { max-width: 46rem; }
+.legal__head { margin-bottom: clamp(2.5rem, 5vw, 4rem); }
+.legal__title { font-size: var(--fs-h1); line-height: .95; margin-bottom: 1.2rem; }
+.legal__lede { color: var(--muted); font-size: var(--fs-lede); line-height: 1.5; max-width: 42ch; }
+.legal__body h2 { margin: 2.4rem 0 .8rem; font-size: 1.35rem; }
+.legal__body h2:first-child { margin-top: 0; }
+.legal__body p, .legal__body li { color: var(--charcoal); line-height: 1.7; }
+.legal__body p { margin: 0 0 1rem; max-width: 68ch; }
+.legal__body ul { margin: 0 0 1.4rem; padding-left: 1.1rem; display: grid; gap: .55rem; max-width: 68ch; }
+.legal__body a { border-bottom: 1px solid var(--paper-line); }
+.legal__body a:hover { border-color: var(--stamp); color: var(--stamp); }
