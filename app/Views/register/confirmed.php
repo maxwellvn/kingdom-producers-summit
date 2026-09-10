@@ -57,7 +57,7 @@ $next = [
       <dl class="confirmed__facts mono">
         <div><dt>Name</dt><dd><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></dd></div>
         <div><dt>Email</dt><dd><?= e($r['email']) ?></dd></div>
-        <?php if (!empty($r['field'])): ?><div><dt>Field</dt><dd><?= e($r['field']) ?></dd></div><?php endif; ?>
+        <?php if (!empty($r['field'])): ?><div><dt>Field</dt><dd><?= e(field_label($r)) ?></dd></div><?php endif; ?>
         <?php if (!empty($r['producer_stage'])): ?><div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div><?php endif; ?>
         <?php if ($r['participation'] === 'onsite' && ($r['payment_status'] ?? '') === 'paid'): ?>
           <div><dt>Paid</dt><dd><?= e(espees_price((int) $r['payment_amount'], 2)) ?></dd></div>

@@ -225,18 +225,30 @@
   });
 
   /* ---------- Fields that open only when a specific choice is made ---------- */
-  // data-reveal-when="<input name>:<value>" — hidden until that input is checked.
+  // data-reveal-when="<field name>:<value>" — hidden until that choice is made.
+  // Works for checkboxes, radios and selects.
   document.querySelectorAll('[data-reveal-when]').forEach(function (panel) {
-    var parts = panel.getAttribute('data-reveal-when').split(':');
-    var controls = Array.prototype.slice.call(
-      document.querySelectorAll('[name="' + parts[0] + '"][value="' + parts[1] + '"]')
-    );
+    var spec = panel.getAttribute('data-reveal-when');
+    var divider = spec.indexOf(':');
+    var name = spec.slice(0, divider);
+    var wanted = spec.slice(divider + 1);
+
+    var controls = Array.prototype.slice.call(document.querySelectorAll('[name="' + name + '"]'))
+      .filter(function (c) {
+        return c.tagName === 'SELECT' || c.value === wanted;
+      });
     if (!controls.length) return;
 
     var input = panel.querySelector('input, textarea, select');
 
+    function isOpen() {
+      return controls.some(function (c) {
+        return c.tagName === 'SELECT' ? c.value === wanted : c.checked;
+      });
+    }
+
     function sync(focusOnOpen) {
-      var open = controls.some(function (c) { return c.checked; });
+      var open = isOpen();
       panel.hidden = !open;
       if (!open && input) input.value = '';
       if (open && focusOnOpen && input) input.focus();

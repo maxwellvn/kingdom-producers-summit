@@ -36,7 +36,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
             <td><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></td>
             <td><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a><?php if ($r['phone']): ?><br><span class="adm-muted mono"><?= e($r['phone']) ?></span><?php endif; ?><?php if ($r['kingschat_username']): ?><br><span class="adm-muted mono">KC: @<?= e($r['kingschat_username']) ?></span><?php endif; ?></td>
             <td><span class="adm-pill adm-pill--<?= e($r['participation']) ?>"><?= e($pathLabel[$r['participation']] ?? $r['participation']) ?></span></td>
-            <td><?= e($r['field'] ?? '') ?></td>
+            <td><?= e(field_label($r)) ?></td>
             <td><?= e(ucfirst((string) ($r['producer_stage'] ?? ''))) ?></td>
             <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?><?php if ($r['zone']): ?><br><span class="adm-muted"><?= e(implode(' · ', array_filter([$r['zone'], $r['group_name'], $r['church_name']]))) ?></span><?php endif; ?></td>
             <td>

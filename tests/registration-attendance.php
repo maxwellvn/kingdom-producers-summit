@@ -83,6 +83,28 @@ try {
     verify($initiativeErrors === [], 'initiative registration needs no field or stage');
     verify($initiativeClean['field'] === null && $initiativeClean['producer_stage'] === null, 'initiative registration stores no field or stage');
 
+    // Choosing "Other" as the field keeps whatever the registrant typed.
+    $otherField = new Request('POST', '/register', [], [
+        'participation' => 'online', 'first_name' => 'Other', 'last_name' => 'Field',
+        'email' => 'other-field-' . bin2hex(random_bytes(8)) . '@example.org',
+        'phone' => '+447700900654', 'country' => 'United Kingdom', 'age_band' => '25-34',
+        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'field' => 'Other', 'field_other' => 'Sport and recreation',
+        'producer_stage' => 'build', 'consent_terms' => '1',
+    ], []);
+    [$otherErrors, $otherClean] = $service->validate($otherField);
+    verify($otherErrors === [], 'other field registration validates');
+    verify($otherClean['field_other'] === 'Sport and recreation', 'the typed field is kept');
+    verify(field_label($otherClean) === 'Sport and recreation (other)', 'the typed field is what gets displayed');
+
+    // A named field discards any leftover text from the "Other" box.
+    $namedField = new Request('POST', '/register', [], array_merge($otherField->all(), [
+        'email' => 'named-field-' . bin2hex(random_bytes(8)) . '@example.org',
+        'field' => Registration::FIELDS[0],
+    ]), []);
+    [, $namedClean] = $service->validate($namedField);
+    verify($namedClean['field_other'] === null, 'a named field stores no other text');
+
     // Onsite places are capped, and the cap is enforced on the server, not just in the markup.
     $capacity = max(1, (int) config('app.summit.onsite_capacity'));
     $pdo->exec("UPDATE registrations SET status = 'confirmed' WHERE participation = 'onsite'");

@@ -44,6 +44,15 @@ function espees_price(?int $amountPence = null, int $decimals = 0): string
     return number_format($amountPence / 100, $decimals) . ' Espees';
 }
 
+/** A registration's field, with the typed answer when they chose "Other". */
+function field_label(array $registration): string
+{
+    $field = (string) ($registration['field'] ?? '');
+    $other = trim((string) ($registration['field_other'] ?? ''));
+
+    return $field === 'Other' && $other !== '' ? $other . ' (other)' : $field;
+}
+
 function csrf_field(): string
 {
     return '<input type="hidden" name="_token" value="' . e(Session::csrfToken()) . '">';

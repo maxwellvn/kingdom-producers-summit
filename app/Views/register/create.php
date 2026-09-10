@@ -290,6 +290,11 @@ $stageLabels = [
             <?php endforeach; ?>
           </select>
           <?php if ($err = error_for('field')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          <div class="field__reveal" data-reveal-when="field:Other">
+            <label for="field_other" class="field__sub-label">Tell us your field <span class="field__opt">optional</span></label>
+            <input id="field_other" name="field_other" type="text" maxlength="120" placeholder="For example: sport, hospitality, logistics" value="<?= old('field_other') ?>">
+            <?php if ($err = error_for('field_other')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
         </div>
 
         <div class="field <?= error_for('producer_stage') ? 'has-error' : '' ?>">

@@ -66,7 +66,7 @@ $max = max(1, ...array_column($stages, 'count'));
                 <td class="mono"><?= e($r['reference']) ?></td>
                 <td><?= e($r['first_name'] . ' ' . $r['last_name']) ?><br><span class="adm-muted"><?= e($r['email']) ?></span></td>
                 <td><span class="adm-pill adm-pill--<?= e($r['participation']) ?>"><?= e($pathLabel[$r['participation']] ?? $r['participation']) ?></span></td>
-                <td><?= e($r['field'] ?? '') ?></td>
+                <td><?= e(field_label($r)) ?></td>
                 <td><?= e($r['country']) ?></td>
                 <td class="mono adm-muted"><?= e(date('j M, H:i', strtotime($r['created_at']))) ?></td>
               </tr>
