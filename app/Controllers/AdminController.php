@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
+use App\Models\Analytics;
 use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
@@ -268,6 +269,44 @@ final class AdminController extends Controller
         Registration::delete((int) $request->input('id', 0));
 
         return $this->redirect('/admin/registrations');
+    }
+
+    /** Traffic and who is connected, refreshed live. */
+    public function analytics(Request $request): Response
+    {
+        $days = max(1, min(90, (int) ($request->input('days') ?? 7)));
+
+        return $this->view('admin/analytics', [
+            'title'     => 'Analytics',
+            'days'      => $days,
+            'summary'   => Analytics::summary($days),
+            'daily'     => Analytics::daily(min(30, max(7, $days * 2))),
+            'pages'     => Analytics::breakdown('path', $days),
+            'referrers' => Analytics::breakdown('referrer', $days),
+            'devices'   => Analytics::breakdown('device', $days),
+            'live'      => Analytics::connectedNow(),
+            'watchers'  => Analytics::watchers(),
+        ], 'layouts/admin');
+    }
+
+    /** The numbers the analytics page polls for, as JSON. */
+    public function analyticsLive(Request $request): Response
+    {
+        $live = Analytics::connectedNow();
+        $watchers = array_map(static fn (array $w) => [
+            'name'      => trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: 'Guest',
+            'email'     => $w['email'] ?? null,
+            'reference' => $w['reference'] ?? null,
+            'device'    => $w['device'],
+            'since'     => $w['started_at'],
+        ], Analytics::watchers());
+
+        return Response::json([
+            'ok'       => true,
+            'live'     => $live,
+            'watchers' => $watchers,
+            'at'       => gmdate('c'),
+        ]);
     }
 
     /** Issue a place by hand, for guests, speakers and anyone comped. */

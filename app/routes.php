@@ -6,6 +6,7 @@ use App\Controllers\AdminController;
 use App\Controllers\ConsentController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
+use App\Controllers\PresenceController;
 use App\Controllers\RegistrationController;
 use App\Core\Router;
 use App\Middleware\RequireAdmin;
@@ -31,6 +32,10 @@ $router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
 // Cookie consent log: anonymous audit row only, no session/CSRF.
 $router->post('/api/consent', [ConsentController::class, 'store']);
 
+// Presence heartbeat: no personal data, so no CSRF ceremony.
+$router->post('/api/presence', [PresenceController::class, 'beat']);
+$router->post('/api/presence/leave', [PresenceController::class, 'leave']);
+
 $router->get('/admin/login', [AdminController::class, 'loginForm']);
 $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::class]);
 $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::class, RequireAdmin::class]);
@@ -45,6 +50,8 @@ $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin:
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);
+$router->get('/admin/analytics/live', [AdminController::class, 'analyticsLive'], [RequireAdmin::class]);
 $router->get('/admin/issue', [AdminController::class, 'issueForm'], [RequireAdmin::class]);
 $router->post('/admin/issue', [AdminController::class, 'issue'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/kingschat', [AdminController::class, 'kingschat'], [RequireAdmin::class]);

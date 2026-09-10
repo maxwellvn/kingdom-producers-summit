@@ -39,6 +39,9 @@ final class Router
             return Response::html(View::render('errors/' . $status, ['title' => (string) $status]), $status);
         }
 
+        // Record the visit before the page is built, so a slow page still counts.
+        \App\Services\VisitorTracker::record($request);
+
         [$class, $action, $middleware] = $match;
 
         foreach ($middleware as $mw) {

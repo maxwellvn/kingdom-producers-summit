@@ -42,7 +42,10 @@ $summit = $summit ?? config('app.summit');
 
   <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 </head>
-<body class="<?= e($bodyClass) ?>">
+<body class="<?= e($bodyClass) ?>"
+      data-presence="<?= e($presenceContext ?? 'site') ?>"
+      data-presence-url="<?= e(url('/api/presence')) ?>"
+      data-presence-leave="<?= e(url('/api/presence/leave')) ?>">
   <?php if ($showIntro): ?>
     <div class="site-intro" id="siteIntro" aria-label="Loveworld Kingdom Producers Summit introduction">
       <video class="site-intro__video" autoplay muted playsinline preload="auto" aria-hidden="true">

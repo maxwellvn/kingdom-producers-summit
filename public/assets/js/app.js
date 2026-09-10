@@ -141,6 +141,30 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) startVideo(); });
   });
 
+  /* ---------- Presence: keep the live counts honest ---------- */
+  (function () {
+    if (document.body.classList.contains('page-admin')) return;
+
+    var context = document.body.getAttribute('data-presence') || 'site';
+    var url = document.body.getAttribute('data-presence-url');
+    if (!url) return;
+
+    function beat() {
+      if (document.hidden) return;
+      var body = new URLSearchParams({ path: location.pathname, context: context });
+      fetch(url, { method: 'POST', body: body, keepalive: true }).catch(function () {});
+    }
+
+    beat();
+    var timer = window.setInterval(beat, 30000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) beat(); });
+    window.addEventListener('pagehide', function () {
+      window.clearInterval(timer);
+      var leave = document.body.getAttribute('data-presence-leave');
+      if (leave && navigator.sendBeacon) navigator.sendBeacon(leave);
+    });
+  })();
+
   /* ---------- Nav: scrolled state + mobile menu ---------- */
   var nav = document.getElementById('nav');
   if (nav) {
