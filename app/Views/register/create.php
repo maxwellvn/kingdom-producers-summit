@@ -41,7 +41,7 @@ $stageLabels = [
     <aside class="reg__aside">
       <div class="reg__card">
         <div class="reg__card-inner">
-          <p class="reg__kicker mono">Essex Edition 2026</p>
+          <p class="reg__kicker mono"><?= e($summit['edition']) ?></p>
           <h1 class="reg__title">Register</h1>
           <p class="reg__lede"><?= $isInitiative ? 'Join the 30, 60 and 90 day production journey.' : 'Choose how you will attend, then tell us about your field and interests.' ?></p>
 

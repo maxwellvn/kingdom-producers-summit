@@ -28,7 +28,7 @@ return [
 
     'summit' => [
         'short'     => 'The Producers Summit',
-        'edition'   => 'Essex Edition 2026',
+        'edition'   => 'London Edition 2026',
         'city'      => 'Rainham, Essex, United Kingdom',
         'date_text' => 'Saturday 19th September 2026, 12 noon',
         'date_day'  => 'Saturday 19th September 2026',

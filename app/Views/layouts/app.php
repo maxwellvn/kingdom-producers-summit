@@ -10,7 +10,7 @@ $summit = $summit ?? config('app.summit');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title) ?></title>
-  <meta name="description" content="The Loveworld Kingdom Producers Summit, Essex Edition 2026. From consumers to producers — whatever your age, whatever your field. Register to attend, follow online, or join the Kingdom Producers initiative.">
+  <meta name="description" content="<?= e(config('app.summit.edition')) ?> of the Loveworld Kingdom Producers Summit. From consumers to producers — whatever your age, whatever your field. Register to attend, follow online, or join the Kingdom Producers initiative.">
   <meta name="theme-color" content="#F3EEE3">
   <meta property="og:title" content="<?= e($title) ?>">
   <meta property="og:description" content="From consumers to producers. Join the initiative and its 30, 60 and 90 day production journey. Organised by Loveworld Consulate UK.">

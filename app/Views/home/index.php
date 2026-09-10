@@ -273,7 +273,7 @@
       <h2 class="cta__title">Start with what you can produce.</h2>
     </div>
     <div class="cta__actions" data-reveal>
-      <p class="cta__text">Register for the Essex summit and take your next practical step.</p>
+      <p class="cta__text">Register for the summit and take your next practical step.</p>
       <a href="<?= url('/register') ?>" class="btn btn--paper">
         <span class="btn__label">Register now</span>
         <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>

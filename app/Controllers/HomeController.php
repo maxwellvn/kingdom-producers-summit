@@ -16,7 +16,7 @@ final class HomeController extends Controller
         $capacity = max(1, (int) config('app.summit.onsite_capacity'));
 
         return $this->view('home/index', [
-            'title'     => config('app.name') . ' — Essex Edition 2026',
+            'title'     => config('app.name') . ' — ' . config('app.summit.edition'),
             'bodyClass' => 'page-home',
             'summit'    => config('app.summit'),
             'capacity'  => $capacity,

@@ -87,10 +87,17 @@
 
 <section class="cta section section--stamp">
   <div class="container cta__inner">
-    <p class="eyebrow eyebrow--light" data-reveal><span class="eyebrow__dot"></span>Free to join</p>
-    <h2 class="cta__title" data-split>Put your name<br>on the register.</h2>
+    <div class="cta__copy" data-reveal>
+      <p class="cta__status mono">Free to join</p>
+      <h2 class="cta__title" data-split>Put your name<br>on the register.</h2>
+    </div>
     <div class="cta__actions" data-reveal>
-      <a href="<?= url('/register') ?>?mode=initiative" class="btn btn--paper"><span class="btn__label">Join the initiative</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
+      <p class="cta__text">Give us your details and we will keep you posted as the initiative unfolds.</p>
+      <a href="<?= url('/register') ?>?mode=initiative" class="btn btn--paper">
+        <span class="btn__label">Join the initiative</span>
+        <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
+      </a>
+      <span class="cta__note mono">Takes about two minutes.</span>
     </div>
   </div>
 </section>

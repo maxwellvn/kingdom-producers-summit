@@ -17,7 +17,7 @@
 
   <div class="container footer__grid">
     <div class="footer__col footer__col--brand">
-      <span class="footer__kicker mono">Essex Edition 2026</span>
+      <span class="footer__kicker mono"><?= e(config('app.summit.edition')) ?></span>
       <p class="footer__office"><?= e($summit['office']) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
     </div>
