@@ -6,7 +6,7 @@ $methodLabels = ['espees' => 'Espees', 'paypal' => 'PayPal', 'bank' => 'Bank tra
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment step</p>
       <h1 class="pay__title">Choose how to pay <?= e($amount) ?> Espees</h1>
-      <p class="pay__lede">The standard price is 100 Espees. Your 50 Espees discount leaves <strong><?= e($amount) ?> Espees</strong> due. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
+      <p class="pay__lede">The full price is <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?>. The inaugural discount takes 50 Espees off, leaving <strong><?= e($amount) ?> Espees</strong> due. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
 
       <?php if (!$methods): ?>
         <div class="pay__alert" role="alert">

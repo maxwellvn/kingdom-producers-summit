@@ -77,7 +77,7 @@ final class RegistrationMail
             . '<tr><td background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
             . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">Essex Edition 2026 &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
             . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase">You are on the list,<br>' . $firstName . '.</h1>'
-            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your onsite place is held. The standard price is 100 Espees; your 50 Espees discount leaves ' . $amount . ' Espees to pay.</p></td></tr>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your onsite place is held. The full price is 100 Espees; the inaugural discount takes 50 Espees off, leaving ' . $amount . ' Espees to pay.</p></td></tr>'
             . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
             . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
             . '<p style="margin:28px 0 8px"><a href="' . $pay . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">Complete payment</a></p>'
@@ -86,7 +86,7 @@ final class RegistrationMail
             . '</table></td></tr></table></body></html>';
 
         $text = "You are on the list, {$registration['first_name']}.\n\n"
-            . "Your onsite place is held. The standard price is 100 Espees; your 50 Espees discount leaves {$amount} Espees to pay.\n\n"
+            . "Your onsite place is held. The full price is 100 Espees; the inaugural discount takes 50 Espees off, leaving {$amount} Espees to pay.\n\n"
             . "Registration reference: {$registration['reference']}\n"
             . "Complete payment: {$payUrl}\n\n"
             . "Your QR access pass is issued by email as soon as your payment is confirmed.\n\n"

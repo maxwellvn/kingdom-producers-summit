@@ -119,7 +119,7 @@
           </h3>
           <p class="path__cost">
             <strong><?= e(espees_price()) ?></strong>
-            <span class="mono">was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s> · 50 Espees off</span>
+            <span class="mono">Inaugural discount · was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s></span>
           </p>
         </div>
         <div class="path__copy">
@@ -266,7 +266,7 @@
       $faqs = [
         ['Who is the summit for?', 'Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet.'],
         ['When exactly is it?', 'The summit is on 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
-        ['Is there a cost to attend?', 'Onsite attendance is normally ' . espees_price((int) config('paypal.standard_price_pence')) . '. A 50 Espees discount reduces the amount due to ' . espees_price() . '. Online access and joining the initiative are free.'],
+        ['Is there a cost to attend?', 'Onsite attendance is ' . espees_price((int) config('paypal.standard_price_pence')) . '. For this first edition an inaugural discount takes 50 Espees off, so you pay ' . espees_price() . '. Attending online and joining the initiative are free.'],
         ['Should I attend onsite or online?', 'Attend onsite if you want to be worked with: the 1-to-1 facilitator engagement, working rooms, networking and product showcases only happen in the room, and only part of the programme is livestreamed. Choose online if travelling to Rainham is genuinely not possible for you. There are only ' . number_format($capacity) . ' onsite seats and registration closes once they are taken.'],
         ['I cannot travel to Essex. Can I still take part?', 'Yes. Choose "Attend online" for the livestreamed sessions, or use the separate "Join the initiative" path and take part in the 30, 60 and 90 day production journey from wherever you are.'],
         ['What is the Kingdom Producers portal?', 'A portal for initiative participants containing methods, case studies, capital pathways, a producer directory, summit resources and opportunities. Participants are notified as it opens.'],

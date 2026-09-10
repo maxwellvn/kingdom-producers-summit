@@ -61,7 +61,7 @@ $stageLabels = [
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
             <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
             <?php if (!$isInitiative): ?>
-              <div><dt>Onsite cost</dt><dd><?= e(espees_price()) ?> <span class="reg__facts-note">reduced from <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></span></dd></div>
+              <div><dt>Onsite cost</dt><dd><?= e(espees_price()) ?> <span class="reg__facts-note">inaugural discount, was <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></span></dd></div>
               <div><dt>Online cost</dt><dd>Free</dd></div>
             <?php endif; ?>
           </dl>
@@ -128,7 +128,7 @@ $stageLabels = [
                 <?php if ($value === 'onsite'): ?>
                   <span class="ticket__cost">
                     <strong class="ticket__amount"><?= e(espees_price()) ?></strong>
-                    <span class="ticket__was mono">was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s> · 50 Espees off</span>
+                    <span class="ticket__was mono">Inaugural discount · was <s><?= e(espees_price((int) config('paypal.standard_price_pence'))) ?></s></span>
                   </span>
                   <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format($seatsLeft) . ' of ' . number_format((int) config('app.summit.onsite_capacity')) . ' places left' ?></span>
                 <?php else: ?>
@@ -426,7 +426,7 @@ $stageLabels = [
             <div class="pay-note">
               <span class="pay-note__stamp mono">Secure payment</span>
               <p class="pay-note__amount">You pay <strong><?= e(espees_price()) ?></strong> for your onsite place.</p>
-              <p>That is <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?> less a 50 Espees discount. On the next page you choose how to pay: Espees wallet, PayPal or bank transfer. Your place is held once payment is confirmed.</p>
+              <p>The full price is <?= e(espees_price((int) config('paypal.standard_price_pence'))) ?>. An inaugural discount takes 50 Espees off for this first edition. On the next page you choose how to pay: Espees wallet, PayPal or bank transfer. Your place is held once payment is confirmed.</p>
             </div>
           </div>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
