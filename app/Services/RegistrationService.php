@@ -143,6 +143,98 @@ final class RegistrationService
         return [[], $clean];
     }
 
+    /**
+     * Create a registration on an organiser's behalf, with nothing to pay.
+     * Only the details needed to reach the person are asked for; the rest of
+     * the form is optional here.
+     *
+     * @return array{0: array<string,string>, 1: array<string,mixed>}
+     */
+    public function validateIssued(Request $request, string $issuedBy): array
+    {
+        $participation = $request->str('participation');
+
+        $rules = [
+            'participation' => 'required|in:' . implode(',', Registration::PARTICIPATION),
+            'title'         => 'max:20',
+            'first_name'    => 'required|min:2|max:80',
+            'last_name'     => 'required|min:2|max:80',
+            'email'         => 'required|email|max:190',
+            'phone'         => 'max:30',
+            'kingschat_username' => 'max:80',
+            'country'       => 'max:80',
+            'zone'          => 'max:120',
+            'note'          => 'max:255',
+        ];
+
+        $labels = [
+            'participation' => 'Participation',
+            'first_name'    => 'First name',
+            'last_name'     => 'Surname',
+            'email'         => 'Email address',
+        ];
+
+        $data = $request->all();
+        $validator = Validator::make($data, $rules, $labels);
+        $errors = $validator->passes() ? [] : $validator->errors();
+
+        $email = mb_strtolower($request->str('email'));
+        if (!isset($errors['email']) && $email !== '' && Registration::findByEmail($email) !== null) {
+            $errors['email'] = self::duplicateMessage($email) ?? 'This email is already registered.';
+        }
+
+        if ($errors) {
+            return [$errors, []];
+        }
+
+        return [[], [
+            'reference'         => $this->generateReference(),
+            'participation'     => $participation,
+            'title'             => $this->nullable($request->str('title')),
+            'first_name'        => $request->str('first_name'),
+            'last_name'         => $request->str('last_name'),
+            'email'             => $email,
+            'phone'             => $this->nullable($request->str('phone')),
+            'kingschat_username'=> $this->nullable(ltrim($request->str('kingschat_username'), '@')),
+            'country'           => $request->str('country') ?: 'United Kingdom',
+            'city'              => null,
+            'age_band'          => null,
+            'church_group'      => null,
+            'zone'              => $this->nullable($request->str('zone')),
+            'group_name'        => null,
+            'church_name'       => null,
+            'organisation'      => null,
+            'role_title'        => null,
+            'field'             => null,
+            'field_other'       => null,
+            'producer_stage'    => null,
+            'producer_stage_detail' => null,
+            'what_to_produce'   => null,
+            'interests'         => null,
+            'interest_other'    => null,
+            'hear_about'        => null,
+            'onsite_days'       => null,
+            'dietary'           => null,
+            'accessibility'     => null,
+            'needs_letter'      => 0,
+            'emergency_contact' => null,
+            'wants_updates'     => 1,
+            'wants_portal'      => $participation === 'initiative' ? 1 : 0,
+            'contribute_as'     => null,
+            'portal_interest'   => $this->nullable($request->str('note')),
+            'consent_terms'     => 1,
+            'consent_marketing' => 0,
+            'ip_address'        => null,
+            'user_agent'        => null,
+            'issued_by'         => mb_substr($issuedBy, 0, 190),
+            // Issued places are settled: nothing to pay and no pending state.
+            'status'            => 'confirmed',
+            'payment_status'    => 'not_required',
+            'payment_amount'    => null,
+            'payment_session_id' => null,
+        ]];
+    }
+
     public function register(array $clean): array
     {
         Registration::create($clean);

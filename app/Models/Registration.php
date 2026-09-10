@@ -256,7 +256,8 @@ final class Registration
         $stmt = $pdo->prepare(
             "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone,
                     r.kingschat_username, r.country, r.city, r.zone, r.group_name, r.church_name,
-                    r.field, r.producer_stage, r.payment_status, r.payment_method, r.created_at, a.checked_in_at
+                    r.field, r.field_other, r.producer_stage, r.payment_status, r.payment_method,
+                    r.issued_by, r.created_at, a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}
              ORDER BY r.created_at DESC

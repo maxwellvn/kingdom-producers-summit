@@ -13,8 +13,12 @@ use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Services\AttendanceService;
+use App\Services\KingsChatNotifier;
+use App\Services\RegistrationMail;
+use App\Services\RegistrationService;
 use App\Services\KingsChatClient;
 use App\Services\PaymentService;
+use PDOException;
 
 final class AdminController extends Controller
 {
@@ -264,6 +268,61 @@ final class AdminController extends Controller
         Registration::delete((int) $request->input('id', 0));
 
         return $this->redirect('/admin/registrations');
+    }
+
+    /** Issue a place by hand, for guests, speakers and anyone comped. */
+    public function issueForm(Request $request): Response
+    {
+        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
+
+        return $this->view('admin/issue', [
+            'title'     => 'Issue a place',
+            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
+            'capacity'  => $capacity,
+            'flash'     => (string) Session::get('admin_flash', ''),
+        ], 'layouts/admin');
+    }
+
+    public function issue(Request $request): Response
+    {
+        $service = new RegistrationService();
+        [$errors, $clean] = $service->validateIssued($request, (string) Session::get('admin_email', 'admin'));
+
+        if ($errors) {
+            return $this->back($request, $errors, $request->all());
+        }
+
+        try {
+            $registration = $service->register($clean);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                return $this->back($request, ['email' => 'That email is already registered.'], $request->all());
+            }
+            throw $e;
+        }
+
+        $delivered = [];
+        try {
+            (new RegistrationMail())->send($registration);
+            $delivered[] = 'emailed';
+        } catch (\Throwable $e) {
+            error_log('Issued registration email could not be sent: ' . $e->getMessage());
+        }
+
+        [$messaged] = (new KingsChatNotifier())->sendConfirmation($registration);
+        if ($messaged) {
+            $delivered[] = 'messaged on KingsChat';
+        }
+
+        Session::flash('admin_flash', sprintf(
+            '%s %s issued to %s%s.',
+            ucfirst((string) $registration['participation']),
+            'place',
+            $registration['email'],
+            $delivered ? ' and ' . implode(' and ', $delivered) : ', but nothing could be delivered'
+        ));
+
+        return $this->redirect('/admin/issue');
     }
 
     /** KingsChat: connection status, and the controls to change it. */

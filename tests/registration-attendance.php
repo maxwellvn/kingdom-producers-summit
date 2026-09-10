@@ -72,6 +72,28 @@ try {
     verify((new App\Middleware\RequireAdmin())->handle($request) !== null, 'attendance requires staff authentication');
     verify(!Session::verifyCsrf('incorrect'), 'incorrect CSRF token rejected');
 
+    // A place issued by an organiser is settled: confirmed, nothing to pay.
+    $issued = new Request('POST', '/admin/issue', [], [
+        'participation' => 'onsite', 'first_name' => 'Guest', 'last_name' => 'Speaker',
+        'email' => 'issued-' . bin2hex(random_bytes(8)) . '@example.org',
+        'note' => 'Guest speaker',
+    ], []);
+    [$issueErrors, $issueClean] = $service->validateIssued($issued, 'organiser@example.org');
+    verify($issueErrors === [], 'an issued place needs only a name and an email');
+    verify($issueClean['status'] === 'confirmed' && $issueClean['payment_status'] === 'not_required',
+        'an issued place is confirmed with nothing to pay');
+    verify($issueClean['issued_by'] === 'organiser@example.org', 'the issuing organiser is recorded');
+    $issuedRow = $service->register($issueClean);
+    verify(AttendanceService::checkIn(AttendanceService::tokenFor($issuedRow['reference']), 'gate@example.org', '127.0.0.1')['status'] === 'checked_in',
+        'an issued pass scans at the gate');
+
+    // The same email cannot be issued twice.
+    [$dupErrors] = $service->validateIssued(new Request('POST', '/admin/issue', [], [
+        'participation' => 'online', 'first_name' => 'Guest', 'last_name' => 'Again',
+        'email' => $issuedRow['email'],
+    ], []), 'organiser@example.org');
+    verify(isset($dupErrors['email']), 'an issued email cannot be reused');
+
     // Initiative sign-ups collect personal details only: no field, no producer stage.
     $initiative = new Request('POST', '/register', [], [
         'participation' => 'initiative', 'first_name' => 'Initiative', 'last_name' => 'Only',
