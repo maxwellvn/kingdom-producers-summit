@@ -38,7 +38,8 @@
 
     <div class="footer__col">
       <h4 class="footer__heading mono">Contact</h4>
-      <a href="mailto:<?= e(config('app.mail.reply_to')) ?>"><?= e(config('app.mail.reply_to')) ?></a>
+      <a href="mailto:<?= e(contact_email()) ?>"><?= e(contact_email()) ?></a>
+      <a href="https://kingschat.online/user/<?= e(contact_kingschat()) ?>" target="_blank" rel="noopener">KingsChat @<?= e(contact_kingschat()) ?></a>
     </div>
   </div>
 

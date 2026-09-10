@@ -94,6 +94,25 @@ function site_url(): string
     return ($https ? 'https://' : 'http://') . $host . \App\Core\Url::base();
 }
 
+/** The address people should write to. Never the retired lkps mailbox. */
+function contact_email(): string
+{
+    $address = trim((string) config('app.mail.reply_to'));
+
+    // A deployment still carrying the old mailbox would send people nowhere.
+    if ($address === '' || str_starts_with(strtolower($address), 'lkps@')) {
+        $address = trim((string) config('payments.proof.email'));
+    }
+
+    return $address !== '' ? $address : 'unitedkingdom@loveworldconsulate.org';
+}
+
+/** The KingsChat handle people can message, without the @. */
+function contact_kingschat(): string
+{
+    return ltrim(trim((string) config('payments.proof.kingschat')), '@');
+}
+
 function csrf_field(): string
 {
     return '<input type="hidden" name="_token" value="' . e(Session::csrfToken()) . '">';

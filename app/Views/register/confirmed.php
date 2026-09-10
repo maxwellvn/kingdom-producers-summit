@@ -86,7 +86,9 @@ $next = [
         <a class="btn btn--outline" href="<?= url('/') ?>"><span class="btn__label">Back to the summit</span></a>
       </div>
 
-      <p class="confirmed__fine mono">Something wrong? Email <a href="mailto:<?= e(config('app.mail.reply_to')) ?>"><?= e(config('app.mail.reply_to')) ?></a> quoting your reference.</p>
+      <p class="confirmed__fine mono">Something wrong? Quote your reference and message us on KingsChat at
+        <a href="https://kingschat.online/user/<?= e(contact_kingschat()) ?>" target="_blank" rel="noopener">@<?= e(contact_kingschat()) ?></a>
+        or email <a href="mailto:<?= e(contact_email()) ?>"><?= e(contact_email()) ?></a>.</p>
     </aside>
   </div>
 </section>
