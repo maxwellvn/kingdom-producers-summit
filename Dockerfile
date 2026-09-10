@@ -1,8 +1,9 @@
 FROM php:8.3-apache
 
+# gd renders the QR access pass, so the image cannot ship without it.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig-dev curl \
-    && docker-php-ext-install mbstring pdo_mysql \
+    && apt-get install -y --no-install-recommends libonig-dev libpng-dev curl \
+    && docker-php-ext-install mbstring pdo_mysql gd \
     && a2enmod headers rewrite \
     && rm -rf /var/lib/apt/lists/*
 
@@ -11,8 +12,9 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 COPY docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY . /var/www/html
 
-RUN mkdir -p /var/www/html/storage/logs \
-    && chown -R www-data:www-data /var/www/html/storage
+RUN mkdir -p /var/www/html/storage/logs /var/www/html/storage/sessions \
+    && chown -R www-data:www-data /var/www/html/storage \
+    && chmod 700 /var/www/html/storage/sessions
 
 COPY docker/entrypoint.sh /usr/local/bin/producers-entrypoint
 RUN chmod +x /usr/local/bin/producers-entrypoint

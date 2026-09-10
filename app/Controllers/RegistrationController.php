@@ -126,6 +126,11 @@ final class RegistrationController extends Controller
             return Response::html(\App\Core\View::render('errors/404', ['title' => 'Not found']), 404);
         }
 
+        if (!function_exists('imagecreate')) {
+            error_log('QR pass cannot be drawn: the gd extension is missing from this PHP build.');
+            return Response::html(\App\Core\View::render('errors/500', ['title' => 'Pass unavailable', 'detail' => '']), 500);
+        }
+
         $old = error_reporting(E_ALL & ~E_DEPRECATED); // vendored phpqrcode predates 8.3 signatures
         require_once BASE_PATH . '/lib/phpqrcode.php';
         ob_start();

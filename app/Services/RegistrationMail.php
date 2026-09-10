@@ -116,6 +116,11 @@ final class RegistrationMail
     /** The attendee's QR pass as raw PNG bytes, for embedding in the email itself. */
     private static function qrPng(string $token): ?string
     {
+        if (!function_exists('imagecreate')) {
+            error_log('QR pass omitted from the email: the gd extension is missing from this PHP build.');
+            return null;
+        }
+
         try {
             $old = error_reporting(E_ALL & ~E_DEPRECATED); // vendored phpqrcode predates 8.3 signatures
             require_once BASE_PATH . '/lib/phpqrcode.php';
