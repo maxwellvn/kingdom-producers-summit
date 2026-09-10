@@ -361,25 +361,6 @@
     });
   }
 
-  /* ---------- Copy reference code ---------- */
-  document.querySelectorAll('[data-copy]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var target = document.querySelector(btn.getAttribute('data-copy'));
-      if (!target) return;
-      var text = target.textContent.trim();
-      var done = function () { var prev = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = prev; }, 1600); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done, function () { fallback(); });
-      } else { fallback(); }
-      function fallback() {
-        var r = document.createRange(); r.selectNode(target);
-        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-        try { document.execCommand('copy'); done(); } catch (e) {}
-        s.removeAllRanges();
-      }
-    });
-  });
-
   /* ---------- Fields that open only when a specific choice is made ---------- */
   // data-reveal-when="<field name>:<value>" — hidden until that choice is made.
   // Works for checkboxes, radios and selects.
@@ -699,7 +680,14 @@
   /* ---------- Copy-to-clipboard buttons ---------- */
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var text = btn.getAttribute('data-copy') || '';
+      // data-copy holds the text itself, or a #id whose text should be copied.
+      var raw = btn.getAttribute('data-copy') || '';
+      var text = raw;
+      if (raw.charAt(0) === '#') {
+        var source = document.querySelector(raw);
+        if (!source) return;
+        text = (source.textContent || '').trim();
+      }
       var swap = function () {
         var original = btn.textContent;
         btn.textContent = 'Copied ✓';

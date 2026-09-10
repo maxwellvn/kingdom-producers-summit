@@ -20,20 +20,21 @@ $errors = $errors ?: \App\Core\Session::get('_errors', []);
 
       <p class="pay__lede">
         Your place is personal to you and can only be open in one place at a time.
-        Enter your reference with the email or KingsChat username you registered with.
+        Enter the email address or KingsChat username you registered with.
       </p>
 
       <form class="pay__form" method="post" action="<?= url('/watch') ?>">
         <?= csrf_field() ?>
         <div class="field">
-          <label for="reference">Registration reference</label>
-          <input id="reference" name="reference" type="text" placeholder="KPS26-XXXXXX"
-                 value="<?= e($reference) ?>" autocomplete="off" required>
+          <label for="identifier">Email or KingsChat username</label>
+          <input id="identifier" name="identifier" type="text" inputmode="email"
+                 autocapitalize="off" autocorrect="off" autocomplete="email" required>
+          <p class="field__hint">Whichever you gave when you registered.</p>
         </div>
         <div class="field">
-          <label for="identifier">Email or KingsChat username</label>
-          <input id="identifier" name="identifier" type="text" autocomplete="email" required>
-          <p class="field__hint">Whichever you gave when you registered.</p>
+          <label for="reference">Registration reference <span class="field__optional">optional</span></label>
+          <input id="reference" name="reference" type="text" placeholder="KPS26-XXXXXX"
+                 value="<?= e($reference) ?>" autocapitalize="characters" autocomplete="off">
         </div>
         <button type="submit" class="btn btn--stamp btn--lg">
           <span class="btn__label">Enter the stream</span>

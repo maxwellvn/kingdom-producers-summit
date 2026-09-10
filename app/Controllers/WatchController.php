@@ -85,8 +85,8 @@ final class WatchController extends Controller
         $reference = $request->str('reference');
         $identifier = $request->str('identifier');
 
-        if ($reference === '' || $identifier === '') {
-            return $this->gate($request, ['auth' => 'Enter your reference and the email or KingsChat username you registered with.']);
+        if ($identifier === '') {
+            return $this->gate($request, ['auth' => 'Enter the email address or KingsChat username you registered with.'], $reference);
         }
 
         $viewer = StreamService::findViewer($reference, $identifier);
@@ -94,7 +94,7 @@ final class WatchController extends Controller
             LoginAttempt::record($throttleKey);
             usleep(random_int(200_000, 500_000)); // Slow down guessing.
 
-            return $this->gate($request, ['auth' => 'Those details do not match a confirmed registration for this summit.'], $reference);
+            return $this->gate($request, ['auth' => 'That does not match a confirmed registration for this summit. Check the email address or KingsChat username you registered with.'], $reference);
         }
 
         LoginAttempt::clear($throttleKey);

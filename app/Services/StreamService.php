@@ -99,27 +99,31 @@ final class StreamService
 
     /**
      * Find the registration behind what someone typed at the gate.
-     * The reference alone is not enough: it must be paired with the email or
-     * the KingsChat handle it was registered with.
+     * The email or KingsChat handle is enough on its own. A reference may be
+     * given as well, and then it has to belong to that same registration.
      */
     public static function findViewer(string $reference, string $identifier): ?array
     {
         $reference = strtoupper(preg_replace('/\s+/', '', $reference) ?? '');
         $identifier = strtolower(trim($identifier));
-        if ($reference === '' || $identifier === '') {
+        if ($identifier === '') {
             return null;
         }
 
-        $registration = Registration::findByReference($reference);
+        $registration = str_contains($identifier, '@') && filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? Registration::findByEmail($identifier)
+            : Registration::findByKingsChatUsername($identifier);
+
+        // An email that is not a valid address may still be a handle, and vice versa.
+        $registration ??= Registration::findByKingsChatUsername($identifier);
+        $registration ??= Registration::findByEmail($identifier);
+
         if ($registration === null) {
             return null;
         }
 
-        $matchesEmail = strtolower((string) $registration['email']) === $identifier;
-        $handle = ltrim(strtolower((string) ($registration['kingschat_username'] ?? '')), '@');
-        $matchesHandle = $handle !== '' && $handle === ltrim($identifier, '@');
-
-        if (!$matchesEmail && !$matchesHandle) {
+        // A reference is optional, but a wrong one is still a wrong answer.
+        if ($reference !== '' && strtoupper((string) $registration['reference']) !== $reference) {
             return null;
         }
 

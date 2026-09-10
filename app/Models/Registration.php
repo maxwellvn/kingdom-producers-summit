@@ -68,6 +68,21 @@ final class Registration
         return $stmt->fetch() ?: null;
     }
 
+    /** Handles are stored without the leading @, but match either way. */
+    public static function findByKingsChatUsername(string $username): ?array
+    {
+        $username = ltrim(mb_strtolower(trim($username)), '@');
+        if ($username === '') {
+            return null;
+        }
+        // Match whether or not the stored handle kept its leading @.
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM registrations WHERE LOWER(kingschat_username) IN (?, ?) LIMIT 1'
+        );
+        $stmt->execute([$username, '@' . $username]);
+        return $stmt->fetch() ?: null;
+    }
+
     public static function referenceExists(string $reference): bool
     {
         $stmt = Database::connection()->prepare('SELECT 1 FROM registrations WHERE reference = ? LIMIT 1');

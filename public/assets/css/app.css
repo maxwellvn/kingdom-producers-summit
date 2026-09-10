@@ -1024,3 +1024,5 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .legal__body a:hover { border-color: var(--stamp); color: var(--stamp); }
 
 .confirmed__pass--noqr { grid-template-columns: minmax(0, 1fr); }
+
+.field__optional { margin-left: .5rem; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }

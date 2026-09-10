@@ -125,6 +125,33 @@ try {
     verify(App\Services\StreamService::kind('https://youtu.be/abc123') === 'iframe', 'a YouTube link is embedded');
     verify(App\Services\StreamService::kind('https://example.org/clip.mp4') === 'file', 'an mp4 link is a file');
 
+    // The watch gate: the email or KingsChat handle is enough on its own.
+    $watchEmail = 'watch-' . bin2hex(random_bytes(8)) . '@example.org';
+    $watchReq = new Request('POST', '/register', [], [
+        'participation' => 'online', 'first_name' => 'Watch', 'last_name' => 'Viewer',
+        'email' => $watchEmail, 'phone' => '+447700900124', 'country' => 'United Kingdom',
+        'age_band' => '25-34', 'zone' => 'UK Zone 1', 'kingschat_username' => 'watchviewer',
+        'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
+    ], []);
+    [$watchErrors, $watchClean] = $service->validate($watchReq);
+    verify($watchErrors === [], 'watch test registration validates');
+    $watchRow = $service->register($watchClean);
+    $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
+        ->execute(['confirmed', 'paid', $watchRow['reference']]);
+    $watchRef = (string) $watchRow['reference'];
+    $gate = fn(string $ref, string $ident) => App\Services\StreamService::findViewer($ref, $ident) !== null;
+    verify($gate('', $watchEmail), 'the email alone opens the gate');
+    verify($gate('', strtoupper($watchEmail)), 'the email is matched case insensitively');
+    verify($gate('', 'watchviewer'), 'the KingsChat handle alone opens the gate');
+    verify($gate('', '@watchviewer'), 'a handle typed with @ still matches');
+    verify($gate($watchRef, $watchEmail), 'an email with its own reference opens the gate');
+    verify($gate(strtolower($watchRef), $watchEmail), 'the reference is matched case insensitively');
+    verify(!$gate('KPS26-ZZZZZZ', $watchEmail), 'a reference belonging to someone else is refused');
+    verify(!$gate($watchRef, ''), 'a reference on its own is not enough');
+    verify(!$gate('', 'nobody-' . bin2hex(random_bytes(4)) . '@example.org'), 'an unknown email is refused');
+    $pdo->prepare('UPDATE registrations SET status = ? WHERE reference = ?')->execute(['pending', $watchRef]);
+    verify(!$gate('', $watchEmail), 'an unconfirmed registration cannot watch');
+
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [
         'participation' => 'onsite', 'first_name' => 'Guest', 'last_name' => 'Speaker',
