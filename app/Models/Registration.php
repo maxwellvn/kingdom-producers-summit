@@ -15,10 +15,18 @@ final class Registration
     public const AGE_BANDS = ['under18', '18-24', '25-34', '35-44', '45-54', '55-64', '65plus'];
 
     public const FIELDS = [
-        'Technology & Software', 'Media & Film', 'Music & Performing Arts', 'Fashion & Design',
-        'Manufacturing & Engineering', 'Agriculture & Food', 'Finance & Investment', 'Property & Construction',
-        'Health & Wellbeing', 'Education & Training', 'Publishing & Writing', 'Retail & E-commerce',
-        'Ministry & Community', 'Public Service & Policy', 'Student', 'Other',
+        'Accounting & Finance', 'Agriculture & Food', 'Architecture & Interior Design',
+        'Automotive & Transport', 'Beauty & Personal Care', 'Charity & Social Care',
+        'Consulting & Professional Services', 'Education & Training', 'Energy & Utilities',
+        'Events & Production', 'Fashion & Design', 'Finance & Investment',
+        'Health & Wellbeing', 'Hospitality, Travel & Tourism', 'Human Resources & Recruitment',
+        'Import, Export & Trade', 'Insurance', 'Law & Legal Services',
+        'Logistics & Supply Chain', 'Manufacturing & Engineering', 'Marketing, Advertising & PR',
+        'Media & Film', 'Ministry & Community', 'Music & Performing Arts',
+        'Photography & Videography', 'Property & Construction', 'Public Service & Policy',
+        'Publishing & Writing', 'Retail & E-commerce', 'Science & Research',
+        'Security & Facilities', 'Sports & Fitness', 'Technology & Software',
+        'Student', 'Not working right now', 'Other',
     ];
 
     public const INTERESTS = [

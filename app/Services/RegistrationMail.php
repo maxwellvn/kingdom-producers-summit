@@ -11,7 +11,7 @@ final class RegistrationMail
     {
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
-        $site = rtrim((string) config('app.url'), '/');
+        $site = site_url();
         $participation = (string) $registration['participation'];
         $amount = number_format(price_pence($participation) / 100, 2);
         $standard = espees_price(standard_price_pence($participation));
@@ -70,7 +70,7 @@ final class RegistrationMail
     {
         $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
-        $site = rtrim((string) config('app.url'), '/');
+        $site = site_url();
         $participation = (string) $registration['participation'];
         $amount = number_format(price_pence($participation) / 100, 2);
         $standard = espees_price(standard_price_pence($participation));
@@ -151,7 +151,7 @@ final class RegistrationMail
             $path .= " \u{00B7} {$amount} Espees paid";
         }
         $path = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
-        $site = rtrim((string) config('app.url'), '/');
+        $site = site_url();
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
         $accessToken = AttendanceService::tokenFor((string) $registration['reference']);

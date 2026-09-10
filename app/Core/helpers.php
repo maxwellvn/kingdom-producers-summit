@@ -71,6 +71,29 @@ function field_label(array $registration): string
     return $field === 'Other' && $other !== '' ? $other . ' (other)' : $field;
 }
 
+/**
+ * Absolute site address for links and images in email.
+ * Falls back to the current request when APP_URL is unset, so a missing
+ * setting cannot silently break confirmation links.
+ */
+function site_url(): string
+{
+    $configured = rtrim((string) config('app.url'), '/');
+    if ($configured !== '') {
+        return $configured;
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    // Host comes from the request, so accept only a plain host[:port].
+    if (!preg_match('/^[A-Za-z0-9.\-]+(:\d+)?$/', $host)) {
+        return '';
+    }
+
+    return ($https ? 'https://' : 'http://') . $host . \App\Core\Url::base();
+}
+
 function csrf_field(): string
 {
     return '<input type="hidden" name="_token" value="' . e(Session::csrfToken()) . '">';
