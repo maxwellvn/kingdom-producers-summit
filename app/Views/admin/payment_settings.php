@@ -54,6 +54,23 @@ $row = static function (string $label, string $value): void {
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
       <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Revolut checkout</legend>
       <?php $toggle('pay_revolut_enabled', $revolutOn, $revolutOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
+      <?php
+      // One link cannot charge two different amounts, so say so plainly.
+      $links = [];
+      foreach ($paidPaths as $path) {
+          $links[$path] = PaymentService::revolutUrl(price_pence($path));
+      }
+      $shared = count($paidPaths) > 1 && count(array_unique(array_filter($links))) === 1;
+      ?>
+      <?php if ($shared): ?>
+        <div class="form__alert" role="alert" style="margin-bottom:1rem">
+          <strong>The same link is set for both prices.</strong>
+          <span>A Revolut checkout link charges the amount it was created for, so one link cannot take
+          <?= e(espees_price(price_pence('onsite'))) ?> from onsite registrants and
+          <?= e(espees_price(price_pence('online'))) ?> from online ones. Create a second link and paste it below.</span>
+        </div>
+      <?php endif; ?>
+
       <?php foreach ($paidPaths as $path): $pence = price_pence($path); ?>
         <?php $textField(
             'pay_revolut_url_' . $pence,
