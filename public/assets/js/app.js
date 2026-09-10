@@ -176,35 +176,6 @@
     });
   }
 
-  /* ---------- Supporting organisations: animate only when clipped ---------- */
-  var supporters = document.querySelector('.supporters');
-  var supportersList = document.querySelector('.supporters__list');
-  if (supporters && supportersList) {
-    var updateSupportersMotion = function () {
-      supportersList.classList.remove('is-overflowing');
-      supportersList.style.removeProperty('--supporters-overflow');
-      supportersList.style.removeProperty('--supporters-duration');
-
-      var available = supporters.getBoundingClientRect().width;
-      var content = supportersList.scrollWidth;
-      var overflow = Math.ceil(content - available);
-      if (overflow > 2) {
-        supportersList.style.setProperty('--supporters-overflow', overflow + 'px');
-        supportersList.style.setProperty('--supporters-duration', Math.max(9, overflow / 24).toFixed(1) + 's');
-        supportersList.classList.add('is-overflowing');
-      }
-    };
-
-    if ('ResizeObserver' in window) {
-      var supportersObserver = new ResizeObserver(updateSupportersMotion);
-      supportersObserver.observe(supporters);
-      supportersObserver.observe(supportersList);
-    } else {
-      window.addEventListener('resize', updateSupportersMotion);
-    }
-    updateSupportersMotion();
-  }
-
   /* ---------- Copy reference code ---------- */
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {

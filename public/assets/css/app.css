@@ -411,15 +411,6 @@ body.menu-open { overflow: hidden; }
   letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft);
 }
 .supporters__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.supporters__list.is-overflowing {
-  animation: supportersPan var(--supporters-duration, 12s) var(--ease-in-out) infinite alternate;
-}
-.supporters__list.is-overflowing:hover,
-.supporters__list.is-overflowing:focus-within { animation-play-state: paused; }
-@keyframes supportersPan {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(var(--supporters-overflow, 0px) * -1)); }
-}
 .supporters__org {
   min-width: 0; display: flex; align-items: center; gap: .8rem; padding: 1.15rem clamp(1rem, 2.2vw, 2rem);
   font-family: var(--font-display); font-size: clamp(.84rem, 1vw, 1rem); font-weight: 500;
@@ -993,7 +984,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
     display: grid; grid-template-columns: 1fr; width: 100%; overflow: visible;
     padding-inline: var(--gutter);
   }
-  .supporters__list.is-overflowing { animation: none; transform: none; }
   .supporters__org { padding: .9rem 0; }
   .supporters__org + .supporters__org { border-left: 0; border-top: 1px solid var(--paper-line); }
 }
@@ -1002,7 +992,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   html.js [data-reveal], html.js [data-split] .split-inner { opacity: 1; transform: none; }
-  .supporters__list.is-overflowing { animation: none; transform: none; }
 }
 
 .ticket.is-soldout { opacity: .45; }
