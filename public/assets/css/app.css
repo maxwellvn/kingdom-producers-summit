@@ -861,6 +861,7 @@ a.proof__value:hover { text-decoration-color: var(--ink); }
 .errpage__code { color: var(--stamp); display: block; margin-bottom: 1.2rem; }
 .errpage__title { font-size: var(--fs-h1); margin-bottom: 1.2rem; }
 .errpage p { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+.errpage__note { font-size: .95rem !important; margin-top: -1.2rem !important; }
 .errpage__debug { text-transform: none; letter-spacing: 0; background: var(--paper-2); padding: 1rem; overflow: auto; margin-bottom: 2rem; }
 
 /* ---------- Reveal (JS-enhanced) ---------- */

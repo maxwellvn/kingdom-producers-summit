@@ -15,10 +15,23 @@ final class Session
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 
-        // Paying by transfer means leaving the site for a while; a 24-minute
-        // default would strand people mid-payment.
-        $lifetime = 4 * 60 * 60;
+        // Filling in the form or leaving to make a transfer both take a while,
+        // so a 24-minute default would strand people mid-registration.
+        $lifetime = 8 * 60 * 60;
         ini_set('session.gc_maxlifetime', (string) $lifetime);
+
+        // Sessions default to the shared system temp directory, where any other
+        // PHP application's shorter cleanup deletes them long before our own
+        // lifetime is up. Keeping them in the app's own directory stops that.
+        $store = BASE_PATH . '/storage/sessions';
+        if (!is_dir($store)) {
+            @mkdir($store, 0700, true);
+        }
+        if (is_dir($store) && is_writable($store)) {
+            session_save_path($store);
+            ini_set('session.gc_probability', '1');
+            ini_set('session.gc_divisor', '100');
+        }
 
         session_name('producers_summit_session');
         session_set_cookie_params([
