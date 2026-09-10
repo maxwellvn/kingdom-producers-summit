@@ -3,7 +3,7 @@
   <header class="adm-page__head">
     <div>
       <p class="eyebrow"><span class="eyebrow__dot"></span>KingsChat</p>
-      <h1 class="adm-page__title">Connecting <span class="adm-page__title-sub">KingsChat</span></h1>
+      <h1 class="adm-page__title">Connecting KingsChat</h1>
     </div>
   </header>
 

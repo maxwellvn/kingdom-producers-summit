@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\Registration;
+use App\Services\KingsChatNotifier;
 use App\Services\PaymentService;
 use App\Services\RegistrationMail;
 use RuntimeException;
@@ -96,11 +97,15 @@ final class PaymentController extends Controller
             return $this->redirect('/register/pay');
         }
 
+        $claimed = Registration::findByReference((string) $registration['reference']) ?? $registration;
+
         try {
-            (new RegistrationMail())->sendClaimReceived(Registration::findByReference((string) $registration['reference']) ?? $registration);
+            (new RegistrationMail())->sendClaimReceived($claimed);
         } catch (\Throwable $e) {
             error_log('Payment claim email could not be sent: ' . $e->getMessage());
         }
+
+        (new KingsChatNotifier())->sendClaimReceived($claimed);
 
         return $this->redirect('/register/awaiting?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
     }

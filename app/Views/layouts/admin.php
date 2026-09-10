@@ -28,7 +28,7 @@ $current = \App\Core\Url::currentPath();
     <div class="adm-nav__inner">
       <a class="adm-nav__brand" href="<?= url('/admin') ?>">
         <span class="adm-nav__mark">Producers Summit</span>
-        <span class="mono">Registrations desk</span>
+        <span class="mono adm-nav__sub">Registrations desk</span>
       </a>
       <nav class="adm-nav__links">
         <a href="<?= url('/admin') ?>" class="<?= $current === '/admin' ? 'is-active' : '' ?>">Overview</a>

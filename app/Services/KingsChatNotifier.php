@@ -46,6 +46,25 @@ final class KingsChatNotifier
         return $this->deliver($registration, $text);
     }
 
+    /** Their payment has been logged and is waiting on an organiser. */
+    public function sendClaimReceived(array $registration): array
+    {
+        $name = trim((string) $registration['first_name']);
+        $reference = (string) $registration['reference'];
+        $amount = espees_price(price_pence((string) $registration['participation']));
+        $method = ['espees' => 'Espees', 'revolut' => 'Revolut'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
+        $proof = (string) config('payments.proof.kingschat');
+
+        $text = "Thank you, {$name}.\n\n"
+            . "We have logged your {$amount} {$method} payment for reference {$reference}, "
+            . "and we are confirming it now.\n\n"
+            . ($proof !== '' ? "Send your proof of payment to @{$proof} with your reference.\n\n" : '')
+            . "Your pass is sent as soon as the payment is confirmed.\n\n"
+            . 'The Loveworld Consulate, United Kingdom';
+
+        return $this->deliver($registration, $text);
+    }
+
     /**
      * @return array{0:bool,1:string} whether it went, and why not if it did not
      */

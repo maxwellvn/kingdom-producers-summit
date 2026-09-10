@@ -18,6 +18,7 @@ return [
         'authorize' => 'https://accounts.kingsch.at/',
         'token'     => 'https://connect.kingsch.at/oauth2/token',
         'contacts'  => 'https://connect.kingsch.at/api/contacts',
+        'user'      => 'https://connect.kingsch.at/api/users',
         'profile'   => 'https://connect.kingsch.at/api/profile',
         'message'   => 'https://connect.kingsch.at/api/users/%s/new_message',
     ],

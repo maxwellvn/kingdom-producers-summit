@@ -165,24 +165,44 @@ final class KingsChatClient
 
     /**
      * Resolve a username to the user id the message endpoint needs.
-     * The directory has no public username search, so this reads the sending
-     * account's own contacts, which is where registrants appear once they have
-     * messaged or been added.
+     *
+     * The directory answers /api/users/{username} for any account, not just
+     * contacts, so this reaches anyone. The reply is protobuf rather than JSON,
+     * and the user id is the 24-character hex string inside it.
      */
     public function resolveUserId(string $username): ?string
     {
-        $username = strtolower(ltrim(trim($username), '@'));
-        if ($username === '') {
+        $username = ltrim(trim($username), '@');
+        if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{2,64}$/', $username)) {
             return null;
         }
 
-        foreach ($this->contacts() as $contact) {
-            if (strtolower((string) ($contact['username'] ?? '')) === $username) {
-                return (string) ($contact['id'] ?? '') ?: null;
+        $token = $this->accessToken();
+        if ($token === null) {
+            return null;
+        }
+
+        [$status, $body] = $this->request(
+            rtrim((string) config('kingschat.endpoints.user'), '/') . '/' . rawurlencode($username),
+            'GET',
+            null,
+            ['Authorization: Bearer ' . $token, 'Accept: application/json']
+        );
+
+        if ($status < 200 || $status >= 300 || $body === false) {
+            return null;
+        }
+
+        // JSON when the directory offers it, otherwise read the id out of the payload.
+        $payload = json_decode((string) $body, true);
+        if (is_array($payload)) {
+            $id = $payload['user_id'] ?? $payload['id'] ?? $payload['user']['user_id'] ?? null;
+            if (is_string($id) && preg_match('/^[a-f0-9]{24}$/i', $id)) {
+                return $id;
             }
         }
 
-        return null;
+        return preg_match('/[a-f0-9]{24}/i', (string) $body, $matches) === 1 ? $matches[0] : null;
     }
 
     /** @return array<int,array<string,mixed>> */
@@ -285,7 +305,6 @@ final class KingsChatClient
         if ($body === false) {
             error_log('KingsChat request failed: ' . curl_error($ch));
         }
-        curl_close($ch);
 
         return [$status, $body];
     }

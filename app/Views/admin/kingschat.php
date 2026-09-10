@@ -1,12 +1,12 @@
 <?php
 /** @var bool $configured @var bool $connected @var string $sender @var string $clientId
- *  @var string $redirect @var string $authorize @var array $contacts @var string $flash */
+ *  @var string $redirect @var string $authorize @var string $flash */
 ?>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
       <p class="eyebrow"><span class="eyebrow__dot"></span>Notifications</p>
-      <h1 class="adm-page__title">Kings<span class="adm-page__title-sub">Chat</span></h1>
+      <h1 class="adm-page__title">KingsChat</h1>
     </div>
   </header>
 
@@ -63,10 +63,7 @@
         <button type="submit" class="adm-btn adm-btn--dark" <?= $connected ? '' : 'disabled' ?>>Send test message</button>
       </form>
       <p class="adm-muted" style="margin-top:.7rem;font-size:.9rem">
-        A username can only be reached once it appears in the sending account's contacts.
-        <?php if ($connected): ?>
-          There are currently <?= count($contacts) ?> contacts.
-        <?php endif; ?>
+        Any KingsChat username can be reached. Leave off the @.
       </p>
     </fieldset>
   </div>

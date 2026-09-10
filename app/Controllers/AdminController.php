@@ -287,7 +287,6 @@ final class AdminController extends Controller
             'clientId'   => (string) config('kingschat.client_id'),
             'redirect'   => site_url() . '/admin/kingschat/callback',
             'authorize'  => KingsChatClient::authorizeUrl(site_url() . '/admin/kingschat/callback'),
-            'contacts'   => KingsChatClient::isConnected() ? (new KingsChatClient())->contacts() : [],
             'flash'      => (string) Session::get('admin_flash', ''),
         ], 'layouts/admin');
     }

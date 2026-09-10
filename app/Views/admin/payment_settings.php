@@ -40,7 +40,7 @@ $row = static function (string $label, string $value): void {
     </div>
   <?php endif; ?>
 
-  <p class="adm-muted mono" style="margin-bottom:1.2rem">Details are maintained in <strong>config/payments.php</strong> (edit + redeploy to change them). The switches below go live immediately.</p>
+  <p class="adm-muted mono" style="margin-bottom:1.2rem">Everything on this page goes live as soon as you save.</p>
 
   <form method="post" action="<?= url('/admin/payments') ?>" style="display:flex;flex-direction:column;gap:1.6rem;max-width:720px">
     <?= csrf_field() ?>
