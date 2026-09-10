@@ -399,26 +399,6 @@ body.menu-open { overflow: hidden; }
 }
 .video-preview.is-below::after { bottom: auto; top: -5.5px; border: 0; border-left: 1px solid rgba(27,34,66,.28); border-top: 1px solid rgba(27,34,66,.28); }
 
-/* ---------- Supporting organisations ---------- */
-.supporters { border-block: 1px solid var(--paper-line); background: var(--paper-2); overflow: hidden; }
-.supporters__inner { display: grid; grid-template-columns: minmax(10rem, .65fr) 2.35fr; align-items: stretch; }
-.supporters__heading {
-  display: flex; align-items: center; padding: 1.35rem clamp(1.25rem, 2.5vw, 2.5rem) 1.35rem 0;
-  border-right: 1px solid var(--paper-line);
-}
-.supporters__title {
-  max-width: 10ch; font-family: var(--font-mono); font-size: .68rem; font-weight: 500; line-height: 1.35;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft);
-}
-.supporters__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.supporters__org {
-  min-width: 0; display: flex; align-items: center; gap: .8rem; padding: 1.15rem clamp(1rem, 2.2vw, 2rem);
-  font-family: var(--font-display); font-size: clamp(.84rem, 1vw, 1rem); font-weight: 500;
-  line-height: 1.2; letter-spacing: .055em; text-transform: uppercase; color: var(--ink);
-}
-.supporters__org + .supporters__org { border-left: 1px solid var(--paper-line); }
-.supporters__org img { width: auto; height: 31px; flex: none; mix-blend-mode: multiply; }
-
 /* ---------- Eyebrow pill: glossy border beam ---------- */
 @property --beam { syntax: "<angle>"; initial-value: 0deg; inherits: true; }
 .eyebrow--pill { position: relative; isolation: isolate; }
@@ -992,16 +972,7 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .cookie-banner__actions { grid-template-columns: 1fr; gap: .75rem; }
   .cookie-banner__actions .btn { justify-content: center; }
   .cookie-banner__reject { align-self: center; padding: .2rem .25rem; }
-  .supporters__inner { width: 100%; grid-template-columns: 1fr; }
-  .supporters__heading { padding: .9rem var(--gutter); border-right: 0; border-bottom: 1px solid var(--paper-line); }
-  .supporters__title { max-width: none; }
   /* Stack the ministries rather than running them off the side of the screen. */
-  .supporters__list {
-    display: grid; grid-template-columns: 1fr; width: 100%; overflow: visible;
-    padding-inline: var(--gutter);
-  }
-  .supporters__org { padding: .9rem 0; }
-  .supporters__org + .supporters__org { border-left: 0; border-top: 1px solid var(--paper-line); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -44,7 +44,7 @@
     <div class="hero__collage">
       <figure class="poster">
         <img class="poster__crest" src="<?= e(asset('img/crest.png')) ?>" alt="Loveworld Consulate United Kingdom crest" width="1040" height="764">
-        <span class="poster__edition">September<br>Edition</span>
+        <span class="poster__edition">London<br>Edition</span>
         <span class="poster__rule" aria-hidden="true"></span>
         <div class="collage__note">
           <span class="hand">Next<br>level</span>
@@ -58,25 +58,6 @@
     <span class="hero__scroll-line"></span>
   </div>
 </section>
-
-<!-- ============ SUPPORTING MINISTRIES ============ -->
-<aside class="supporters" aria-labelledby="supportersTitle">
-  <div class="supporters__inner container">
-    <div class="supporters__heading">
-      <h2 class="supporters__title" id="supportersTitle">Supporting Ministries</h2>
-    </div>
-    <div class="supporters__list">
-    <?php foreach ($summit['partners'] as $partner): ?>
-      <div class="supporters__org">
-        <?php if ($partner === 'Loveworld Consulate UK'): ?>
-          <img src="<?= e(asset('img/crest.png')) ?>" alt="" width="44" height="32">
-        <?php endif; ?>
-        <span><?= e($partner) ?></span>
-      </div>
-    <?php endforeach; ?>
-    </div>
-  </div>
-</aside>
 
 <!-- ============ STATEMENT ============ -->
 <section class="statement section" id="summit">
