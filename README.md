@@ -14,7 +14,7 @@ Create a new Coolify resource from this repository and select **Docker Compose**
 - `DB_ROOT_PASS` — a different strong root password
 - `ADMIN_EMAIL` — administrator login email
 - `ADMIN_PASSWORD_HASH` — generate with `php -r "echo password_hash('your-password', PASSWORD_DEFAULT);"`
-- `MAIL_FROM` — optional; defaults to `lkps@loveworldconsulate.org`
+- `MAIL_FROM` — optional; defaults to `unitedkingdom@loveworldconsulate.org`
 - `MAIL_FROM_NAME` — optional sender name
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_ENCRYPTION` — SMTP connection settings
 - `MAIL_USERNAME`, `MAIL_PASSWORD` — authenticated mailbox credentials
