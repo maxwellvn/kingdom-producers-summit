@@ -13,14 +13,15 @@ final class PaymentService
     /** The pay methods shown to the registrant, in display order. */
     public static function methods(int $amountPence = 0): array
     {
-        $amount = number_format(($amountPence ?: price_pence('onsite')) / 100, 2);
+        $amountPence = $amountPence ?: price_pence('onsite');
+        $amount = number_format($amountPence / 100, 2);
 
         return [
             'espees' => [
                 'label' => 'Espees',
                 'blurb' => 'Pay from your Espees wallet.',
                 'available' => (bool) config('payments.espees.enabled')
-                    && trim((string) config('payments.espees.code')) !== ''
+                    && self::espeesCode() !== ''
                     && Setting::get('pay_espees_enabled', '1') === '1',
                 'href' => 'espees',
             ],
@@ -28,11 +29,36 @@ final class PaymentService
                 'label' => 'Card or bank via Revolut',
                 'blurb' => "Pay {$amount} Espees on Revolut's secure checkout page.",
                 'available' => (bool) config('payments.revolut.enabled')
-                    && trim((string) config('payments.revolut.url')) !== ''
+                    && self::revolutUrl($amountPence) !== ''
                     && Setting::get('pay_revolut_enabled', '1') === '1',
                 'href' => 'revolut',
             ],
         ];
+    }
+
+    /** The Espees code, from the admin panel first, then config. */
+    public static function espeesCode(): string
+    {
+        $saved = trim(Setting::get('pay_espees_code', ''));
+
+        return $saved !== '' ? $saved : trim((string) config('payments.espees.code'));
+    }
+
+    /**
+     * The Revolut checkout link for a given amount. A checkout link is usually
+     * fixed-amount, so each price can have its own; a single general link is
+     * used when no price-specific one is set.
+     */
+    public static function revolutUrl(int $amountPence): string
+    {
+        foreach (['pay_revolut_url_' . $amountPence, 'pay_revolut_url'] as $key) {
+            $saved = trim(Setting::get($key, ''));
+            if ($saved !== '') {
+                return $saved;
+            }
+        }
+
+        return trim((string) config('payments.revolut.url'));
     }
 
     /** Only the methods an actual registrant may use right now. */

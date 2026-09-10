@@ -1,7 +1,7 @@
 <?php /** @var array $summit @var array $registration @var string $type @var string $amount */
 $isEspees = $type === 'espees';
-$code = (string) config('payments.espees.code');
-$revolutUrl = (string) config('payments.revolut.url');
+$code = \App\Services\PaymentService::espeesCode();
+$revolutUrl = \App\Services\PaymentService::revolutUrl(price_pence((string) $registration['participation']));
 $note = (string) config($isEspees ? 'payments.espees.note' : 'payments.revolut.note');
 $reference = (string) $registration['reference'];
 $cell = 'padding:10px 0;border-top:1px solid rgba(0,0,0,.15);color:#756f60;text-transform:uppercase;font-size:.72rem;letter-spacing:1.5px';

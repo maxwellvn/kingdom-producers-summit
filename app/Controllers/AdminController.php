@@ -236,7 +236,23 @@ final class AdminController extends Controller
             Setting::set($key, $request->input($key) === '1' ? '1' : '0');
         }
 
-        Session::flash('admin_flash', 'Payment method switches updated.');
+        Setting::set('pay_espees_code', mb_substr(trim($request->str('pay_espees_code')), 0, 120));
+
+        // A Revolut checkout link is usually fixed-amount, so each price has its own.
+        foreach (Registration::PARTICIPATION as $path) {
+            $pence = price_pence($path);
+            if ($pence <= 0) {
+                continue;
+            }
+            $url = trim($request->str('pay_revolut_url_' . $pence));
+            if ($url !== '' && !filter_var($url, FILTER_VALIDATE_URL)) {
+                Session::flash('admin_flash', 'That Revolut link is not a valid web address, so it was not saved.');
+                return $this->redirect('/admin/payments');
+            }
+            Setting::set('pay_revolut_url_' . $pence, mb_substr($url, 0, 500));
+        }
+
+        Session::flash('admin_flash', 'Payment settings updated.');
 
         return $this->redirect('/admin/payments');
     }

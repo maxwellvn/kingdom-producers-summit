@@ -1,7 +1,16 @@
 <?php /** @var array $flash @var bool $paymentsLive */
 use App\Models\Setting;
+use App\Services\PaymentService;
 $espeesOn = Setting::get('pay_espees_enabled', '1') === '1';
 $revolutOn = Setting::get('pay_revolut_enabled', '1') === '1';
+$paidPaths = array_values(array_filter(App\Models\Registration::PARTICIPATION, 'is_paid_path'));
+$textField = static function (string $key, string $label, string $value, string $hint = ''): void {
+    echo '<label style="display:block;margin-top:1rem;font-size:.95rem">'
+        . '<span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#756f60">' . e($label) . '</span>'
+        . '<input type="text" name="' . e($key) . '" value="' . e($value) . '" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">'
+        . ($hint !== '' ? '<span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">' . e($hint) . '</span>' : '')
+        . '</label>';
+};
 $toggle = static function (string $key, bool $on, string $label): void {
     $checked = $on ? ' checked' : '';
     echo '<label style="display:flex;gap:.6rem;align-items:center;font-size:.95rem">'
@@ -39,13 +48,20 @@ $row = static function (string $label, string $value): void {
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
       <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Espees — shown first</legend>
       <?php $toggle('pay_espees_enabled', $espeesOn, $espeesOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
-      <?php $row('Espees code', trim((string) config('payments.espees.code')) !== '' ? config('payments.espees.code') : 'Not set yet — add it in config/payments.php'); ?>
+      <?php $textField('pay_espees_code', 'Espees code', PaymentService::espeesCode(), 'Registrants see this code with a copy button.'); ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
       <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Revolut checkout</legend>
       <?php $toggle('pay_revolut_enabled', $revolutOn, $revolutOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
-      <?php $row('Checkout link', trim((string) config('payments.revolut.url')) !== '' ? config('payments.revolut.url') : 'Not set yet — add it in config/payments.php'); ?>
+      <?php foreach ($paidPaths as $path): $pence = price_pence($path); ?>
+        <?php $textField(
+            'pay_revolut_url_' . $pence,
+            ucfirst($path) . ' link (' . espees_price($pence) . ')',
+            PaymentService::revolutUrl($pence),
+            'A Revolut checkout link is normally fixed-amount, so give each price its own link.'
+        ); ?>
+      <?php endforeach; ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">

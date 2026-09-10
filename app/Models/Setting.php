@@ -6,17 +6,20 @@ namespace App\Models;
 
 use App\Core\Database;
 
-/** Key/value toggles stored by the admin panel (payment method switches). */
+/** Key/value settings maintained from the admin panel (payment methods and their details). */
 final class Setting
 {
+    /** @var array<string,string>|null */
+    private static ?array $cache = null;
+
     public static function get(string $key, string $default = ''): string
     {
-        static $cache = null;
-        if ($cache === null) {
+        if (self::$cache === null) {
             $rows = Database::connection()->query('SELECT `key`, value FROM settings')->fetchAll();
-            $cache = array_column($rows, 'value', 'key');
+            self::$cache = array_column($rows, 'value', 'key');
         }
-        return isset($cache[$key]) ? (string) $cache[$key] : $default;
+
+        return isset(self::$cache[$key]) ? (string) self::$cache[$key] : $default;
     }
 
     public static function set(string $key, string $value): void
@@ -25,5 +28,8 @@ final class Setting
             'INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)'
         );
         $stmt->execute([$key, $value]);
+
+        // Keep the rest of this request consistent with what was just written.
+        self::$cache = null;
     }
 }

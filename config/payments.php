@@ -8,7 +8,7 @@ return [
 
     'espees' => [
         'enabled' => true,
-        'code'    => '', // ← your Espees code goes here; Espees stays hidden until it is set
+        'code'    => 'SALWC', // editable in the admin panel; this is the fallback
         'note'    => '',
     ],
 

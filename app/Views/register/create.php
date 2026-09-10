@@ -61,8 +61,8 @@ $stageLabels = [
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
             <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
             <?php if (!$isInitiative): ?>
-              <div><dt>Onsite cost</dt><dd><?= e(espees_price(price_pence('onsite'))) ?> <span class="reg__facts-note">inaugural edition price, was <?= e(espees_price(standard_price_pence('onsite'))) ?></span></dd></div>
-              <div><dt>Online cost</dt><dd><?= e(espees_price(price_pence('online'))) ?> <span class="reg__facts-note">inaugural edition price, was <?= e(espees_price(standard_price_pence('online'))) ?></span></dd></div>
+              <div><dt>Onsite cost</dt><dd><?= e(espees_price(price_pence('onsite'))) ?></dd></div>
+              <div><dt>Online cost</dt><dd><?= e(espees_price(price_pence('online'))) ?></dd></div>
             <?php endif; ?>
           </dl>
         </div>
