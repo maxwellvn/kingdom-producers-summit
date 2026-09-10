@@ -229,14 +229,14 @@ $stageLabels = [
             <?php if ($err = error_for('zone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>">
-            <label for="group_name">Group</label>
-            <input id="group_name" name="group_name" type="text" maxlength="120" required
+            <label for="group_name">Group <span class="field__opt">optional</span></label>
+            <input id="group_name" name="group_name" type="text" maxlength="120"
                    placeholder="e.g. Rainham Group" value="<?= old('group_name') ?>">
             <?php if ($err = error_for('group_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>">
-            <label for="church_name">Church</label>
-            <input id="church_name" name="church_name" type="text" maxlength="160" required
+            <label for="church_name">Church <span class="field__opt">optional</span></label>
+            <input id="church_name" name="church_name" type="text" maxlength="160"
                    placeholder="e.g. CE Rainham" value="<?= old('church_name') ?>">
             <?php if ($err = error_for('church_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>

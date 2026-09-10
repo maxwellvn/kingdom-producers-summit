@@ -24,13 +24,14 @@ try {
     ], []);
     $service = new RegistrationService();
     [$requiredErrors] = $service->validate($incomplete);
-    verify(isset($requiredErrors['phone'], $requiredErrors['zone'], $requiredErrors['group_name'], $requiredErrors['church_name']), 'phone and church hierarchy are required');
+    verify(isset($requiredErrors['phone'], $requiredErrors['zone']), 'phone and zone are required');
+    verify(!isset($requiredErrors['group_name'], $requiredErrors['church_name']), 'group and church are optional');
 
     $request = new Request('POST', '/register', [], [
         'participation' => 'onsite', 'first_name' => 'Regression', 'last_name' => 'Test',
         'email' => 'attendance-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900123', 'country' => 'United Kingdom', 'age_band' => '25-34',
-        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'zone' => 'UK Zone 1',
         'field' => Registration::FIELDS[0], 'producer_stage' => 'build',
         'interests' => ['technology', 'other'], 'interest_other' => 'Sustainable transport',
         'consent_terms' => '1',
