@@ -20,17 +20,31 @@ final class Session
         $lifetime = 8 * 60 * 60;
         ini_set('session.gc_maxlifetime', (string) $lifetime);
 
-        // Sessions default to the shared system temp directory, where any other
-        // PHP application's shorter cleanup deletes them long before our own
-        // lifetime is up. Keeping them in the app's own directory stops that.
-        $store = BASE_PATH . '/storage/sessions';
-        if (!is_dir($store)) {
-            @mkdir($store, 0700, true);
+        // Sessions live in the database, so a redeploy does not wipe them and
+        // every instance of the site sees the same ones. If the database is
+        // unreachable the site cannot do much anyway, but fall back to files
+        // in the app's own directory rather than the shared system temp dir,
+        // where other applications' cleanup would delete them early.
+        ini_set('session.gc_probability', '1');
+        ini_set('session.gc_divisor', '100');
+        $useDatabase = true;
+        try {
+            $pdo = Database::connection();
+            // Until migration 021 has run there is no table to keep them in.
+            $pdo->query('SELECT 1 FROM sessions LIMIT 1');
+            session_set_save_handler(new DatabaseSessionHandler($pdo, $lifetime), true);
+        } catch (\Throwable $e) {
+            $useDatabase = false;
+            error_log('Database sessions unavailable, using files: ' . $e->getMessage());
         }
-        if (is_dir($store) && is_writable($store)) {
-            session_save_path($store);
-            ini_set('session.gc_probability', '1');
-            ini_set('session.gc_divisor', '100');
+        if (!$useDatabase) {
+            $store = BASE_PATH . '/storage/sessions';
+            if (!is_dir($store)) {
+                @mkdir($store, 0700, true);
+            }
+            if (is_dir($store) && is_writable($store)) {
+                session_save_path($store);
+            }
         }
 
         session_name('producers_summit_session');
