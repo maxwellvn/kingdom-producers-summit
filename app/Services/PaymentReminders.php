@@ -49,6 +49,10 @@ final class PaymentReminders
         }
         Setting::set('payment_reminders_swept_at', (string) time());
 
+        // Keep the KingsChat token fresh while we are here, so it never lapses
+        // between messages.
+        KingsChatClient::refreshIfDue();
+
         try {
             self::run();
         } catch (\Throwable $e) {

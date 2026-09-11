@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Database;
 use App\Models\Setting;
 use RuntimeException;
 
@@ -23,6 +24,12 @@ final class KingsChatClient
 
     /** Refresh a little early so a message never fails on a just-expired token. */
     private const EXPIRY_MARGIN = 120;
+
+    /** Refresh this far ahead of expiry when housekeeping runs, so a quiet site never lapses. */
+    private const PROACTIVE_WINDOW = 45 * 60;
+
+    private const LAST_REFRESH_KEY = 'kingschat_last_refresh';
+    private const LAST_ERROR_KEY = 'kingschat_last_error';
 
     public static function isConfigured(): bool
     {
@@ -136,31 +143,101 @@ final class KingsChatClient
     {
         $refreshToken = Setting::get(self::REFRESH_KEY, '');
         if ($refreshToken === '' || !self::isConfigured()) {
+            self::note(self::LAST_ERROR_KEY, 'Not connected: no refresh token is stored. Connect KingsChat from the admin.');
             return null;
         }
 
-        [$status, $body] = $this->request(
-            (string) config('kingschat.endpoints.token'),
-            'POST',
-            http_build_query([
-                'client_id'     => (string) config('kingschat.client_id'),
-                'refresh_token' => $refreshToken,
-                'grant_type'    => 'refresh_token',
-            ]),
-            ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json']
-        );
+        // Two requests refreshing at once would both spend the same refresh
+        // token, and the second would fail. Take a short database lock so the
+        // second one waits and then finds a fresh token already stored.
+        $pdo = Database::connection();
+        $locked = (bool) $pdo->query("SELECT GET_LOCK('kingschat_refresh', 10)")->fetchColumn();
+        try {
+            if ($locked) {
+                $token = Setting::get(self::TOKEN_KEY, '');
+                $expiresAt = (int) Setting::get(self::EXPIRES_KEY, '0');
+                if ($token !== '' && $expiresAt > time() + self::EXPIRY_MARGIN
+                    && Setting::get(self::REFRESH_KEY, '') !== $refreshToken) {
+                    return $token; // Someone else just refreshed.
+                }
+            }
 
-        $payload = json_decode((string) $body, true);
-        if ($status < 200 || $status >= 300 || !is_array($payload) || empty($payload['access_token'])) {
-            error_log('KingsChat token refresh failed with status ' . $status);
-            return null;
+            [$status, $body] = $this->request(
+                (string) config('kingschat.endpoints.token'),
+                'POST',
+                http_build_query([
+                    'client_id'     => (string) config('kingschat.client_id'),
+                    'refresh_token' => $refreshToken,
+                    'grant_type'    => 'refresh_token',
+                ]),
+                ['Content-Type: application/x-www-form-urlencoded', 'Accept: application/json']
+            );
+
+            $payload = json_decode((string) $body, true);
+            if ($status < 200 || $status >= 300 || !is_array($payload) || empty($payload['access_token'])) {
+                $why = 'KingsChat token refresh failed with status ' . $status
+                    . (is_array($payload) && !empty($payload['error']) ? ' (' . $payload['error'] . ')' : '');
+                error_log($why);
+                self::note(self::LAST_ERROR_KEY, $why . ' at ' . date('Y-m-d H:i'));
+                // A refresh token KingsChat no longer accepts will never work again.
+                if (in_array($status, [400, 401], true)) {
+                    Setting::set(self::REFRESH_KEY, '');
+                    Setting::set(self::TOKEN_KEY, '');
+                }
+                return null;
+            }
+
+            // The API reports the lifetime in milliseconds.
+            $seconds = (int) floor(((int) ($payload['expires_in_millis'] ?? 3600000)) / 1000);
+            self::storeTokens((string) $payload['access_token'], (string) ($payload['refresh_token'] ?? ''), $seconds);
+            self::note(self::LAST_REFRESH_KEY, date('Y-m-d H:i:s'));
+            self::note(self::LAST_ERROR_KEY, '');
+
+            return (string) $payload['access_token'];
+        } finally {
+            if ($locked) {
+                $pdo->query("SELECT RELEASE_LOCK('kingschat_refresh')");
+            }
         }
+    }
 
-        // The API reports the lifetime in milliseconds.
-        $seconds = (int) floor(((int) ($payload['expires_in_millis'] ?? 3600000)) / 1000);
-        self::storeTokens((string) $payload['access_token'], (string) ($payload['refresh_token'] ?? ''), $seconds);
+    /**
+     * Renew the token before it lapses. Called by housekeeping from ordinary
+     * traffic, so the token stays fresh without anyone sending a message.
+     */
+    public static function refreshIfDue(): void
+    {
+        if (!self::isConnected()) {
+            return;
+        }
+        $expiresAt = (int) Setting::get(self::EXPIRES_KEY, '0');
+        if ($expiresAt > time() + self::PROACTIVE_WINDOW) {
+            return;
+        }
+        try {
+            (new self())->refresh();
+        } catch (\Throwable $e) {
+            error_log('KingsChat proactive refresh failed: ' . $e->getMessage());
+        }
+    }
 
-        return (string) $payload['access_token'];
+    /** What the admin page shows: when the token lapses, when it was last renewed, and the last problem. */
+    public static function status(): array
+    {
+        $expiresAt = (int) Setting::get(self::EXPIRES_KEY, '0');
+
+        return [
+            'expires_at'   => $expiresAt,
+            'expired'      => $expiresAt > 0 && $expiresAt <= time(),
+            'last_refresh' => Setting::get(self::LAST_REFRESH_KEY, ''),
+            'last_error'   => Setting::get(self::LAST_ERROR_KEY, ''),
+            'last_sent'    => Setting::get('kingschat_last_sent', ''),
+        ];
+    }
+
+    private static function note(string $key, string $value): void
+    {
+        Setting::set($key, mb_substr($value, 0, 500));
     }
 
     /**
@@ -270,10 +347,30 @@ final class KingsChatClient
         );
 
         if ($status >= 200 && $status < 300) {
+            self::note('kingschat_last_sent', date('Y-m-d H:i:s') . ' to @' . ltrim($recipient, '@'));
             return [true, 'sent'];
         }
 
-        error_log('KingsChat send failed with status ' . $status . ': ' . substr((string) $body, 0, 200));
+        // A 401 means the token we hold is no longer accepted: renew and try once more.
+        if ($status === 401) {
+            $fresh = $this->refresh();
+            if ($fresh !== null) {
+                [$status, $body] = $this->request(
+                    sprintf((string) config('kingschat.endpoints.message'), rawurlencode($userId)),
+                    'POST',
+                    json_encode(['message' => ['body' => ['text' => ['body' => $text]]]], JSON_THROW_ON_ERROR),
+                    ['Authorization: Bearer ' . $fresh, 'Content-Type: application/json', 'Accept: application/json']
+                );
+                if ($status >= 200 && $status < 300) {
+                    self::note('kingschat_last_sent', date('Y-m-d H:i:s') . ' to @' . ltrim($recipient, '@'));
+                    return [true, 'sent'];
+                }
+            }
+        }
+
+        $why = 'KingsChat send failed with status ' . $status . ': ' . substr((string) $body, 0, 200);
+        error_log($why);
+        self::note(self::LAST_ERROR_KEY, 'Send to @' . ltrim($recipient, '@') . ' failed with status ' . $status . ' at ' . date('Y-m-d H:i'));
 
         return [false, 'KingsChat replied with status ' . $status];
     }

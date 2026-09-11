@@ -540,6 +540,7 @@ final class AdminController extends Controller
             'title'      => 'KingsChat',
             'configured' => KingsChatClient::isConfigured(),
             'connected'  => KingsChatClient::isConnected(),
+            'status'     => KingsChatClient::status(),
             'sender'     => KingsChatClient::senderUsername(),
             'clientId'   => (string) config('kingschat.client_id'),
             'redirect'   => site_url() . '/admin/kingschat/callback',
