@@ -3,6 +3,10 @@ use App\Models\Setting;
 use App\Services\PaymentService;
 $espeesOn = Setting::get('pay_espees_enabled', '1') === '1';
 $revolutOn = Setting::get('pay_revolut_enabled', '1') === '1';
+$stripeOn = Setting::get('pay_stripe_enabled', '1') === '1';
+$stripeReady = App\Services\StripeClient::configured();
+$stripeWebhook = trim((string) config('payments.stripe.webhook_secret')) !== '';
+$stripeKeyKind = str_starts_with((string) config('payments.stripe.secret'), 'sk_live_') ? 'live' : 'test';
 $paidPaths = array_values(array_filter(App\Models\Registration::PARTICIPATION, 'is_paid_path'));
 $textField = static function (string $key, string $label, string $value, string $hint = ''): void {
     echo '<label style="display:block;margin-top:1rem;font-size:.95rem">'
@@ -46,7 +50,15 @@ $row = static function (string $label, string $value): void {
     <?= csrf_field() ?>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
-      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Espees — shown first</legend>
+      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Card via Stripe — shown first</legend>
+      <?php $toggle('pay_stripe_enabled', $stripeOn, $stripeOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
+      <?php $row('Keys', $stripeReady ? 'Set (' . $stripeKeyKind . ' mode)' : 'Not set — add STRIPE_SECRET_KEY to the environment'); ?>
+      <?php $row('Webhook', $stripeWebhook ? 'Signing secret set' : 'Not set — add the endpoint ' . rtrim(site_url(), '/') . '/webhooks/stripe in the Stripe dashboard and put its signing secret in STRIPE_WEBHOOK_SECRET'); ?>
+      <?php $row('Charges', 'Onsite ' . espees_price(price_pence('onsite')) . ' · Online ' . espees_price(price_pence('online')) . ', taken in pounds sterling. The registrant lands on the confirmation page the moment Stripe reports the payment.'); ?>
+    </fieldset>
+
+    <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
+      <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Espees</legend>
       <?php $toggle('pay_espees_enabled', $espeesOn, $espeesOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
       <?php $textField('pay_espees_code', 'Espees code', PaymentService::espeesCode(), 'Registrants see this code with a copy button.'); ?>
     </fieldset>

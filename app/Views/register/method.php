@@ -8,6 +8,10 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
       <h1 class="pay__title">Choose how to pay <?= e($amount) ?> Espees</h1>
       <p class="pay__lede">The full price is <?= e($standard) ?>. The inaugural edition price leaves <strong><?= e($amount) ?> Espees</strong> due. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
 
+      <?php $payError = \App\Core\Session::get('_errors', [])['pay'] ?? ''; ?>
+      <?php if ($payError !== ''): ?>
+        <div class="pay__alert" role="alert"><span><?= e($payError) ?></span></div>
+      <?php endif; ?>
       <?php if (!$methods): ?>
         <div class="pay__alert" role="alert">
           <strong>Payment is not available yet.</strong>
@@ -17,7 +21,10 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
 
       <div class="pay__methods">
         <?php foreach ($methods as $id => $method): ?>
-          <a class="pay__method" href="<?= url('/register/instructions?type=' . $method['href'] . '&resume=' . rawurlencode($resume)) ?>">
+          <?php $target = $id === 'stripe'
+              ? url('/register/stripe?resume=' . rawurlencode($resume))
+              : url('/register/instructions?type=' . $method['href'] . '&resume=' . rawurlencode($resume)); ?>
+          <a class="pay__method" href="<?= $target ?>">
             <div>
               <strong><?= e($method['label']) ?></strong>
               <span class="pay__method-blurb"><?= e($method['blurb']) ?></span>

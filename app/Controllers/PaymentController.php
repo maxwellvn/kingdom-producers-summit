@@ -12,6 +12,7 @@ use App\Models\Registration;
 use App\Services\KingsChatNotifier;
 use App\Services\PaymentService;
 use App\Services\RegistrationMail;
+use App\Services\StripeClient;
 use RuntimeException;
 
 final class PaymentController extends Controller
@@ -64,6 +65,96 @@ final class PaymentController extends Controller
             'type'      => $type,
             'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
         ]);
+    }
+
+    /** Send the registrant to Stripe's hosted checkout page. */
+    public function stripeStart(Request $request): Response
+    {
+        $registration = $this->sessionRegistration(true, $request);
+        if ($registration === null) {
+            return $this->redirect('/register/pay?expired=1');
+        }
+        $methods = PaymentService::methods(price_pence((string) $registration['participation']));
+        if (empty($methods['stripe']['available'])) {
+            return $this->redirect('/register/method');
+        }
+
+        $resume = rawurlencode(PaymentService::resumeToken((string) $registration['reference']));
+        $site = rtrim(site_url(), '/');
+        try {
+            $checkout = StripeClient::createCheckout(
+                $registration,
+                $site . '/register/stripe/return?session_id={CHECKOUT_SESSION_ID}&resume=' . $resume,
+                $site . '/register/pay?cancelled=1&resume=' . $resume
+            );
+        } catch (\Throwable $e) {
+            error_log('Stripe checkout could not be opened: ' . $e->getMessage());
+            Session::flash('_errors', ['pay' => 'Card payment is not available right now. Choose another way to pay, or try again in a moment.']);
+            return $this->redirect('/register/method?resume=' . $resume);
+        }
+
+        return $this->redirect($checkout);
+    }
+
+    /**
+     * Back from Stripe. The webhook is the source of truth, but checking the
+     * session here means the person sees their confirmation straight away
+     * rather than waiting for the webhook to arrive.
+     */
+    public function stripeReturn(Request $request): Response
+    {
+        $registration = $this->sessionRegistration(false, $request);
+        $reference = $registration['reference'] ?? PaymentService::referenceFromResumeToken($request->str('resume'));
+        if (!is_string($reference) || $reference === '') {
+            return $this->redirect('/register/pay?expired=1');
+        }
+
+        $sessionId = $request->str('session_id');
+        try {
+            $session = StripeClient::session($sessionId);
+        } catch (\Throwable $e) {
+            error_log('Stripe session could not be read: ' . $e->getMessage());
+            Session::put('last_registration', $reference);
+            return $this->redirect('/register/method');
+        }
+
+        // The session must be for this registration, and actually paid.
+        $paidFor = (string) ($session['client_reference_id'] ?? '');
+        if ($paidFor !== $reference || ($session['payment_status'] ?? '') !== 'paid') {
+            Session::put('last_registration', $reference);
+            return $this->redirect('/register/method');
+        }
+
+        (new PaymentService())->markPaid($reference, $sessionId, (int) ($session['amount_total'] ?? 0), 'stripe');
+        Session::put('last_registration', $reference);
+
+        return $this->redirect('/register/confirmed');
+    }
+
+    /** Stripe tells us a checkout was paid. Signed, and safe to receive twice. */
+    public function stripeWebhook(Request $request): Response
+    {
+        $payload = (string) file_get_contents('php://input');
+        $event = StripeClient::verifyWebhook($payload, (string) ($_SERVER['HTTP_STRIPE_SIGNATURE'] ?? ''));
+        if ($event === null) {
+            return Response::json(['ok' => false, 'reason' => 'bad_signature'], 400);
+        }
+
+        if (($event['type'] ?? '') === 'checkout.session.completed'
+            || ($event['type'] ?? '') === 'checkout.session.async_payment_succeeded') {
+            $session = (array) ($event['data']['object'] ?? []);
+            $reference = (string) ($session['client_reference_id'] ?? '');
+            if ($reference !== '' && ($session['payment_status'] ?? '') === 'paid') {
+                (new PaymentService())->markPaid(
+                    $reference,
+                    (string) ($session['id'] ?? 'stripe'),
+                    (int) ($session['amount_total'] ?? 0),
+                    'stripe'
+                );
+            }
+        }
+
+        return Response::json(['ok' => true]);
     }
 
     /** "Have you paid?" — the confirmation step before a claim is recorded. */

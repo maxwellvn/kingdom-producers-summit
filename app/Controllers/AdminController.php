@@ -242,7 +242,7 @@ final class AdminController extends Controller
 
     public function savePaymentSettings(Request $request): Response
     {
-        foreach (['pay_espees_enabled', 'pay_revolut_enabled'] as $key) {
+        foreach (['pay_stripe_enabled', 'pay_espees_enabled', 'pay_revolut_enabled'] as $key) {
             Setting::set($key, $request->input($key) === '1' ? '1' : '0');
         }
 

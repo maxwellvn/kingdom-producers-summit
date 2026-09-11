@@ -18,6 +18,16 @@ return [
         'note'    => '',
     ],
 
+    // Card payments through Stripe Checkout. Keys live in .env, never here.
+    'stripe' => [
+        'enabled'        => true,
+        'secret'         => (string) env('STRIPE_SECRET_KEY', ''),
+        'publishable'    => (string) env('STRIPE_PUBLISHABLE_KEY', ''),
+        'webhook_secret' => (string) env('STRIPE_WEBHOOK_SECRET', ''),
+        // Prices are held in pence, so the charge is made in pounds sterling.
+        'currency'       => 'gbp',
+    ],
+
     // Contact details for enquiries. Delegates are never asked to send proof; organisers verify payments themselves.
     'proof' => [
         'kingschat' => 'lwconsul_uk',

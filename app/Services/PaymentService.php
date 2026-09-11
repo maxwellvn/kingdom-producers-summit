@@ -16,6 +16,13 @@ final class PaymentService
         $amount = number_format($amountPence / 100, 2);
 
         return [
+            'stripe' => [
+                'label' => 'Debit or credit card',
+                'blurb' => "Pay {$amount} Espees by debit or credit card. Your place is confirmed the moment the payment goes through.",
+                'available' => StripeClient::configured()
+                    && Setting::get('pay_stripe_enabled', '1') === '1',
+                'href' => 'stripe',
+            ],
             'espees' => [
                 'label' => 'Espees',
                 'blurb' => 'Pay from your Espees wallet.',
@@ -79,14 +86,14 @@ final class PaymentService
      * Mark a registration paid and send the confirmation email.
      * Returns false when it was already paid (idempotent for webhook + return URL).
      */
-    public function markPaid(string $reference, string $sessionId, int $amountPence = 0): bool
+    public function markPaid(string $reference, string $sessionId, int $amountPence = 0, ?string $method = null): bool
     {
         if ($amountPence <= 0) {
             $existing = Registration::findByReference($reference);
             $amountPence = price_pence((string) ($existing['participation'] ?? 'onsite'));
         }
 
-        $updated = Registration::markPaid($reference, $sessionId, $amountPence);
+        $updated = Registration::markPaid($reference, $sessionId, $amountPence, $method);
         if (!$updated) {
             return false;
         }

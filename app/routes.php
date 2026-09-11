@@ -40,6 +40,10 @@ $router->get('/register/instructions', [PaymentController::class, 'instructions'
 $router->get('/register/claim', [PaymentController::class, 'claimForm']);
 $router->post('/register/claim', [PaymentController::class, 'claim'], [VerifyCsrf::class]);
 $router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
+$router->get('/register/stripe', [PaymentController::class, 'stripeStart']);
+$router->get('/register/stripe/return', [PaymentController::class, 'stripeReturn']);
+// Stripe signs this itself, so it carries no CSRF token.
+$router->post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook']);
 
 // Cookie consent log: anonymous audit row only, no session/CSRF.
 $router->post('/api/consent', [ConsentController::class, 'store']);

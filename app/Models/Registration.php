@@ -167,14 +167,16 @@ final class Registration
     }
 
     /** Transition unpaid (or claimed offline payment) → paid. Returns false when already paid (idempotent). */
-    public static function markPaid(string $reference, string $sessionId, int $amountPence): bool
+    public static function markPaid(string $reference, string $sessionId, int $amountPence, ?string $method = null): bool
     {
+        // Keep whatever method was claimed unless the confirmation names one.
         $stmt = Database::connection()->prepare(
             "UPDATE registrations
-             SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, payment_session_id = ?
+             SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, payment_session_id = ?,
+                 payment_method = COALESCE(?, payment_method)
              WHERE reference = ? AND payment_status IN ('unpaid', 'claimed')"
         );
-        $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $reference]);
+        $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $method, $reference]);
         return $stmt->rowCount() > 0;
     }
 
