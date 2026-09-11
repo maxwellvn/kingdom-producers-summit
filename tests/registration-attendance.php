@@ -183,6 +183,29 @@ try {
         'an organiser can clear the whole board');
     App\Models\Setting::set('comments_enabled', $wasOpen);
 
+    // Someone who says they have paid is never chased or released.
+    $claimEmail = 'claim-' . bin2hex(random_bytes(8)) . '@example.org';
+    [$claimErrors, $claimClean] = $service->validate(new Request('POST', '/register', [], [
+        'participation' => 'onsite', 'first_name' => 'Claimed', 'last_name' => 'Payer',
+        'email' => $claimEmail, 'phone' => '+447700900143', 'country' => 'United Kingdom',
+        'age_band' => '25-34', 'zone' => 'UK Zone 1', 'field' => Registration::FIELDS[0],
+        'producer_stage' => 'build', 'consent_terms' => '1',
+    ], []));
+    verify($claimErrors === [], 'claimed-payer registration validates');
+    $claimRow = $service->register($claimClean);
+    $pdo->prepare('UPDATE registrations SET created_at = DATE_SUB(NOW(), INTERVAL 30 HOUR),
+                   payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?')
+        ->execute([$claimRow['id']]);
+    verify(in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'unpaid past the grace period would be released');
+    $pdo->prepare("UPDATE registrations SET payment_status = 'claimed', payment_method = 'espees',
+                   payment_reminder_sent_at = NULL WHERE id = ?")->execute([$claimRow['id']]);
+    verify(!in_array($claimRow['id'], array_column(Registration::dueForPaymentReminder(), 'id')), 'a claimed payment is not reminded');
+    $pdo->prepare('UPDATE registrations SET payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?')
+        ->execute([$claimRow['id']]);
+    verify(!in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'a claimed payment is not released');
+    verify(!Registration::release((int) $claimRow['id']), 'release refuses a claimed payment even if asked directly');
+    verify(Registration::find($claimRow['id'])['status'] === 'pending', 'the claimed registration is untouched');
+
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [
         'participation' => 'onsite', 'first_name' => 'Guest', 'last_name' => 'Speaker',
