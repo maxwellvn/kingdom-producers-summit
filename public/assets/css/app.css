@@ -1048,3 +1048,12 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .chat__hint.is-error { color: #ff9aa2; }
 .chat__send { flex: none; }
 @media (max-width: 560px) { .chat__actions { flex-direction: column; align-items: stretch; } .chat__send { width: 100%; } }
+
+/* ---------- Payment method marks ---------- */
+.pay-icon { display: inline-block; flex: none; vertical-align: middle; }
+.pay-icon--espees { border-radius: 50%; }
+.pay__method-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6rem; height: 2.6rem; color: var(--ink); background: rgba(27,34,66,.06); border-radius: 50%; }
+.pay__method > div { flex: 1 1 auto; min-width: 0; }
+.pay__kicker .pay-icon { margin-right: .1rem; }
+.pay__with { display: inline-flex; align-items: center; gap: .4rem; }
+.pay__method-icon .pay-icon--espees { width: 2.1rem; height: 2.1rem; }

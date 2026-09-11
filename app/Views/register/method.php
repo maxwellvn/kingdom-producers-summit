@@ -25,6 +25,7 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
               ? url('/register/stripe?resume=' . rawurlencode($resume))
               : url('/register/instructions?type=' . $method['href'] . '&resume=' . rawurlencode($resume)); ?>
           <a class="pay__method" href="<?= $target ?>">
+            <span class="pay__method-icon"><?= payment_icon((string) $id) ?></span>
             <div>
               <strong><?= e($method['label']) ?></strong>
               <span class="pay__method-blurb"><?= e($method['blurb']) ?></span>

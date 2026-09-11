@@ -16,7 +16,7 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
-      <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> <?= $isEspees ? 'Pay with Espees' : 'Pay by card or bank' ?></p>
+      <p class="mono pay__kicker"><?= payment_icon($type, 22) ?> <?= $isEspees ? 'Pay with Espees' : 'Pay by card or bank' ?></p>
       <h1 class="pay__title"><?= $isEspees ? 'Send ' . e($amount) . ' Espees' : 'Pay ' . e(amount_for('revolut', $pence)) ?></h1>
 
       <?php if ($isEspees): ?>

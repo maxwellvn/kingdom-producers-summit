@@ -82,6 +82,28 @@ function payment_phrase(array $registration): string
     };
 }
 
+/**
+ * A small mark for a payment method: the Espees coin, a generic card, or the
+ * Revolut "R". Decorative, so hidden from screen readers.
+ */
+function payment_icon(string $method, int $size = 28): string
+{
+    $px = (string) $size;
+    return match ($method) {
+        'espees' => '<img class="pay-icon pay-icon--espees" src="' . e(asset('img/espees.png')) . '" width="' . $px . '" height="' . $px . '" alt="" aria-hidden="true">',
+        'stripe' => '<svg class="pay-icon pay-icon--card" width="' . $px . '" height="' . $px . '" viewBox="0 0 28 28" fill="none" aria-hidden="true">'
+            . '<rect x="2.5" y="6.5" width="23" height="15" rx="2.5" stroke="currentColor" stroke-width="1.6"/>'
+            . '<rect x="2.5" y="10" width="23" height="3.2" fill="currentColor"/>'
+            . '<rect x="6" y="16" width="7" height="2" rx="1" fill="currentColor"/>'
+            . '</svg>',
+        'revolut' => '<svg class="pay-icon pay-icon--revolut" width="' . $px . '" height="' . $px . '" viewBox="0 0 28 28" aria-hidden="true">'
+            . '<rect x="2" y="2" width="24" height="24" rx="6" fill="currentColor"/>'
+            . '<path d="M9.5 20.5V7.5h5.6c2.9 0 4.7 1.6 4.7 4.1 0 1.9-1.1 3.2-2.8 3.7l3.3 5.2h-3l-3-4.8h-2.1v4.8H9.5zm2.7-7.1h2.6c1.4 0 2.2-.7 2.2-1.8s-.8-1.8-2.2-1.8h-2.6v3.6z" fill="#F3EEE2"/>'
+            . '</svg>',
+        default => '',
+    };
+}
+
 /** A readable name for a payment method. */
 function payment_method_label(?string $method): string
 {

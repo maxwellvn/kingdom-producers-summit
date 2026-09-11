@@ -8,7 +8,7 @@ $reference = (string) $registration['reference'];
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment received — pending confirmation</p>
       <h1 class="pay__title">Thank you — nearly there</h1>
 
-      <p class="pay__lede">We've logged your <strong><?= e($paid) ?></strong> payment. Our team checks it against our records and confirms it from our end. There is nothing further for you to send.</p>
+      <p class="pay__lede">We've logged your <strong class="pay__with"><?= payment_icon((string) ($registration['payment_method'] ?? ''), 20) ?><?= e($paid) ?></strong> payment. Our team checks it against our records and confirms it from our end. There is nothing further for you to send.</p>
 
       <section class="proof" aria-labelledby="proofTitle">
         <h2 class="proof__title" id="proofTitle">Your reference</h2>
