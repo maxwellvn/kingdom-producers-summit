@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
@@ -45,10 +46,29 @@ final class RegistrationController extends Controller
         ]);
     }
 
+    /**
+     * Whole groups register from one church network, so the per-connection
+     * cap is generous. Scripts are caught by the honeypot and the timer instead.
+     */
+    private const MAX_REGISTRATIONS = 40;
+    private const REGISTRATION_WINDOW = 3600;
+    private const MIN_SECONDS_TO_FILL = 4;
+
     public function store(Request $request): Response
     {
-        // No per-connection limit: whole groups register from one church network.
-        // One registration per email address is still enforced by the validator.
+        // A filled honeypot or an instant submit is a script, not a person.
+        // Send it back looking like an ordinary error so it learns nothing.
+        $opened = (int) $request->str('opened_at');
+        if ($request->str('website') !== '' || ($opened > 0 && time() - $opened < self::MIN_SECONDS_TO_FILL)) {
+            return $this->back($request, ['email' => 'Please check your details and try again.'], $request->all());
+        }
+
+        $throttleKey = 'register|' . $request->ip();
+        if (LoginAttempt::lockedForSeconds($throttleKey, self::MAX_REGISTRATIONS, self::REGISTRATION_WINDOW) > 0) {
+            return $this->back($request, [
+                'email' => 'That is a great many registrations from this connection in a short time. Wait a little while, or contact us if you are registering a large group.',
+            ], $request->all());
+        }
 
         $service = new RegistrationService();
         [$errors, $clean] = $service->validate($request);
@@ -56,6 +76,8 @@ final class RegistrationController extends Controller
         if ($errors) {
             return $this->back($request, $errors, $request->all());
         }
+
+        LoginAttempt::record($throttleKey);
 
 
         try {
