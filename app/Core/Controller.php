@@ -13,7 +13,11 @@ abstract class Controller
 
     protected function redirect(string $path): Response
     {
-        return Response::redirect(Url::to($path));
+        // An absolute address (Stripe, Revolut, KingsChat) leaves the site as it is;
+        // anything else is a path within it.
+        $to = preg_match('#^https?://#i', $path) ? $path : Url::to($path);
+
+        return Response::redirect($to);
     }
 
     protected function back(Request $request, array $errors = [], array $old = []): Response
