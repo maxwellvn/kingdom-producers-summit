@@ -42,13 +42,17 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
             <td><?= e(ucfirst((string) ($r['producer_stage'] ?? ''))) ?></td>
             <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?><?php if ($r['zone']): ?><br><span class="adm-muted"><?= e(implode(' · ', array_filter([$r['zone'], $r['group_name'], $r['church_name']]))) ?></span><?php endif; ?></td>
             <td>
-              <?php $payState = $r['participation'] === 'onsite' ? ($r['payment_status'] ?? 'unpaid') : 'not_required'; ?>
+              <?php
+                // Onsite and online both pay; the initiative does not.
+                $paidPath = is_paid_path((string) $r['participation']);
+                $payState = $paidPath ? ($r['payment_status'] ?? 'unpaid') : 'not_required';
+              ?>
               <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) : '' ?></span>
-              <?php if ($r['participation'] === 'onsite' && in_array($payState, ['unpaid', 'claimed'], true)): ?>
+              <?php if ($paidPath && in_array($payState, ['unpaid', 'claimed'], true)): ?>
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>
                   <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm <?= e(espees_price()) ?> received</button>
+                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm <?= e(espees_price(price_pence((string) $r['participation']))) ?> received</button>
                 </form>
               <?php endif; ?>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
