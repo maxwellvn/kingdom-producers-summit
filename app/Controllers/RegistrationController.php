@@ -12,6 +12,7 @@ use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
+use App\Services\PaymentService;
 use App\Services\KingsChatNotifier;
 use App\Services\RegistrationMail;
 use PDOException;
@@ -118,7 +119,7 @@ final class RegistrationController extends Controller
 
         // Unpaid onsite registrations have no access pass yet; claimed ones await confirmation.
         if ($registration['payment_status'] === 'unpaid') {
-            return $this->redirect('/register/pay?ref=' . rawurlencode((string) $registration['reference']));
+            return $this->redirect('/register/pay?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
         }
         if ($registration['payment_status'] === 'claimed') {
             return $this->redirect('/register/awaiting');

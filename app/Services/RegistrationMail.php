@@ -59,7 +59,8 @@ final class RegistrationMail
         $participation = (string) $registration['participation'];
         $amount = number_format(price_pence($participation) / 100, 2);
         $standard = espees_price(standard_price_pence($participation));
-        $payUrl = $site . '/register/pay?ref=' . rawurlencode((string) $registration['reference']);
+        // Signed, so the link identifies them by itself: no form, straight to the payment methods.
+        $payUrl = $site . '/register/pay?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference']));
         $pay = htmlspecialchars($payUrl, ENT_QUOTES, 'UTF-8');
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
