@@ -13,9 +13,7 @@ final class RegistrationMail
         $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
         $site = site_url();
         $participation = (string) $registration['participation'];
-        $amount = number_format(price_pence($participation) / 100, 2);
-        $standard = espees_price(standard_price_pence($participation));
-        $methodLabel = ['espees' => 'Espees', 'revolut' => 'Revolut'][ (string) ($registration['payment_method'] ?? '') ] ?? 'offline';
+        $paid = payment_phrase($registration);
         $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
         $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
 
@@ -32,7 +30,7 @@ final class RegistrationMail
             . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
             . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . ' &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
             . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">Payment received,<br>' . $firstName . '.</h1>'
-            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your registration is confirmed and your ' . $amount . ' Espees ' . htmlspecialchars($methodLabel, ENT_QUOTES, 'UTF-8') . ' payment has been logged. We are verifying it now.</p></td></tr>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">Your registration is confirmed and your ' . htmlspecialchars($paid, ENT_QUOTES, 'UTF-8') . ' payment has been logged. We are verifying it now.</p></td></tr>'
             . '<tr><td style="padding:32px"><p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
             . '<p style="margin:0 0 28px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
             . '<p style="margin:0 0 18px;color:#6e6857;font-size:15px;line-height:1.6">We verify every payment against our own records, so there is nothing for you to send us. Your QR access pass is emailed to you the moment your payment is confirmed — keep this reference safe in the meantime.</p>'
@@ -42,7 +40,7 @@ final class RegistrationMail
             . '</table></td></tr></table></body></html>';
 
         $text = "Payment received, {$registration['first_name']}.\n\n"
-            . "Your registration is confirmed and your {$amount} Espees {$methodLabel} payment has been logged for reference {$registration['reference']}.\n\n"
+            . "Your registration is confirmed and your {$paid} payment has been logged for reference {$registration['reference']}.\n\n"
             . "We verify every payment against our own records, so there is nothing for you to send us.\n"
             . "Your QR access pass is emailed to you the moment your payment is confirmed.\n"
             . "\nThe Loveworld Consulate, United Kingdom";
@@ -139,8 +137,7 @@ final class RegistrationMail
             'initiative' => 'Joined the Kingdom Producers initiative',
         ][(string) $registration['participation']] ?? 'Registered producer';
         if (($registration['payment_status'] ?? '') === 'paid') {
-            $amount = number_format((int) $registration['payment_amount'] / 100, 2);
-            $path .= " \u{00B7} {$amount} Espees paid";
+            $path .= " \u{00B7} " . payment_phrase($registration) . ' paid';
         }
         $path = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
         $site = site_url();

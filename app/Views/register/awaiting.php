@@ -1,6 +1,5 @@
 <?php /** @var array $summit @var array $registration */
-$methodLabel = ['espees' => 'Espees', 'revolut' => 'Revolut'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
-$amount = espees_price(price_pence((string) $registration['participation']));
+$paid = payment_phrase($registration);
 $reference = (string) $registration['reference'];
 ?>
 <section class="reg">
@@ -9,7 +8,7 @@ $reference = (string) $registration['reference'];
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment received — pending confirmation</p>
       <h1 class="pay__title">Thank you — nearly there</h1>
 
-      <p class="pay__lede">We've logged your <?= e($amount) ?> <strong><?= e($methodLabel) ?></strong> payment. Our team checks it against our records and confirms it from our end. There is nothing further for you to send.</p>
+      <p class="pay__lede">We've logged your <strong><?= e($paid) ?></strong> payment. Our team checks it against our records and confirms it from our end. There is nothing further for you to send.</p>
 
       <section class="proof" aria-labelledby="proofTitle">
         <h2 class="proof__title" id="proofTitle">Your reference</h2>

@@ -47,7 +47,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 $paidPath = is_paid_path((string) $r['participation']);
                 $payState = $paidPath ? ($r['payment_status'] ?? 'unpaid') : 'not_required';
               ?>
-              <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) : '' ?></span>
+              <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) . ($payState === 'paid' ? ' · ' . e(paid_amount($r)) : '') : '' ?></span>
               <?php if ($paidPath && in_array($payState, ['unpaid', 'claimed'], true)): ?>
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>

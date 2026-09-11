@@ -14,11 +14,12 @@ final class PaymentService
     {
         $amountPence = $amountPence ?: price_pence('onsite');
         $amount = number_format($amountPence / 100, 2);
+        $pounds = amount_for('stripe', $amountPence);
 
         return [
             'stripe' => [
                 'label' => 'Debit or credit card',
-                'blurb' => "Pay {$amount} Espees by debit or credit card. Your place is confirmed the moment the payment goes through.",
+                'blurb' => "Pay {$pounds} by debit or credit card. Your place is confirmed the moment the payment goes through.",
                 'available' => StripeClient::configured()
                     && Setting::get('pay_stripe_enabled', '1') === '1',
                 'href' => 'stripe',
@@ -33,7 +34,7 @@ final class PaymentService
             ],
             'revolut' => [
                 'label' => 'Card or bank via Revolut',
-                'blurb' => "Pay {$amount} Espees on Revolut's secure checkout page.",
+                'blurb' => "Pay {$pounds} on Revolut's secure checkout page.",
                 'available' => (bool) config('payments.revolut.enabled')
                     && self::revolutUrl($amountPence) !== ''
                     && Setting::get('pay_revolut_enabled', '1') === '1',

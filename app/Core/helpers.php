@@ -44,6 +44,50 @@ function espees_price(?int $amountPence = null, int $decimals = 0): string
     return number_format($amountPence / 100, $decimals) . ' Espees';
 }
 
+/**
+ * An amount in the currency a payment method actually takes: Espees for the
+ * Espees wallet, pounds sterling for card and bank payments.
+ */
+function amount_for(string $method, int $amountPence): string
+{
+    return $method === 'espees'
+        ? number_format($amountPence / 100, 0) . ' Espees'
+        : '£' . number_format($amountPence / 100, 2);
+}
+
+/**
+ * What a registrant paid, or is due to pay, in the currency of their chosen
+ * method. Before a method is chosen the amount is shown in Espees.
+ */
+function paid_amount(array $registration): string
+{
+    $pence = (int) ($registration['payment_amount'] ?? 0) ?: price_pence((string) ($registration['participation'] ?? ''));
+
+    return amount_for((string) ($registration['payment_method'] ?? 'espees'), $pence);
+}
+
+/**
+ * The amount and how it was paid, as one phrase: "50 Espees", "£50.00 by card",
+ * "£20.00 via Revolut". Espees is a currency in itself, so it is not repeated.
+ */
+function payment_phrase(array $registration): string
+{
+    $method = (string) ($registration['payment_method'] ?? '');
+    $amount = paid_amount($registration);
+
+    return match ($method) {
+        'stripe'  => $amount . ' by card',
+        'revolut' => $amount . ' via Revolut',
+        default   => $amount,
+    };
+}
+
+/** A readable name for a payment method. */
+function payment_method_label(?string $method): string
+{
+    return ['espees' => 'Espees', 'revolut' => 'Revolut', 'stripe' => 'card'][(string) $method] ?? 'your chosen method';
+}
+
 /** What a participation path costs after the inaugural discount, in pence. */
 function price_pence(string $participation): int
 {

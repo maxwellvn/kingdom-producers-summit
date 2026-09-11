@@ -1,11 +1,12 @@
 <?php /** @var array $summit @var array $registration @var string $type @var string $amount */
 $label = $type === 'espees' ? 'Espees' : 'Revolut';
+$paidLabel = amount_for($type, $pence);
 ?>
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Confirm payment</p>
-      <h1 class="pay__title">Have you paid <?= e($amount) ?> Espees?</h1>
+      <h1 class="pay__title">Have you paid <?= e($paidLabel) ?>?</h1>
 
       <p class="pay__lede">Please confirm:</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px">
@@ -19,7 +20,7 @@ $label = $type === 'espees' ? 'Espees' : 'Revolut';
         <input type="hidden" name="type" value="<?= e($type) ?>">
         <input type="hidden" name="resume" value="<?= e($resume) ?>">
         <button type="submit" class="btn btn--stamp btn--lg">
-          <span class="btn__label">Confirm — I have paid <?= e($amount) ?> Espees</span>
+          <span class="btn__label">Confirm — I have paid <?= e($paidLabel) ?></span>
         </button>
       </form>
 

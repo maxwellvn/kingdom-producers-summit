@@ -17,7 +17,7 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> <?= $isEspees ? 'Pay with Espees' : 'Pay by card or bank' ?></p>
-      <h1 class="pay__title">Send <?= e($amount) ?> Espees</h1>
+      <h1 class="pay__title"><?= $isEspees ? 'Send ' . e($amount) . ' Espees' : 'Pay ' . e(amount_for('revolut', $pence)) ?></h1>
 
       <?php if ($isEspees): ?>
         <p class="pay__lede">Open your Espees wallet and send <strong><?= e($amount) ?> Espees</strong> to this Espees code:</p>
@@ -25,7 +25,7 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
           <?php $row('Espees code', $code); ?>
         </table>
       <?php else: ?>
-        <p class="pay__lede">Pay <strong><?= e($amount) ?> Espees</strong> on Revolut's secure checkout page. You can pay by card or from your bank.</p>
+        <p class="pay__lede">Pay <strong><?= e(amount_for('revolut', $pence)) ?></strong> on Revolut's secure checkout page. You can pay by card or from your bank.</p>
         <p style="margin:18px 0 6px">
           <a class="btn btn--stamp btn--lg" style="display:inline-block" href="<?= e($revolutUrl) ?>" target="_blank" rel="noopener noreferrer">
             <span class="btn__label">Open the Revolut checkout</span>

@@ -39,6 +39,7 @@ final class PaymentController extends Controller
             'registration' => $registration,
             'methods'   => PaymentService::availableMethods(price_pence((string) $registration['participation'])),
             'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
+            'pence'     => price_pence((string) $registration['participation']),
         ]);
     }
 
@@ -64,6 +65,7 @@ final class PaymentController extends Controller
             'registration' => $registration,
             'type'      => $type,
             'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
+            'pence'     => price_pence((string) $registration['participation']),
         ]);
     }
 
@@ -179,6 +181,7 @@ final class PaymentController extends Controller
             'registration' => $registration,
             'type'      => $type,
             'amount'    => number_format(price_pence((string) $registration['participation']) / 100, 2),
+            'pence'     => price_pence((string) $registration['participation']),
         ]);
     }
 

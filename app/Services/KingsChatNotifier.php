@@ -51,11 +51,10 @@ final class KingsChatNotifier
     {
         $name = trim((string) $registration['first_name']);
         $reference = (string) $registration['reference'];
-        $amount = espees_price(price_pence((string) $registration['participation']));
-        $method = ['espees' => 'Espees', 'revolut' => 'Revolut'][$registration['payment_method'] ?? ''] ?? 'your chosen method';
+        $paid = payment_phrase($registration);
 
         $text = "Thank you, {$name}.\n\n"
-            . "We have logged your {$amount} {$method} payment for reference {$reference}, "
+            . "We have logged your {$paid} payment for reference {$reference}, "
             . "and we are confirming it now.\n\n"
             . "We verify it against our own records, so there is nothing for you to send us.\n\n"
             . "Your pass is sent as soon as the payment is confirmed.\n\n"
