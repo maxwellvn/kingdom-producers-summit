@@ -214,6 +214,38 @@ final class Registration
         return $stmt->fetchAll();
     }
 
+    /**
+     * Reminded, still unpaid, and past the grace period: these places go back
+     * to the pool.
+     */
+    public static function dueForRelease(int $graceHours = 72, int $limit = 50): array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT * FROM registrations
+             WHERE payment_status = 'unpaid' AND status = 'pending'
+               AND payment_reminder_sent_at IS NOT NULL
+               AND payment_reminder_sent_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)
+               AND released_at IS NULL
+             ORDER BY payment_reminder_sent_at
+             LIMIT " . max(1, min(200, $limit))
+        );
+        $stmt->execute([$graceHours]);
+
+        return $stmt->fetchAll();
+    }
+
+    /** Give an unpaid place back. The row stays, cancelled, as a record. */
+    public static function release(int $id): bool
+    {
+        $stmt = Database::connection()->prepare(
+            "UPDATE registrations SET status = 'cancelled', released_at = NOW()
+             WHERE id = ? AND payment_status = 'unpaid' AND status = 'pending'"
+        );
+        $stmt->execute([$id]);
+
+        return $stmt->rowCount() > 0;
+    }
+
     public static function markReminded(int $id): void
     {
         Database::connection()->prepare('UPDATE registrations SET payment_reminder_sent_at = NOW() WHERE id = ?')->execute([$id]);
@@ -320,7 +352,7 @@ final class Registration
             "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone,
                     r.kingschat_username, r.country, r.city, r.zone, r.group_name, r.church_name,
                     r.field, r.field_other, r.producer_stage, r.payment_status, r.payment_method,
-                    r.issued_by, r.created_at, r.payment_amount, r.payment_reminder_sent_at, r.payment_email_resent_at,
+                    r.issued_by, r.created_at, r.payment_amount, r.payment_reminder_sent_at, r.payment_email_resent_at, r.released_at,
                     a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}

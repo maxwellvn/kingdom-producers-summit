@@ -82,7 +82,13 @@ final class RegistrationService
 
         $email = mb_strtolower($request->str('email'));
         // One registration per email. Changing path is an organiser action until there is an event manager.
-        if (!isset($errors['email']) && $email !== '' && Registration::findByEmail($email) !== null) {
+        // A place that was released for non-payment is the exception: that person may start again.
+        $existing = $email !== '' ? Registration::findByEmail($email) : null;
+        if ($existing !== null && $existing['status'] === 'cancelled' && !empty($existing['released_at'])) {
+            Registration::delete((int) $existing['id']);
+            $existing = null;
+        }
+        if (!isset($errors['email']) && $existing !== null) {
             $errors['email'] = self::duplicateMessage($email) ?? 'This email is already registered.';
         }
 

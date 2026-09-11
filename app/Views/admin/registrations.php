@@ -70,6 +70,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 <?php if (!empty($r['payment_email_resent_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.3rem;font-size:.68rem">resent <?= e(date('d M H:i', strtotime((string) $r['payment_email_resent_at']))) ?></span><?php endif; ?>
                 <?php if (!empty($r['payment_reminder_sent_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.2rem;font-size:.68rem">24h reminder sent <?= e(date('d M H:i', strtotime((string) $r['payment_reminder_sent_at']))) ?></span><?php endif; ?>
               <?php endif; ?>
+              <?php if (!empty($r['released_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.3rem;font-size:.68rem;color:#b4232b">place released <?= e(date('d M H:i', strtotime((string) $r['released_at']))) ?></span><?php endif; ?>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">

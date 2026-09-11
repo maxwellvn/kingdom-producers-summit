@@ -15,8 +15,31 @@ final class PaymentReminders
 {
     public const AFTER_HOURS = 24;
 
+    /** Hours after the reminder before an unpaid place is given back. */
+    public const GRACE_HOURS = 72;
+
     /** How often the sweep may run when triggered by ordinary traffic. */
     private const SWEEP_EVERY = 900;
+
+    /** Give back places still unpaid after the grace period. Returns how many. */
+    public static function release(): int
+    {
+        $released = 0;
+        foreach (Registration::dueForRelease(self::GRACE_HOURS) as $registration) {
+            if (!Registration::release((int) $registration['id'])) {
+                continue; // Paid in the meantime.
+            }
+            $released++;
+            try {
+                (new RegistrationMail())->sendPlaceReleased($registration);
+            } catch (\Throwable $e) {
+                error_log('Place released email failed for ' . $registration['reference'] . ': ' . $e->getMessage());
+            }
+            (new KingsChatNotifier())->sendPlaceReleased($registration);
+        }
+
+        return $released;
+    }
 
     /** Send every due reminder. Returns how many went out. */
     public static function run(): int
@@ -55,6 +78,7 @@ final class PaymentReminders
 
         try {
             self::run();
+            self::release();
         } catch (\Throwable $e) {
             error_log('Payment reminder sweep failed: ' . $e->getMessage());
         }

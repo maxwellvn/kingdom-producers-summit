@@ -8,7 +8,6 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
-use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
@@ -47,11 +46,9 @@ final class RegistrationController extends Controller
     }
 
     /**
-     * Whole groups register from one church network, so the per-connection
-     * cap is generous. Scripts are caught by the honeypot and the timer instead.
+     * No limit on how many register from one connection: whole groups do,
+     * from one church network. Scripts are caught by the honeypot and the timer.
      */
-    private const MAX_REGISTRATIONS = 40;
-    private const REGISTRATION_WINDOW = 3600;
     private const MIN_SECONDS_TO_FILL = 4;
 
     public function store(Request $request): Response
@@ -63,21 +60,12 @@ final class RegistrationController extends Controller
             return $this->back($request, ['email' => 'Please check your details and try again.'], $request->all());
         }
 
-        $throttleKey = 'register|' . $request->ip();
-        if (LoginAttempt::lockedForSeconds($throttleKey, self::MAX_REGISTRATIONS, self::REGISTRATION_WINDOW) > 0) {
-            return $this->back($request, [
-                'email' => 'That is a great many registrations from this connection in a short time. Wait a little while, or contact us if you are registering a large group.',
-            ], $request->all());
-        }
-
         $service = new RegistrationService();
         [$errors, $clean] = $service->validate($request);
 
         if ($errors) {
             return $this->back($request, $errors, $request->all());
         }
-
-        LoginAttempt::record($throttleKey);
 
 
         try {

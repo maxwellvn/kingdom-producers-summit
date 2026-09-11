@@ -10,4 +10,5 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/app/bootstrap.php';
 
 $sent = App\Services\PaymentReminders::run();
-echo $sent === 0 ? "Nothing to send.\n" : "Sent {$sent} reminder(s).\n";
+$released = App\Services\PaymentReminders::release();
+echo "Sent {$sent} reminder(s), released {$released} place(s).\n";

@@ -56,10 +56,23 @@ final class KingsChatNotifier
 
         $text = "Hello {$name}, your place at the Kingdom Producers Summit is not yet secured.\n\n"
             . "You registered a day ago and the {$amount} has not reached us. Registration alone does not hold a place; payment does. "
-            . "Places are limited and go to whoever pays first.\n\n"
+            . "Places are limited and go to whoever pays first. If payment has not reached us three days from now, this place is released.\n\n"
             . "Secure your place: {$payUrl}\n"
             . "Reference: {$reference}\n\n"
             . "If you have already paid, thank you; you can ignore this message.\n\n"
+            . 'The Loveworld Consulate, United Kingdom';
+
+        return $this->deliver($registration, $text);
+    }
+
+    /** The grace period passed unpaid, so the place went back to the pool. */
+    public function sendPlaceReleased(array $registration): array
+    {
+        $name = trim((string) $registration['first_name']);
+        $text = "Hello {$name}, we did not receive payment for your place at the Kingdom Producers Summit, "
+            . "so reference {$registration['reference']} has been released for someone else.\n\n"
+            . "You are welcome to register again while places remain: " . site_url() . "/register\n\n"
+            . "If you believe you did pay, reply here and we will put it right.\n\n"
             . 'The Loveworld Consulate, United Kingdom';
 
         return $this->deliver($registration, $text);
