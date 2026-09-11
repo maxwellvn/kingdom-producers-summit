@@ -94,7 +94,8 @@ final class Validator
                     ? null : 'Enter a valid phone number.';
 
             case 'in':
-                $allowed = explode(',', (string) $arg);
+                // Allowed values may contain commas themselves, so the list is joined with ";;".
+                $allowed = str_contains((string) $arg, ';;') ? explode(';;', (string) $arg) : explode(',', (string) $arg);
                 $values = $isArray ? (array) $value : [(string) $value];
                 foreach ($values as $v) {
                     if (!in_array((string) $v, $allowed, true)) {

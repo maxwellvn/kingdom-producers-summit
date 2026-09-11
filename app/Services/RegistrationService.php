@@ -36,7 +36,7 @@ final class RegistrationService
             'church_name'   => 'max:160',
             'organisation'  => 'max:120',
             'role_title'    => 'max:120',
-            'field'         => 'in:' . implode(',', Registration::FIELDS),
+            'field'         => 'in:' . implode(';;', Registration::FIELDS),
             'field_other'   => 'max:120',
             'producer_stage'=> 'in:' . implode(',', Registration::STAGES),
             'producer_stage_detail' => 'max:500',
