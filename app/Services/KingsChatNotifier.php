@@ -46,6 +46,25 @@ final class KingsChatNotifier
         return $this->deliver($registration, $text);
     }
 
+    /** A day on and still unpaid: the place is not held until it is paid for. */
+    public function sendPaymentReminder(array $registration): array
+    {
+        $name = trim((string) $registration['first_name']);
+        $reference = (string) $registration['reference'];
+        $amount = espees_price(price_pence((string) $registration['participation']));
+        $payUrl = site_url() . '/register/pay?resume=' . rawurlencode(PaymentService::resumeToken($reference));
+
+        $text = "Hello {$name}, your place at the Kingdom Producers Summit is not yet secured.\n\n"
+            . "You registered a day ago and the {$amount} has not reached us. Registration alone does not hold a place; payment does. "
+            . "Places are limited and go to whoever pays first.\n\n"
+            . "Secure your place: {$payUrl}\n"
+            . "Reference: {$reference}\n\n"
+            . "If you have already paid, thank you; you can ignore this message.\n\n"
+            . 'The Loveworld Consulate, United Kingdom';
+
+        return $this->deliver($registration, $text);
+    }
+
     /** Their payment has been logged and is waiting on an organiser. */
     public function sendClaimReceived(array $registration): array
     {

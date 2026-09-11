@@ -42,6 +42,12 @@ final class Router
         // Record the visit before the page is built, so a slow page still counts.
         \App\Services\VisitorTracker::record($request);
 
+        // Housekeeping that needs no scheduler: chase unpaid registrations.
+        // Throttled inside, so it costs one cheap read on most requests.
+        if (!$request->isPost()) {
+            \App\Services\PaymentReminders::runIfDue();
+        }
+
         [$class, $action, $middleware] = $match;
 
         foreach ($middleware as $mw) {

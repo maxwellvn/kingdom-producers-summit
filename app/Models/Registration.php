@@ -194,6 +194,36 @@ final class Registration
             : null;
     }
 
+    /**
+     * Registrations still unpaid a day after registering that have not yet
+     * been reminded. Claimed payments are not chased; an organiser is
+     * checking those.
+     */
+    public static function dueForPaymentReminder(int $afterHours = 24, int $limit = 50): array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT * FROM registrations
+             WHERE payment_status = 'unpaid' AND status = 'pending'
+               AND payment_reminder_sent_at IS NULL
+               AND created_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)
+             ORDER BY created_at
+             LIMIT " . max(1, min(200, $limit))
+        );
+        $stmt->execute([$afterHours]);
+
+        return $stmt->fetchAll();
+    }
+
+    public static function markReminded(int $id): void
+    {
+        Database::connection()->prepare('UPDATE registrations SET payment_reminder_sent_at = NOW() WHERE id = ?')->execute([$id]);
+    }
+
+    public static function markPaymentEmailResent(int $id): void
+    {
+        Database::connection()->prepare('UPDATE registrations SET payment_email_resent_at = NOW() WHERE id = ?')->execute([$id]);
+    }
+
     /** Onsite places already held: paid, claimed, or awaiting payment. Cancelled rows release their place. */
     public static function onsiteSeatsTaken(): int
     {
@@ -290,7 +320,8 @@ final class Registration
             "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone,
                     r.kingschat_username, r.country, r.city, r.zone, r.group_name, r.church_name,
                     r.field, r.field_other, r.producer_stage, r.payment_status, r.payment_method,
-                    r.issued_by, r.created_at, a.checked_in_at
+                    r.issued_by, r.created_at, r.payment_amount, r.payment_reminder_sent_at, r.payment_email_resent_at,
+                    a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}
              ORDER BY r.created_at DESC

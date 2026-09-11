@@ -97,6 +97,62 @@ final class RegistrationMail
             'Reply-To' => (string) config('app.mail.reply_to'),
         ]);
     }
+    /**
+     * A day on and still unpaid: the place is not held until it is paid for.
+     * Sent once per registration.
+     */
+    public function sendPaymentReminder(array $registration): void
+    {
+        $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
+        $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
+        $site = site_url();
+        $participation = (string) $registration['participation'];
+        $amount = espees_price(price_pence($participation));
+        $pathLabel = $participation === 'onsite' ? 'onsite place' : 'online place';
+        $payUrl = $site . '/register/pay?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference']));
+        $pay = htmlspecialchars($payUrl, ENT_QUOTES, 'UTF-8');
+        $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
+        $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
+        $scarce = $participation === 'onsite'
+            ? 'Onsite places are limited and go to whoever pays first, so an unpaid registration does not keep one back for you.'
+            : 'Online places are limited too, and it is payment that secures one.';
+
+        $subject = 'Your ' . $pathLabel . ' is not yet secured (' . (string) $registration['reference'] . ')';
+        $html = '<!doctype html><html><head><meta charset="utf-8">'
+            . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
+            . '<style>:root{color-scheme:light only;supported-color-schemes:light only}'
+            . '[data-ogsc] .dark-safe-ink{color:#1b2242!important}[data-ogsc] .dark-safe-paper{color:#f3eee2!important}'
+            . '</style></head>'
+            . '<body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
+            . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
+            . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . ' &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">Your place is<br>not yet secured, ' . $firstName . '.</h1>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">You registered a day ago and the ' . $amount . ' for your ' . $pathLabel . ' has not reached us. Registration alone does not hold a place; payment does.</p></td></tr>'
+            . '<tr><td style="padding:32px"><p style="margin:0 0 18px;color:#1b2242;font-size:16px;line-height:1.6">' . $scarce . ' Once the places are taken, registration closes and unpaid registrations will be released.</p>'
+            . '<p style="margin:0 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
+            . '<p style="margin:0 0 20px;color:#1b2242;font:700 32px Arial Narrow,Arial,sans-serif;letter-spacing:2px">' . $reference . '</p>'
+            . '<p style="margin:0 0 8px"><a href="' . $pay . '" style="display:inline-block;padding:15px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase">Secure my place now</a></p>'
+            . '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6">If you have already paid, thank you; we are confirming payments as they arrive and you can ignore this message. If you no longer wish to attend, there is nothing you need to do.</p></td></tr>'
+            . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '<br><br>'
+            . 'If our emails are hard to find, check your spam or promotions folder and mark us as safe.</td></tr>'
+            . '</table></td></tr></table></body></html>';
+
+        $text = "Your place is not yet secured, {$registration['first_name']}.\n\n"
+            . "You registered a day ago and the {$amount} for your {$pathLabel} has not reached us. Registration alone does not hold a place; payment does.\n\n"
+            . strip_tags($scarce) . " Once the places are taken, registration closes and unpaid registrations will be released.\n\n"
+            . "Registration reference: {$registration['reference']}\n"
+            . "Secure your place: {$payUrl}\n\n"
+            . "If you have already paid, thank you; you can ignore this message.\n\n"
+            . "The Loveworld Consulate, United Kingdom";
+
+        (new Mailer())->send((string) $registration['email'], $subject, $html, $text, [
+            'Reply-To' => (string) config('app.mail.reply_to'),
+        ]);
+    }
+
     /** @param array<string,mixed> $registration */
     /** The attendee's QR pass as raw PNG bytes, for embedding in the email itself. */
     private static function qrPng(string $token): ?string

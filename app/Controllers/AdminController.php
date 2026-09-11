@@ -230,6 +230,33 @@ final class AdminController extends Controller
         return $this->redirect('/admin/registrations');
     }
 
+    /** Send the "complete your payment" email and KingsChat message again. */
+    public function resendPaymentEmail(Request $request): Response
+    {
+        $registration = Registration::find((int) $request->input('id', 0));
+
+        if ($registration === null
+            || !is_paid_path((string) $registration['participation'])
+            || $registration['payment_status'] !== 'unpaid'
+            || $registration['status'] !== 'pending') {
+            Session::flash('admin_flash', 'That registration has nothing outstanding to pay.');
+            return $this->redirect('/admin/registrations');
+        }
+
+        try {
+            (new RegistrationMail())->sendAcknowledgement($registration);
+            Registration::markPaymentEmailResent((int) $registration['id']);
+            [$messaged] = (new KingsChatNotifier())->sendPaymentPending($registration);
+            Session::flash('admin_flash', 'Payment email sent again to ' . $registration['email']
+                . ($messaged ? ', and a KingsChat message with it.' : '.'));
+        } catch (\Throwable $e) {
+            error_log('Payment email could not be re-sent: ' . $e->getMessage());
+            Session::flash('admin_flash', 'The email could not be sent. Check the mail settings and try again.');
+        }
+
+        return $this->redirect('/admin/registrations');
+    }
+
     /** Read-only payment method details (from config/payments.php) + live on/off switches. */
     public function paymentSettings(Request $request): Response
     {
