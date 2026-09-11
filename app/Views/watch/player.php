@@ -13,12 +13,17 @@ $notice = (string) \App\Core\Session::get('watch_notice', '');
         <h1 class="watch__title"><?= e(\App\Services\StreamService::title()) ?></h1>
       </div>
       <div class="watch__viewer">
-        <span class="mono"><?= e(trim($viewer['first_name'] . ' ' . $viewer['last_name'])) ?></span>
-        <span class="mono watch__ref"><?= e($viewer['reference']) ?></span>
-        <form method="post" action="<?= url('/watch/leave') ?>">
-          <?= csrf_field() ?>
-          <button type="submit" class="watch__leave mono">Sign out</button>
-        </form>
+        <?php if (!empty($viewer['is_organiser'])): ?>
+          <span class="mono watch__ref">Organiser view</span>
+          <a class="watch__leave mono" href="<?= url('/admin/stream') ?>">Back to admin</a>
+        <?php else: ?>
+          <span class="mono"><?= e(trim($viewer['first_name'] . ' ' . $viewer['last_name'])) ?></span>
+          <span class="mono watch__ref"><?= e($viewer['reference']) ?></span>
+          <form method="post" action="<?= url('/watch/leave') ?>">
+            <?= csrf_field() ?>
+            <button type="submit" class="watch__leave mono">Sign out</button>
+          </form>
+        <?php endif; ?>
       </div>
     </header>
 
@@ -63,7 +68,7 @@ $notice = (string) \App\Core\Session::get('watch_notice', '');
     </section>
 
     <p class="watch__fine mono">
-      This pass is yours alone. Opening it elsewhere signs this screen out.
+      <?php if (!empty($viewer['is_organiser'])): ?>You are watching as an organiser, without a pass, so this does not take a place from anyone.<?php else: ?>This pass is yours alone. Opening it elsewhere signs this screen out.<?php endif; ?>
       Trouble? Message <a href="https://kingschat.online/user/<?= e(contact_kingschat()) ?>" target="_blank" rel="noopener">@<?= e(contact_kingschat()) ?></a>
       or email <a href="mailto:<?= e(contact_email()) ?>"><?= e(contact_email()) ?></a>.
     </p>

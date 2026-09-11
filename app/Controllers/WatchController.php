@@ -29,6 +29,11 @@ final class WatchController extends Controller
 
     public function show(Request $request): Response
     {
+        $organiser = $this->organiser();
+        if ($organiser !== null) {
+            return $this->player($organiser);
+        }
+
         $reference = Session::get(self::SESSION_KEY);
         $viewer = is_string($reference) ? \App\Models\Registration::findByReference($reference) : null;
 
@@ -58,6 +63,11 @@ final class WatchController extends Controller
             (string) $viewer['reference']
         );
 
+        return $this->player($viewer);
+    }
+
+    private function player(array $viewer): Response
+    {
         return $this->view('watch/player', [
             'title'     => StreamService::title(),
             'bodyClass' => 'page-watch',
@@ -138,7 +148,7 @@ final class WatchController extends Controller
         if ($viewer === null) {
             return Response::json(['ok' => false, 'reason' => 'signed_out'], 403);
         }
-        if (!StreamService::holdsPass((string) $viewer['reference'], VisitorTracker::sessionHash())) {
+        if (!$this->holds($viewer)) {
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
         if (!StreamService::isLive()) {
@@ -162,11 +172,13 @@ final class WatchController extends Controller
         }
 
         $session = VisitorTracker::sessionHash();
-        if (!StreamService::holdsPass((string) $viewer['reference'], $session)) {
+        if (!$this->holds($viewer)) {
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
 
-        StreamService::touchPass((string) $viewer['reference'], $session);
+        if (empty($viewer['is_organiser'])) {
+            StreamService::touchPass((string) $viewer['reference'], $session);
+        }
         Analytics::touch(
             $session,
             Analytics::visitorHash($request->ip(), $request->userAgent()),
@@ -245,9 +257,7 @@ final class WatchController extends Controller
             return null;
         }
 
-        return StreamService::holdsPass((string) $viewer['reference'], VisitorTracker::sessionHash())
-            ? $viewer
-            : null;
+        return $this->holds($viewer) ? $viewer : null;
     }
 
     /** Comments as the browser needs them. Escaping happens here, not in JS. */
@@ -269,7 +279,7 @@ final class WatchController extends Controller
     public function hls(Request $request): Response
     {
         $viewer = $this->currentViewer();
-        if ($viewer === null || !StreamService::holdsPass((string) $viewer['reference'], VisitorTracker::sessionHash())) {
+        if ($viewer === null || !$this->holds($viewer)) {
             return Response::html('', 403);
         }
         if (!StreamService::isLive() || StreamService::kind() !== 'hls') {
@@ -394,8 +404,41 @@ final class WatchController extends Controller
         return [$status, $body === false ? null : (string) $body, $type];
     }
 
+    /** An organiser signed in to the admin. They watch without a pass, and never take anyone's. */
+    private function organiser(): ?array
+    {
+        $email = Session::get('admin_email');
+        if (!is_string($email) || $email === '') {
+            return null;
+        }
+
+        return [
+            'reference'          => 'ORGANISER',
+            'first_name'         => 'Organiser',
+            'last_name'          => '',
+            'email'              => $email,
+            'kingschat_username' => null,
+            'participation'      => 'onsite',
+            'status'             => 'confirmed',
+            'payment_status'     => 'not_required',
+            'is_organiser'       => true,
+        ];
+    }
+
+    /** True for a pass held by this device, or for an organiser. */
+    private function holds(array $viewer): bool
+    {
+        return !empty($viewer['is_organiser'])
+            || StreamService::holdsPass((string) $viewer['reference'], VisitorTracker::sessionHash());
+    }
+
     private function currentViewer(): ?array
     {
+        $organiser = $this->organiser();
+        if ($organiser !== null) {
+            return $organiser;
+        }
+
         $reference = Session::get(self::SESSION_KEY);
         if (!is_string($reference) || $reference === '') {
             return null;

@@ -1062,3 +1062,4 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 /* ---------- Notices fade away ---------- */
 [role="status"].form__alert, [role="status"].pay__alert { transition: opacity .5s ease, transform .5s ease, max-height .5s ease, margin .5s ease; }
 [role="status"].is-leaving { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+.watch__leave { text-decoration: none; display: inline-block; }

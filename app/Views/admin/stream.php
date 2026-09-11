@@ -138,9 +138,9 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
 
 <section id="comments" style="margin-top:1.4rem">
   <div class="adm-panel">
-    <h2 class="adm-panel__title">Comments</h2>
+    <h2 class="adm-panel__title" style="margin-bottom:1rem">Comments</h2>
 
-    <form method="post" action="<?= url('/admin/comments') ?>" style="display:grid;gap:.8rem">
+    <form method="post" action="<?= url('/admin/comments') ?>" style="display:grid;gap:1rem">
       <?= csrf_field() ?>
       <label style="display:flex;gap:.6rem;align-items:flex-start">
         <input type="checkbox" name="comments_enabled" value="1" <?= $commentsOn ? 'checked' : '' ?>>
