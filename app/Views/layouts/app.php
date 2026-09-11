@@ -187,5 +187,6 @@ $summit = $summit ?? config('app.summit');
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js" defer></script>
   <?php endif; ?>
   <script src="<?= asset('js/app.js') ?>" defer></script>
+  <script src="<?= asset('js/notices.js') ?>" defer></script>
 </body>
 </html>

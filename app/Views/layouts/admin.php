@@ -54,5 +54,6 @@ $current = \App\Core\Url::currentPath();
   <main class="adm-main">
     <?= $content ?>
   </main>
+  <script src="<?= asset('js/notices.js') ?>" defer></script>
 </body>
 </html>

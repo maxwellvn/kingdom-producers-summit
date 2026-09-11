@@ -1058,3 +1058,7 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .pay__with { display: inline; }
 .pay__with .pay-icon { vertical-align: -.2em; margin-right: .35rem; }
 .pay__method-icon .pay-icon--espees { width: 2.1rem; height: 2.1rem; }
+
+/* ---------- Notices fade away ---------- */
+[role="status"].form__alert, [role="status"].pay__alert { transition: opacity .5s ease, transform .5s ease, max-height .5s ease, margin .5s ease; }
+[role="status"].is-leaving { opacity: 0; transform: translateY(-4px); pointer-events: none; }
