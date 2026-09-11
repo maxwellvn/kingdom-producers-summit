@@ -1055,5 +1055,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .pay__method-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6rem; height: 2.6rem; color: var(--ink); background: rgba(27,34,66,.06); border-radius: 50%; }
 .pay__method > div { flex: 1 1 auto; min-width: 0; }
 .pay__kicker .pay-icon { margin-right: .1rem; }
-.pay__with { display: inline-flex; align-items: center; gap: .4rem; }
+.pay__with { display: inline; }
+.pay__with .pay-icon { vertical-align: -.2em; margin-right: .35rem; }
 .pay__method-icon .pay-icon--espees { width: 2.1rem; height: 2.1rem; }
