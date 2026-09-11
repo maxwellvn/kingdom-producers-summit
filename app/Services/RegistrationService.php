@@ -21,7 +21,7 @@ final class RegistrationService
         $participation = $request->str('participation');
 
         $rules = [
-            'participation' => 'required|in:' . implode(',', Registration::PARTICIPATION),
+            'participation' => 'required|in:' . implode(';;', Registration::PARTICIPATION),
             'title'         => 'max:20',
             'first_name'    => 'required|min:2|max:80',
             'last_name'     => 'required|min:2|max:80',
@@ -30,7 +30,7 @@ final class RegistrationService
             'kingschat_username' => 'max:80',
             'country'       => 'required|min:2|max:80',
             'city'          => 'max:80',
-            'age_band'      => 'required|in:' . implode(',', Registration::AGE_BANDS),
+            'age_band'      => 'required|in:' . implode(';;', Registration::AGE_BANDS),
             'zone'          => 'required|max:120',
             'group_name'    => 'max:120',
             'church_name'   => 'max:160',
@@ -38,11 +38,11 @@ final class RegistrationService
             'role_title'    => 'max:120',
             'field'         => 'in:' . implode(';;', Registration::FIELDS),
             'field_other'   => 'max:120',
-            'producer_stage'=> 'in:' . implode(',', Registration::STAGES),
+            'producer_stage'=> 'in:' . implode(';;', Registration::STAGES),
             'producer_stage_detail' => 'max:500',
-            'interests'     => 'array|max_items:16|in:' . implode(',', array_keys(Registration::INTERESTS)),
+            'interests'     => 'array|max_items:16|in:' . implode(';;', array_keys(Registration::INTERESTS)),
             'interest_other'=> 'max:160',
-            'hear_about'    => 'in:' . implode(',', array_keys(Registration::HEAR_ABOUT)),
+            'hear_about'    => 'in:' . implode(';;', array_keys(Registration::HEAR_ABOUT)),
             'consent_terms' => 'required|accepted',
         ];
 
@@ -153,7 +153,7 @@ final class RegistrationService
         $participation = $request->str('participation');
 
         $rules = [
-            'participation' => 'required|in:' . implode(',', Registration::PARTICIPATION),
+            'participation' => 'required|in:' . implode(';;', Registration::PARTICIPATION),
             'title'         => 'max:20',
             'first_name'    => 'required|min:2|max:80',
             'last_name'     => 'required|min:2|max:80',

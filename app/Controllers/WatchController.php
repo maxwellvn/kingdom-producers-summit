@@ -408,7 +408,7 @@ final class WatchController extends Controller
     private function organiser(): ?array
     {
         $email = Session::get('admin_email');
-        if (!is_string($email) || $email === '') {
+        if (Session::get('admin_authenticated') !== true || !is_string($email) || $email === '') {
             return null;
         }
 
