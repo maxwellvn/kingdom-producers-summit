@@ -59,7 +59,7 @@ $stageLabels = [
           <dl class="reg__facts mono">
             <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
-            <div><dt>Onsite places</dt><dd><?= number_format($seatsLeft) ?> of <?= number_format((int) config('app.summit.onsite_capacity')) ?> left</dd></div>
+            <div><dt>Onsite places</dt><dd><?= $seatsLeft <= 0 ? 'Fully booked' : number_format((int) config('app.summit.onsite_capacity')) . ' only' ?></dd></div>
             <?php if (!$isInitiative): ?>
               <div><dt>Onsite cost</dt><dd><?= e(espees_price(price_pence('onsite'))) ?></dd></div>
               <div><dt>Online cost</dt><dd><?= e(espees_price(price_pence('online'))) ?></dd></div>
@@ -130,7 +130,7 @@ $stageLabels = [
                   <span class="ticket__was mono">Inaugural edition · was <s><?= e(espees_price(standard_price_pence($value))) ?></s></span>
                 </span>
                 <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format($seatsLeft) . ' of ' . number_format((int) config('app.summit.onsite_capacity')) . ' places left' ?></span>
+                  <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format((int) config('app.summit.onsite_capacity')) . ' places only' ?></span>
                 <?php else: ?>
                   <span class="ticket__limit mono">Selected sessions only · no workshops, mentoring or networking</span>
                 <?php endif; ?>

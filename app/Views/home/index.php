@@ -96,7 +96,7 @@
         <div class="path__head">
           <h3 class="path__title">
             Attend in Essex
-            <span class="path__meta mono"><?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> places left</span>
+            <span class="path__meta mono"><?= $seatsLeft <= 0 ? 'Fully booked' : number_format($capacity) . ' places only' ?></span>
           </h3>
           <p class="path__cost">
             <strong><?= e(espees_price(price_pence('onsite'))) ?></strong>
@@ -174,7 +174,7 @@
     </div>
 
     <div class="perks__foot" data-reveal>
-      <p class="mono"><?= e(espees_price(price_pence('onsite'))) ?> · <?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> places left</p>
+      <p class="mono"><?= e(espees_price(price_pence('onsite'))) ?> · <?= $seatsLeft <= 0 ? 'Fully booked' : number_format($capacity) . ' places only' ?></p>
       <a href="<?= url('/register') ?>?mode=onsite" class="btn btn--ink"><span class="btn__label">Register to attend onsite</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
     </div>
   </div>
