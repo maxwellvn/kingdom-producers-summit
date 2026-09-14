@@ -20,9 +20,9 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
       <h1 class="pay__title"><?= $isEspees ? 'Send ' . e($amount) . ' Espees' : 'Pay ' . e(amount_for('revolut', $pence)) ?></h1>
 
       <?php if ($isEspees): ?>
-        <p class="pay__lede">Open your Espees wallet and send <strong><?= e($amount) ?> Espees</strong> to this Espees code:</p>
+        <p class="pay__lede">Open your Espees wallet and send <strong><?= e($amount) ?> Espees</strong> to this Espees merchant code:</p>
         <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
-          <?php $row('Espees code', $code); ?>
+          <?php $row('Espees merchant code', $code); ?>
         </table>
       <?php else: ?>
         <p class="pay__lede">Pay <strong><?= e(amount_for('revolut', $pence)) ?></strong> on Revolut's secure checkout page. You can pay by card or from your bank.</p>
