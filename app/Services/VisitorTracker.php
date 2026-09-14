@@ -16,13 +16,15 @@ use App\Models\Analytics;
  */
 final class VisitorTracker
 {
-    /** Paths that say nothing about how the site is used. */
-    // Background calls the pages make for themselves are not visits.
-    private const IGNORED_PREFIXES = ['/admin', '/access/qr', '/api/', '/watch/comments', '/watch/source', '/watch/beat', '/watch/hls', '/webhooks/'];
+    /** Paths that say nothing about how the site is used, even as page loads. */
+    private const IGNORED_PREFIXES = ['/admin', '/access/qr'];
 
     public static function record(Request $request): void
     {
-        if ($request->method !== 'GET' || self::isIgnored($request->path)) {
+        // Only a person opening a page counts. A page's own background calls
+        // (comment polls, stream checks, heartbeats), webhooks and API requests
+        // never ask for HTML, so they are ruled out here whatever their path.
+        if ($request->method !== 'GET' || !self::wantsPage() || self::isIgnored($request->path)) {
             return;
         }
         // A visitor who declined measurement is not measured.
@@ -97,5 +99,16 @@ final class VisitorTracker
         }
 
         return strtolower(preg_replace('/^www\./', '', $host) ?? $host);
+    }
+
+    /** True for a browser navigation; false for fetch(), XHR, webhooks and API clients. */
+    private static function wantsPage(): bool
+    {
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+            return false;
+        }
+        $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+
+        return str_contains($accept, 'text/html') || str_contains($accept, 'application/xhtml+xml');
     }
 }
