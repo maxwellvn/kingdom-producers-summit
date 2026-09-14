@@ -17,7 +17,8 @@ use App\Models\Analytics;
 final class VisitorTracker
 {
     /** Paths that say nothing about how the site is used. */
-    private const IGNORED_PREFIXES = ['/admin', '/access/qr', '/api/'];
+    // Background calls the pages make for themselves are not visits.
+    private const IGNORED_PREFIXES = ['/admin', '/access/qr', '/api/', '/watch/comments', '/watch/source', '/watch/beat', '/watch/hls', '/webhooks/'];
 
     public static function record(Request $request): void
     {
