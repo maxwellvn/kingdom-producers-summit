@@ -219,7 +219,7 @@ final class AdminController extends Controller
 
         if ($registration !== null
             && is_paid_path((string) $registration['participation'])
-            && in_array($registration['payment_status'], ['unpaid', 'claimed'], true)) {
+            && in_array($registration['payment_status'], ['not_required', 'unpaid', 'claimed'], true)) {
             (new PaymentService())->markPaid(
                 (string) $registration['reference'],
                 'manual-' . date('Ymd-His'),

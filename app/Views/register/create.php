@@ -59,11 +59,7 @@ $stageLabels = [
           <dl class="reg__facts mono">
             <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
-            <div><dt>Onsite places</dt><dd><?= $seatsLeft <= 0 ? 'Fully booked' : number_format((int) config('app.summit.onsite_capacity')) . ' only' ?></dd></div>
-            <?php if (!$isInitiative): ?>
-              <div><dt>Onsite cost</dt><dd><?= e(espees_price(price_pence('onsite'))) ?></dd></div>
-              <div><dt>Online cost</dt><dd><?= e(espees_price(price_pence('online'))) ?></dd></div>
-            <?php endif; ?>
+            <div><dt>Cost</dt><dd>Free to attend</dd></div>
           </dl>
         </div>
       </div>
@@ -82,9 +78,6 @@ $stageLabels = [
           <span><?= count($errors) === 1 ? 'There is one thing to correct.' : 'There are ' . count($errors) . ' things to correct.' ?></span>
           <?php if (!empty($errors['email'])): ?>
             <p><?= e($errors['email']) ?></p>
-            <?php if (str_contains($errors['email'], 'payment is still outstanding')): ?>
-              <a href="<?= url('/register/pay') ?>">Complete payment</a>
-            <?php endif; ?>
           <?php endif; ?>
         </div>
       <?php endif; ?>
@@ -121,20 +114,17 @@ $stageLabels = [
             'online' => ['B', 'Attend online', 'The main sessions streamed to you, to follow from anywhere. You take no part in the room, so the workshops, mentoring, clinic and networking are not included.'],
           ];
           foreach ($paths as $value => [$letter, $label, $desc]): ?>
-            <?php $soldOut = $value === 'onsite' && $seatsLeft <= 0; ?>
-            <label class="ticket ticket--<?= e($value) ?> <?= $soldOut ? 'is-soldout' : '' ?>">
-              <input type="radio" name="participation" value="<?= $value ?>" <?= $selectedMode === $value && !$soldOut ? 'checked' : '' ?> <?= $soldOut ? 'disabled' : '' ?> required>
+            <label class="ticket ticket--<?= e($value) ?>">
+              <input type="radio" name="participation" value="<?= $value ?>" <?= $selectedMode === $value ? 'checked' : '' ?> required>
               <span class="ticket__body">
                 <span class="ticket__letter mono"><?= $letter ?></span>
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <span class="ticket__cost">
-                  <strong class="ticket__amount"><?= e(espees_price(price_pence($value))) ?></strong>
-                  <span class="ticket__was mono">Inaugural edition · was <s><?= e(espees_price(standard_price_pence($value))) ?></s></span>
+                  <strong class="ticket__amount">Free</strong>
+                  <span class="ticket__was mono">Confirmed on registration</span>
                 </span>
-                <?php if ($value === 'onsite'): ?>
-                  <span class="ticket__seats mono"><?= $soldOut ? 'Fully booked' : number_format((int) config('app.summit.onsite_capacity')) . ' places only' ?></span>
-                <?php else: ?>
+                <?php if ($value === 'online'): ?>
                   <span class="ticket__limit mono">Selected sessions only · no workshops, mentoring or networking</span>
                 <?php endif; ?>
                 <span class="ticket__punch" aria-hidden="true"></span>
@@ -178,9 +168,6 @@ $stageLabels = [
             <input id="email" name="email" type="email" autocomplete="email" inputmode="email" value="<?= old('email') ?>" required>
             <p class="field__hint">Your reference and all updates go here.</p>
             <?php if ($err = error_for('email')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-            <?php if (str_contains((string) error_for('email'), 'payment is still outstanding')): ?>
-              <p><a href="<?= url('/register/pay') ?>">Complete payment</a></p>
-            <?php endif; ?>
           </div>
           <div class="field <?= error_for('phone') ? 'has-error' : '' ?>">
             <label for="phone">Phone number</label>
@@ -404,21 +391,6 @@ $stageLabels = [
         </div>
 
         <div class="form__submit">
-          <?php foreach (['onsite', 'online'] as $paidPath): ?>
-            <div class="form__conditional" data-only="<?= $paidPath ?>">
-              <div class="pay-note">
-                <span class="pay-note__stamp mono">Secure payment</span>
-                <div class="pay-note__body">
-                  <p class="pay-note__amount">
-                    <span class="pay-note__due mono">You pay</span>
-                    <strong><?= e(espees_price(price_pence($paidPath))) ?></strong>
-                    <span class="pay-note__for">for your <?= $paidPath === 'onsite' ? 'onsite' : 'online' ?> place</span>
-                  </p>
-                  <p>Full price <?= e(espees_price(standard_price_pence($paidPath))) ?>, reduced for the inaugural edition. You choose how to pay on the next page, and your place is held once payment is confirmed.</p>
-                </div>
-              </div>
-            </div>
-          <?php endforeach; ?>
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
             <span class="btn__label"
                   data-pay-label-onsite="Continue to payment &mdash; <?= e(espees_price(price_pence('onsite'))) ?>"

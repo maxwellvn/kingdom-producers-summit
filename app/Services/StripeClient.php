@@ -31,7 +31,7 @@ final class StripeClient
     public static function createCheckout(array $registration, string $successUrl, string $cancelUrl): string
     {
         $amount = price_pence((string) $registration['participation']);
-        $label = ['onsite' => 'Onsite place', 'online' => 'Online place'][(string) $registration['participation']] ?? 'Summit place';
+        $label = 'Contribution to the programme';
 
         $session = self::request('POST', '/checkout/sessions', [
             'mode' => 'payment',

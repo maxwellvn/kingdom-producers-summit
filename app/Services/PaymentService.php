@@ -102,12 +102,12 @@ final class PaymentService
         $registration = Registration::findByReference($reference);
         if ($registration !== null) {
             try {
-                (new RegistrationMail())->send($registration);
+                (new RegistrationMail())->sendSupportThanks($registration);
             } catch (\Throwable $e) {
-                error_log('Registration confirmation email could not be sent: ' . $e->getMessage());
+                error_log('Support thank-you email could not be sent: ' . $e->getMessage());
             }
 
-            (new KingsChatNotifier())->sendConfirmation($registration);
+            (new KingsChatNotifier())->sendSupportThanks($registration);
         }
 
         return true;

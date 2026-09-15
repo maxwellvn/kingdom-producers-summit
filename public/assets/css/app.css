@@ -1063,3 +1063,11 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 [role="status"].form__alert, [role="status"].pay__alert { transition: opacity .5s ease, transform .5s ease, max-height .5s ease, margin .5s ease; }
 [role="status"].is-leaving { opacity: 0; transform: translateY(-4px); pointer-events: none; }
 .watch__leave { text-decoration: none; display: inline-block; }
+
+/* ---------- Optional contribution ---------- */
+.support { margin: 0 0 2.2rem; padding: clamp(1.25rem, 3vw, 1.75rem); border: 1px solid rgba(243,238,226,.22); background: rgba(243,238,226,.06); }
+.support__kicker { display: inline-block; margin-bottom: .6rem; font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(243,238,226,.6); }
+.support__title { margin: 0 0 .6rem; font-family: var(--font-display); font-size: 1.5rem; text-transform: uppercase; letter-spacing: .01em; color: var(--paper); }
+.support__lede { margin: 0 0 1.1rem; max-width: 46ch; color: rgba(243,238,226,.85); font-size: .98rem; line-height: 1.55; }
+.support__lede strong { color: var(--paper); }
+.support__thanks { margin: 0 0 2rem; color: rgba(243,238,226,.7); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }

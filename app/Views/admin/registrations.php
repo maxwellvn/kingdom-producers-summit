@@ -34,7 +34,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
   <?php else: ?>
     <div class="adm-table-wrap">
     <table class="adm-table">
-      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>KingsChat</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Payment</th><th>Attendance</th><th>Registered</th></tr></thead>
+      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>KingsChat</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Support</th><th>Attendance</th><th>Registered</th></tr></thead>
       <tbody>
         <?php foreach ($result['rows'] as $r): ?>
           <tr>
@@ -49,16 +49,24 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
             <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?><?php if ($r['zone']): ?><br><span class="adm-muted"><?= e(implode(' · ', array_filter([$r['zone'], $r['group_name'], $r['church_name']]))) ?></span><?php endif; ?></td>
             <td>
               <?php
-                // Onsite and online both pay; the initiative does not.
+                // Attending is free. Onsite and online may contribute; the initiative has nothing to give.
                 $paidPath = is_paid_path((string) $r['participation']);
-                $payState = $paidPath ? ($r['payment_status'] ?? 'unpaid') : 'not_required';
+                $payState = $paidPath ? ($r['payment_status'] ?? 'not_required') : 'none';
+                $pill = ['paid' => 'paid', 'claimed' => 'claimed', 'unpaid' => 'onsite'][$payState] ?? 'initiative';
+                $label = match ($payState) {
+                    'paid'    => 'Supported · ' . paid_amount($r) . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
+                    'claimed' => 'Contribution claimed' . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
+                    'unpaid'  => 'Unpaid (older row)',
+                    'none'    => '—',
+                    default   => 'No contribution',
+                };
               ?>
-              <span class="adm-pill adm-pill--<?= $payState === 'paid' ? 'paid' : ($payState === 'claimed' ? 'claimed' : ($payState === 'not_required' ? 'initiative' : 'onsite')) ?> mono"><?= e(ucfirst($payState)) ?><?= in_array($payState, ['claimed', 'paid'], true) && !empty($r['payment_method']) ? ' · ' . e($r['payment_method']) . ($payState === 'paid' ? ' · ' . e(paid_amount($r)) : '') : '' ?></span>
-              <?php if ($paidPath && in_array($payState, ['unpaid', 'claimed'], true)): ?>
+              <span class="adm-pill adm-pill--<?= e($pill) ?> mono"><?= e($label) ?></span>
+              <?php if ($paidPath && in_array($payState, ['not_required', 'unpaid', 'claimed'], true)): ?>
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>
                   <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm <?= e(espees_price(price_pence((string) $r['participation']))) ?> received</button>
+                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
                 </form>
               <?php endif; ?>
               <?php if ($paidPath && $payState === 'unpaid'): ?>

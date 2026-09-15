@@ -43,16 +43,20 @@ try {
     $ref = $row['reference'];
     $token = AttendanceService::tokenFor($ref);
     $scan = fn($code) => AttendanceService::checkIn($code, 'test@example.org', '127.0.0.1');
-    verify(str_contains(RegistrationService::duplicateMessage(strtoupper($row['email'])), 'payment is still outstanding'), 'unpaid duplicate message is case insensitive');
+    verify($row['status'] === 'confirmed' && $row['payment_status'] === 'not_required', 'attending is free: confirmed at once, nothing owed');
+    verify(str_contains(RegistrationService::duplicateMessage(strtoupper($row['email'])), 'already registered'), 'duplicate message is case insensitive');
     [$errors] = $service->validate($request);
-    verify(str_contains($errors['email'] ?? '', 'payment is still outstanding'), 'duplicate form submission reports unpaid status');
-    verify($scan($token)['ok'] === false, 'unpaid signed pass rejected');
+    verify(str_contains($errors['email'] ?? '', 'already registered'), 'duplicate form submission is refused');
+    // Rows from before contributions were optional: pending and unpaid never reach the door.
+    $update = $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ?, participation = ? WHERE reference = ?');
+    $update->execute(['pending', 'unpaid', 'onsite', $ref]);
+    verify($scan($token)['ok'] === false, 'an older unconfirmed row is still refused at the door');
     verify($scan(substr($token, 0, -1) . (str_ends_with($token, 'a') ? 'b' : 'a'))['ok'] === false, 'tampered QR rejected');
     verify(AttendanceService::referenceFromToken('https://example.org/admin/scanner?token=' . rawurlencode($token)) === $ref, 'copied scanner URL decodes');
-    $update = $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ?, participation = ? WHERE reference = ?');
+    $update->execute(['confirmed', 'not_required', 'onsite', $ref]);
+    verify($scan($token)['status'] === 'checked_in', 'a free confirmed place scans at the door');
     $update->execute(['confirmed', 'paid', 'onsite', $ref]);
-    verify(str_contains(RegistrationService::duplicateMessage($row['email']), 'payment is complete'), 'paid duplicate message');
-    verify($scan($token)['status'] === 'checked_in', 'paid signed pass records attendance');
+    verify(str_contains(RegistrationService::duplicateMessage($row['email']), 'thank you for supporting'), 'a supporter is thanked in the duplicate message');
     verify($scan($token)['status'] === 'duplicate', 'repeat scan is duplicate');
     $count = $pdo->prepare('SELECT COUNT(*) FROM attendances WHERE registration_id = ?');
     $count->execute([$row['id']]);
@@ -67,7 +71,7 @@ try {
     $update->execute(['confirmed', 'not_required', 'onsite', $ref]);
     verify($scan($token)['ok'] === true, 'legacy free onsite pass remains valid');
     $update->execute(['confirmed', 'not_required', 'online', $ref]);
-    verify(str_contains(RegistrationService::duplicateMessage($row['email']), 'No payment is required'), 'free online duplicate message');
+    verify(str_contains(RegistrationService::duplicateMessage($row['email']), 'already registered'), 'free online duplicate message');
     // Online and initiative places are not places in the room, so they never check in.
     $update->execute(['confirmed', 'paid', 'online', $ref]);
     verify($scan($token)['ok'] === false, 'an online pass is refused at the door');
@@ -104,7 +108,11 @@ try {
     $pdo->prepare('UPDATE registrations SET participation = ?, payment_status = ? WHERE reference = ?')
         ->execute(['online', 'unpaid', $watcher['reference']]);
     verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
-        'an unpaid place may not watch');
+        'an older unpaid row may not watch');
+    $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')
+        ->execute(['not_required', $watcher['reference']]);
+    verify(App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
+        'a free online place may watch');
     $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')
         ->execute(['paid', $watcher['reference']]);
 
@@ -193,10 +201,12 @@ try {
     ], []));
     verify($claimErrors === [], 'claimed-payer registration validates');
     $claimRow = $service->register($claimClean);
-    $pdo->prepare('UPDATE registrations SET created_at = DATE_SUB(NOW(), INTERVAL 30 HOUR),
-                   payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?')
-        ->execute([$claimRow['id']]);
-    verify(in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'unpaid past the grace period would be released');
+    $pdo->prepare('UPDATE registrations SET created_at = DATE_SUB(NOW(), INTERVAL 30 HOUR) WHERE id = ?')->execute([$claimRow['id']]);
+    verify(!in_array($claimRow['id'], array_column(Registration::dueForPaymentReminder(), 'id')), 'a free place is never reminded');
+    verify(!in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'a free place is never released');
+    $pdo->prepare("UPDATE registrations SET status = 'pending', payment_status = 'unpaid',
+                   payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?")->execute([$claimRow['id']]);
+    verify(in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'an older unpaid row past the grace period would be released');
     $pdo->prepare("UPDATE registrations SET payment_status = 'claimed', payment_method = 'espees',
                    payment_reminder_sent_at = NULL WHERE id = ?")->execute([$claimRow['id']]);
     verify(!in_array($claimRow['id'], array_column(Registration::dueForPaymentReminder(), 'id')), 'a claimed payment is not reminded');
@@ -262,25 +272,21 @@ try {
     [, $namedClean] = $service->validate($namedField);
     verify($namedClean['field_other'] === null, 'a named field stores no other text');
 
-    // Onsite places are capped, and the cap is enforced on the server, not just in the markup.
+    // There is no cap on onsite places: the old capacity figure is exceeded without complaint.
     $capacity = max(1, (int) config('app.summit.onsite_capacity'));
-    $pdo->exec("UPDATE registrations SET status = 'confirmed' WHERE participation = 'onsite'");
-    verify(Registration::onsiteSeatsTaken() < $capacity, 'onsite capacity is not already exhausted');
     $filler = $pdo->prepare('INSERT INTO registrations (reference, participation, first_name, last_name, email, country, age_band, status, payment_status) '
-        . "VALUES (?, 'onsite', 'Seat', 'Filler', ?, 'United Kingdom', '25-34', 'confirmed', 'paid')");
-    for ($i = Registration::onsiteSeatsTaken(); $i < $capacity; $i++) {
+        . "VALUES (?, 'onsite', 'Seat', 'Filler', ?, 'United Kingdom', '25-34', 'confirmed', 'not_required')");
+    for ($i = Registration::onsiteSeatsTaken(); $i <= $capacity; $i++) {
         $filler->execute(['KPS26-F' . str_pad((string) $i, 5, '0', STR_PAD_LEFT), "seat-{$i}-" . bin2hex(random_bytes(4)) . '@example.org']);
     }
-    verify(!RegistrationService::onsitePlaceAvailable(), 'onsite capacity reports full');
     $overflow = new Request('POST', '/register', [], [
-        'participation' => 'onsite', 'first_name' => 'One', 'last_name' => 'TooMany',
+        'participation' => 'onsite', 'first_name' => 'One', 'last_name' => 'More',
         'email' => 'overflow-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900999', 'country' => 'United Kingdom', 'age_band' => '25-34',
-        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
-        'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
+        'zone' => 'UK Zone 1', 'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
     ], []);
     [$overflowErrors] = $service->validate($overflow);
-    verify(str_contains($overflowErrors['participation'] ?? '', 'fully booked'), 'onsite registration is refused when full');
+    verify($overflowErrors === [], 'onsite registration is accepted past the old capacity');
 } finally {
     $pdo->rollBack();
 }

@@ -19,10 +19,30 @@ final class KingsChatNotifier
         $link = site_url() . '/register/confirmed?access='
             . rawurlencode(AttendanceService::tokenFor($reference));
 
+        $support = '';
+        if (is_paid_path((string) $registration['participation']) && ($registration['payment_status'] ?? '') === 'not_required') {
+            $support = "Attending is free. If you would like to support the programme, a contribution of "
+                . espees_price(price_pence((string) $registration['participation'])) . " is suggested: "
+                . site_url() . '/register/method?resume=' . rawurlencode(PaymentService::resumeToken($reference)) . "\n\n";
+        }
+
         $text = "You are registered, {$name}.\n\n"
             . "Reference: {$reference}\n"
             . "Summit: {$summit['date_text']}, {$summit['city']}\n\n"
             . "Your pass and full details: {$link}\n\n"
+            . $support
+            . 'The Loveworld Consulate, United Kingdom';
+
+        return $this->deliver($registration, $text);
+    }
+
+    /** A contribution has been confirmed. */
+    public function sendSupportThanks(array $registration): array
+    {
+        $name = trim((string) $registration['first_name']);
+        $text = "Thank you, {$name}. Your " . payment_phrase($registration)
+            . " contribution to the Kingdom Producers programme is confirmed.\n\n"
+            . "Your place was already confirmed, and nothing about it changes.\n\n"
             . 'The Loveworld Consulate, United Kingdom';
 
         return $this->deliver($registration, $text);
@@ -86,10 +106,10 @@ final class KingsChatNotifier
         $paid = payment_phrase($registration);
 
         $text = "Thank you, {$name}.\n\n"
-            . "We have logged your {$paid} payment for reference {$reference}, "
+            . "We have logged your {$paid} contribution for reference {$reference}, "
             . "and we are confirming it now.\n\n"
-            . "We verify it against our own records, so there is nothing for you to send us.\n\n"
-            . "Your pass is sent as soon as the payment is confirmed.\n\n"
+            . "We confirm it against our own records, so there is nothing for you to send us. "
+            . "Your place is already confirmed.\n\n"
             . 'The Loveworld Consulate, United Kingdom';
 
         return $this->deliver($registration, $text);

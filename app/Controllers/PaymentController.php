@@ -32,7 +32,7 @@ final class PaymentController extends Controller
 
         return $this->view('register/method', [
             'resume'    => PaymentService::resumeToken((string) $registration['reference']),
-            'title'     => 'Choose payment — ' . config('app.name'),
+            'title'     => 'Support the programme — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'noIndex'   => true,
             'summit'    => config('app.summit'),
@@ -252,7 +252,7 @@ final class PaymentController extends Controller
 
         $saved = $this->savedRegistration($request->str('ref'));
         return $this->view('register/pay', [
-            'title'     => 'Complete payment — ' . config('app.name'),
+            'title'     => 'Support the programme — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'noIndex'   => true,
             'summit'    => config('app.summit'),
@@ -289,7 +289,7 @@ final class PaymentController extends Controller
 
             $message = $known === null
                 ? 'We could not find a registration with that email address or KingsChat username. Check what you registered with, or register first.'
-                : 'That registration has nothing outstanding to pay. Check your confirmation email for your details.';
+                : 'That registration has already contributed. Thank you. Check your confirmation email for your details.';
 
             return $this->view('register/pay', $this->payViewData('', $message, $identifier));
         }
@@ -302,7 +302,7 @@ final class PaymentController extends Controller
     private function payViewData(string $reference, string $error, string $identifier = ''): array
     {
         return [
-            'title'     => 'Complete payment — ' . config('app.name'),
+            'title'     => 'Support the programme — ' . config('app.name'),
             'bodyClass' => 'page-register',
             'noIndex'   => true,
             'summit'    => config('app.summit'),
@@ -334,10 +334,11 @@ final class PaymentController extends Controller
         }
         $registration = Registration::findByReference($reference);
         if ($registration === null || !is_paid_path((string) $registration['participation'])
-            || $registration['status'] !== 'pending') {
+            || $registration['status'] === 'cancelled') {
             return null;
         }
-        $statuses = $unpaidOnly ? ['unpaid'] : ['unpaid', 'claimed'];
+        // Nothing given yet (not_required, or unpaid on older rows), or a claim awaiting confirmation.
+        $statuses = $unpaidOnly ? ['not_required', 'unpaid'] : ['not_required', 'unpaid', 'claimed'];
         if (!in_array($registration['payment_status'], $statuses, true)) {
             return null;
         }

@@ -92,11 +92,6 @@ final class RegistrationService
             $errors['email'] = self::duplicateMessage($email) ?? 'This email is already registered.';
         }
 
-        // Onsite places are finite; an upgrade needs a place just as a new registration does.
-        if (!isset($errors['participation']) && $participation === 'onsite' && !self::onsitePlaceAvailable()) {
-            $errors['participation'] = 'Onsite places are fully booked. You can still register to participate online or join the initiative.';
-        }
-
         if ($errors) {
             return [$errors, []];
         }
@@ -138,9 +133,10 @@ final class RegistrationService
             'portal_interest'   => $participation === 'initiative' ? $this->nullable($request->str('portal_interest')) : null,
             'consent_terms'     => 1,
             'consent_marketing' => $request->str('consent_marketing') === '1' ? 1 : 0,
-            'status'            => is_paid_path($participation) ? 'pending' : 'confirmed',
-            'payment_status'    => is_paid_path($participation) ? 'unpaid' : 'not_required',
-            'payment_amount'    => is_paid_path($participation) ? price_pence($participation) : null,
+            // Attending is free and confirmed at once. A contribution is optional and comes after.
+            'status'            => 'confirmed',
+            'payment_status'    => 'not_required',
+            'payment_amount'    => null,
             'payment_session_id' => null,
         ];
 
@@ -243,14 +239,6 @@ final class RegistrationService
         return Registration::findByReference($clean['reference']) ?? $clean;
     }
 
-    /** True while onsite capacity has not been reached. */
-    public static function onsitePlaceAvailable(): bool
-    {
-        // ponytail: a read-then-insert check, so a dead heat could seat one extra.
-        // Swap for a transaction with SELECT ... FOR UPDATE if that ever matters.
-        return Registration::onsiteSeatsTaken() < max(1, (int) config('app.summit.onsite_capacity'));
-    }
-
     public static function duplicateMessage(string $email): ?string
     {
         $registration = Registration::findByEmail($email);
@@ -260,16 +248,13 @@ final class RegistrationService
         if ($registration['status'] === 'cancelled') {
             return 'This email has a cancelled registration. Please contact the organisers before registering again.';
         }
-        if ($registration['payment_status'] === 'unpaid') {
-            return 'This email is already registered, but payment is still outstanding. Use Complete payment with your saved reference and email; you do not need to register again.';
-        }
         if ($registration['payment_status'] === 'claimed') {
-            return 'This email is already registered and your payment is awaiting confirmation. You do not need to register or pay again.';
+            return 'This email is already registered, and your contribution is being confirmed. Thank you. Check your confirmation email for your details.';
         }
         if ($registration['payment_status'] === 'paid') {
-            return 'This email is already registered and payment is complete. Check your confirmation email for your access pass; you do not need to register or pay again.';
+            return 'This email is already registered, and thank you for supporting the programme. Check your confirmation email for your details.';
         }
-        return 'This email is already registered. No payment is required for your registration. Check your confirmation email for your registration details.';
+        return 'This email is already registered. Check your confirmation email for your registration details.';
     }
 
     /** e.g. KPS26-7QK4M3 — unambiguous alphabet, no 0/O/1/I. */

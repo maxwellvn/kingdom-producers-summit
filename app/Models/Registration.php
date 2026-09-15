@@ -152,7 +152,7 @@ final class Registration
         $stmt = Database::connection()->prepare(
             "UPDATE registrations
              SET payment_status = 'claimed', payment_method = ?
-             WHERE reference = ? AND payment_status = 'unpaid'"
+             WHERE reference = ? AND payment_status IN ('not_required', 'unpaid')"
         );
         $stmt->execute([$method, $reference]);
         return $stmt->rowCount() > 0;
@@ -174,7 +174,7 @@ final class Registration
             "UPDATE registrations
              SET payment_status = 'paid', status = 'confirmed', payment_amount = ?, payment_session_id = ?,
                  payment_method = COALESCE(?, payment_method)
-             WHERE reference = ? AND payment_status IN ('unpaid', 'claimed')"
+             WHERE reference = ? AND payment_status IN ('not_required', 'unpaid', 'claimed')"
         );
         $stmt->execute([$amountPence, mb_substr($sessionId, 0, 255), $method, $reference]);
         return $stmt->rowCount() > 0;
@@ -189,7 +189,9 @@ final class Registration
             return null;
         }
 
-        return $registration['payment_status'] === 'unpaid' && $registration['status'] === 'pending'
+        return in_array($registration['payment_status'], ['not_required', 'unpaid'], true)
+            && $registration['status'] !== 'cancelled'
+            && is_paid_path((string) $registration['participation'])
             ? $registration
             : null;
     }

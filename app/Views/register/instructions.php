@@ -17,10 +17,10 @@ $row = static function (string $label, string $value) use ($cell, $cellR): void 
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><?= payment_icon($type, 22) ?> <?= $isEspees ? 'Pay with Espees' : 'Pay by card or bank' ?></p>
-      <h1 class="pay__title"><?= $isEspees ? 'Send ' . e($amount) . ' Espees' : 'Pay ' . e(amount_for('revolut', $pence)) ?></h1>
+      <h1 class="pay__title"><?= $isEspees ? 'Send ' . e(amount_for('espees', $pence)) : 'Pay ' . e(amount_for('revolut', $pence)) ?></h1>
 
       <?php if ($isEspees): ?>
-        <p class="pay__lede">Open your Espees wallet and send <strong><?= e($amount) ?> Espees</strong> to this Espees merchant code:</p>
+        <p class="pay__lede">Open your Espees wallet and send <strong><?= e(amount_for('espees', $pence)) ?></strong> to this Espees merchant code:</p>
         <table style="width:100%;border-collapse:collapse;margin:0 0 8px">
           <?php $row('Espees merchant code', $code); ?>
         </table>

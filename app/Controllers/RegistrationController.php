@@ -78,20 +78,6 @@ final class RegistrationController extends Controller
             throw $e;
         }
 
-        // Paid paths save as pending, acknowledge by email, then offer payment methods.
-        if (is_paid_path((string) $registration['participation'])) {
-            Session::put('last_registration', $registration['reference']);
-            try {
-                (new RegistrationMail())->sendAcknowledgement($registration);
-            } catch (\Throwable $e) {
-                error_log('Registration acknowledgement email could not be sent: ' . $e->getMessage());
-            }
-
-            (new KingsChatNotifier())->sendPaymentPending($registration);
-
-            return $this->redirect('/register/method');
-        }
-
         Session::put('last_registration', $registration['reference']);
 
         try {
@@ -117,12 +103,9 @@ final class RegistrationController extends Controller
             return $this->redirect('/register');
         }
 
-        // Unpaid onsite registrations have no access pass yet; claimed ones await confirmation.
-        if ($registration['payment_status'] === 'unpaid') {
+        // Rows from before contributions were optional may still be pending payment.
+        if ($registration['status'] === 'pending' && $registration['payment_status'] === 'unpaid') {
             return $this->redirect('/register/pay?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
-        }
-        if ($registration['payment_status'] === 'claimed') {
-            return $this->redirect('/register/awaiting');
         }
 
         return $this->view('register/confirmed', [
@@ -132,6 +115,10 @@ final class RegistrationController extends Controller
             'summit'       => config('app.summit'),
             'registration' => $registration,
             'accessToken'  => AttendanceService::tokenFor($registration['reference']),
+            // The optional contribution, offered once they are in.
+            'supportUrl'   => is_paid_path((string) $registration['participation']) && $registration['payment_status'] === 'not_required'
+                ? url('/register/method?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])))
+                : null,
         ]);
     }
 

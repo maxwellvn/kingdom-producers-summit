@@ -4,18 +4,18 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
-      <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Payment step</p>
-      <h1 class="pay__title">Choose how to pay <?= e($amount) ?> Espees</h1>
-      <p class="pay__lede">The full price is <?= e($standard) ?>. The inaugural edition price leaves <strong><?= e($amount) ?> Espees</strong> due. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
+      <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Optional contribution</p>
+      <h1 class="pay__title">Support the programme</h1>
+      <p class="pay__lede">Your place is confirmed and attending is free. If you would like to help fund the summit and the initiative, a contribution of <strong><?= e($amount) ?> Espees</strong> is suggested. Choose how you would like to give. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
 
       <?php $payError = \App\Core\Session::get('_errors', [])['pay'] ?? ''; ?>
       <?php if ($payError !== ''): ?>
         <div class="pay__alert" role="alert"><span><?= e($payError) ?></span></div>
       <?php endif; ?>
       <?php if (!$methods): ?>
-        <div class="pay__alert" role="alert">
-          <strong>Payment is not available yet.</strong>
-          <span>Your registration is saved. Please contact the organisers to complete payment; you do not need to register again.</span>
+        <div class="pay__alert" role="status">
+          <strong>Contributions are not open yet.</strong>
+          <span>Your place is confirmed regardless. We will let you know when giving opens.</span>
         </div>
       <?php endif; ?>
 
@@ -35,7 +35,7 @@ $standard = espees_price(standard_price_pence((string) $registration['participat
         <?php endforeach; ?>
       </div>
 
-      <p class="form__fine mono">Keep your registration reference — it identifies every payment.</p>
+      <p class="form__fine mono">Not today? <a href="<?= url('/register/confirmed') ?>">Back to your registration</a>. Your place is not affected either way.</p>
     </div>
   </div>
 </section>

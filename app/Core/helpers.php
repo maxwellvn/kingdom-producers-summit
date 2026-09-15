@@ -122,7 +122,7 @@ function standard_price_pence(string $participation): int
     return (int) (config('pricing.prices')[$participation]['standard'] ?? 0);
 }
 
-/** True when a path has something to pay, so it needs the payment flow. */
+/** True when a path has a suggested contribution: onsite and online. Attending is free either way. */
 function is_paid_path(string $participation): bool
 {
     return price_pence($participation) > 0;
