@@ -72,7 +72,7 @@ $next = [
         <?php if (!empty($r['field'])): ?><div><dt>Field</dt><dd><?= e(field_label($r)) ?></dd></div><?php endif; ?>
         <?php if (!empty($r['producer_stage'])): ?><div><dt>Stage</dt><dd><?= e(ucfirst($r['producer_stage'])) ?></dd></div><?php endif; ?>
         <?php if (($r['payment_status'] ?? '') === 'paid'): ?>
-          <div><dt>Paid</dt><dd class="pay__with"><?= payment_icon((string) ($r['payment_method'] ?? ''), 18) ?><?= e(payment_phrase($r)) ?></dd></div>
+          <div><dt>Contribution</dt><dd class="pay__with"><?= payment_icon((string) ($r['payment_method'] ?? ''), 18) ?><?= e(payment_phrase($r)) ?></dd></div>
         <?php endif; ?>
         <div><dt>Registered</dt><dd><?= e(date('j M Y, H:i', strtotime($r['created_at']))) ?></dd></div>
       </dl>

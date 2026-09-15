@@ -130,7 +130,7 @@ final class RegistrationMail
             'initiative' => 'Joined the Kingdom Producers initiative',
         ][(string) $registration['participation']] ?? 'Registered producer';
         if (($registration['payment_status'] ?? '') === 'paid') {
-            $path .= " \u{00B7} " . payment_phrase($registration) . ' paid';
+            $path .= " \u{00B7} " . payment_phrase($registration) . ' contributed';
         }
         $path = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
         $site = site_url();
