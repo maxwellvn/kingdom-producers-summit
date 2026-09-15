@@ -1,6 +1,7 @@
 <?php /** @var array $result @var string $participation @var string $search */
 $pathLabel = ['onsite' => 'Onsite', 'online' => 'Online', 'initiative' => 'Initiative'];
-$qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build_query(array_filter(array_merge(['type' => $participation, 'q' => $search], $extra), static fn ($v) => $v !== '' && $v !== null));
+$support = $support ?? '';
+$qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build_query(array_filter(array_merge(['type' => $participation, 'q' => $search, 'support' => $support], $extra), static fn ($v) => $v !== '' && $v !== null));
 ?>
 <section class="adm-page">
   <header class="adm-page__head">
@@ -20,6 +21,11 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     <div class="adm-tabs" role="tablist">
       <?php foreach (['' => 'All', 'onsite' => 'A · Onsite', 'online' => 'B · Online', 'initiative' => 'C · Initiative'] as $val => $label): ?>
         <a class="adm-tab <?= $participation === $val ? 'is-active' : '' ?>" href="<?= $qs(['type' => $val, 'page' => null]) ?>"><?= $label ?></a>
+      <?php endforeach; ?>
+    </div>
+    <div class="adm-tabs adm-tabs--support" role="tablist" aria-label="Support">
+      <?php foreach (['' => 'Everyone', 'contributed' => '★ Contributed', 'legacy' => '⚑ Paid before the change'] as $val => $label): ?>
+        <a class="adm-tab <?= $support === $val ? 'is-active' : '' ?> <?= $val === 'legacy' ? 'adm-tab--legacy' : '' ?>" href="<?= $qs(['support' => $val, 'page' => null]) ?>"><?= $label ?></a>
       <?php endforeach; ?>
     </div>
     <input type="hidden" name="type" value="<?= e($participation) ?>">
@@ -52,12 +58,15 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 // Onsite and online may contribute; the initiative has nothing to give.
                 $paidPath = is_paid_path((string) $r['participation']);
                 $payState = $paidPath ? ($r['payment_status'] ?? 'not_required') : 'none';
-                $pill = ['paid' => 'paid', 'claimed' => 'claimed'][$payState] ?? 'initiative';
-                $label = match ($payState) {
-                    'paid'    => 'Supported · ' . paid_amount($r) . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
-                    'claimed' => 'Contribution claimed' . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
-                    'none'    => '—',
-                    default   => 'No contribution',
+                $legacy = $paidPath && \App\Models\Registration::isLegacyPayment($r);
+                $method = !empty($r['payment_method']) ? ' · ' . $r['payment_method'] : '';
+                [$pill, $label] = match (true) {
+                    $legacy && $payState === 'paid'    => ['legacy', '⚑ Paid before the change · ' . paid_amount($r) . $method],
+                    $legacy && $payState === 'claimed' => ['legacy', '⚑ Claimed before the change' . $method],
+                    $payState === 'paid'               => ['paid', '★ Contributed · ' . paid_amount($r) . $method],
+                    $payState === 'claimed'            => ['claimed', '★ Contribution claimed' . $method],
+                    $payState === 'none'               => ['initiative', '—'],
+                    default                            => ['none', 'No contribution'],
                 };
               ?>
               <span class="adm-pill adm-pill--<?= e($pill) ?> mono"><?= e($label) ?></span>

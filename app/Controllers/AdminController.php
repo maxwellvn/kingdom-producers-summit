@@ -202,13 +202,15 @@ final class AdminController extends Controller
         $page = max(1, (int) $request->input('page', 1));
         $participation = $request->str('type');
         $search = mb_substr($request->str('q'), 0, 80);
+        $support = in_array($request->str('support'), ['contributed', 'legacy'], true) ? $request->str('support') : '';
 
         return $this->view('admin/registrations', [
             'title'         => 'Registrations',
             'bodyClass'     => 'page-admin',
-            'result'        => Registration::paginate($page, 25, $participation ?: null, $search),
+            'result'        => Registration::paginate($page, 25, $participation ?: null, $search, $support),
             'participation' => $participation,
             'search'        => $search,
+            'support'       => $support,
         ], 'layouts/admin');
     }
 

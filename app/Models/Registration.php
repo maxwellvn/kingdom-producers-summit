@@ -253,11 +253,33 @@ final class Registration
         return array_map(static fn (string $s) => ['label' => $s, 'count' => (int) ($map[$s] ?? 0)], self::STAGES);
     }
 
-    public static function paginate(int $page, int $perPage = 25, ?string $participation = null, string $search = ''): array
+    /** When attendance became free. Money before this was a payment; after, a contribution. */
+    public static function contributionsSince(): string
+    {
+        return Setting::get('contributions_since', '1970-01-01 00:00:00');
+    }
+
+    /** True for money recorded against a registration made before attendance became free. */
+    public static function isLegacyPayment(array $registration): bool
+    {
+        return in_array($registration['payment_status'] ?? '', ['paid', 'claimed'], true)
+            && (string) ($registration['created_at'] ?? '') < self::contributionsSince();
+    }
+
+    public static function paginate(int $page, int $perPage = 25, ?string $participation = null, string $search = '', string $support = ''): array
     {
         $pdo = Database::connection();
         $where = ["r.status <> 'cancelled'"];
         $params = [];
+
+        // 'contributed': gave under the new model. 'legacy': paid or claimed under the old pricing.
+        if ($support === 'contributed') {
+            $where[] = "r.payment_status IN ('paid', 'claimed') AND r.created_at >= :since";
+            $params['since'] = self::contributionsSince();
+        } elseif ($support === 'legacy') {
+            $where[] = "r.payment_status IN ('paid', 'claimed') AND r.created_at < :since";
+            $params['since'] = self::contributionsSince();
+        }
 
         if ($participation && in_array($participation, self::PARTICIPATION, true)) {
             $where[] = 'r.participation = :participation';

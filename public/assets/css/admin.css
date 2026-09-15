@@ -232,3 +232,13 @@
    one dark surface, and its buttons keep the cream treatment. */
 .adm-nav .adm-btn { color: var(--paper); border-color: rgba(243,238,226,.3); }
 .adm-nav .adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
+
+/* ---------- Support states ---------- */
+.adm-pill--paid { background: #1e7d3c; color: #f3eee2; box-shadow: 0 0 0 3px rgba(30,125,60,.18); }
+.adm-pill--claimed { background: #b8860b; color: #1b2242; box-shadow: 0 0 0 3px rgba(184,134,11,.2); }
+.adm-pill--legacy { background: #b4232b; color: #f3eee2; box-shadow: 0 0 0 3px rgba(180,35,43,.2); }
+.adm-pill--none { background: transparent; color: var(--muted-2); border: 1px dashed rgba(27,34,66,.3); }
+.adm-tabs--support { margin-top: .6rem; }
+.adm-tab--legacy.is-active { background: #b4232b; color: #f3eee2; }
+tr:has(.adm-pill--legacy) td { background: rgba(180,35,43,.06); }
+tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
