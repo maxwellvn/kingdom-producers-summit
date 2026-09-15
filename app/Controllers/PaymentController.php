@@ -245,7 +245,7 @@ final class PaymentController extends Controller
 
         // A signed link from an email or a KingsChat message already identifies
         // them, so send them straight to the payment methods.
-        if ($request->str('resume') !== '' && $claimed !== null && $claimed['payment_status'] === 'unpaid') {
+        if ($request->str('resume') !== '' && $claimed !== null && in_array($claimed['payment_status'], ['not_required', 'unpaid'], true)) {
             return $this->redirect('/register/method?resume='
                 . rawurlencode(PaymentService::resumeToken((string) $claimed['reference'])));
         }
