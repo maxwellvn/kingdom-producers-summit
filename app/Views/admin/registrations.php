@@ -49,36 +49,25 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
             <td><?= e(implode(', ', array_filter([$r['city'], $r['country']]))) ?><?php if ($r['zone']): ?><br><span class="adm-muted"><?= e(implode(' · ', array_filter([$r['zone'], $r['group_name'], $r['church_name']]))) ?></span><?php endif; ?></td>
             <td>
               <?php
-                // Attending is free. Onsite and online may contribute; the initiative has nothing to give.
+                // Onsite and online may contribute; the initiative has nothing to give.
                 $paidPath = is_paid_path((string) $r['participation']);
                 $payState = $paidPath ? ($r['payment_status'] ?? 'not_required') : 'none';
-                $pill = ['paid' => 'paid', 'claimed' => 'claimed', 'unpaid' => 'onsite'][$payState] ?? 'initiative';
+                $pill = ['paid' => 'paid', 'claimed' => 'claimed'][$payState] ?? 'initiative';
                 $label = match ($payState) {
                     'paid'    => 'Supported · ' . paid_amount($r) . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
                     'claimed' => 'Contribution claimed' . (!empty($r['payment_method']) ? ' · ' . $r['payment_method'] : ''),
-                    'unpaid'  => 'Unpaid (older row)',
                     'none'    => '—',
                     default   => 'No contribution',
                 };
               ?>
               <span class="adm-pill adm-pill--<?= e($pill) ?> mono"><?= e($label) ?></span>
-              <?php if ($paidPath && in_array($payState, ['not_required', 'unpaid', 'claimed'], true)): ?>
+              <?php if ($paidPath && in_array($payState, ['not_required', 'claimed'], true)): ?>
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>
                   <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
                   <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
                 </form>
               <?php endif; ?>
-              <?php if ($paidPath && $payState === 'unpaid'): ?>
-                <form method="post" action="<?= url('/admin/registrations/resend-payment') ?>" style="margin-top:.4rem">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                  <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Resend payment email</button>
-                </form>
-                <?php if (!empty($r['payment_email_resent_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.3rem;font-size:.68rem">resent <?= e(date('d M H:i', strtotime((string) $r['payment_email_resent_at']))) ?></span><?php endif; ?>
-                <?php if (!empty($r['payment_reminder_sent_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.2rem;font-size:.68rem">24h reminder sent <?= e(date('d M H:i', strtotime((string) $r['payment_reminder_sent_at']))) ?></span><?php endif; ?>
-              <?php endif; ?>
-              <?php if (!empty($r['released_at'])): ?><span class="adm-muted mono" style="display:block;margin-top:.3rem;font-size:.68rem;color:#b4232b">place released <?= e(date('d M H:i', strtotime((string) $r['released_at']))) ?></span><?php endif; ?>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">

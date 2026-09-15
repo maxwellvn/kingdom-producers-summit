@@ -25,8 +25,6 @@ final class RegistrationController extends Controller
             $mode = '';
         }
 
-        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
-
         return $this->view('register/create', [
             'title'     => 'Register — ' . config('app.name'),
             'bodyClass' => 'page-register',
@@ -34,7 +32,6 @@ final class RegistrationController extends Controller
                 . config('app.summit.city') . ', watch online, or join the initiative.',
             'summit'    => config('app.summit'),
             'mode'      => $mode,
-            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
             'fields'    => Registration::FIELDS,
             'stages'    => Registration::STAGES,
             'ageBands'  => Registration::AGE_BANDS,
@@ -101,11 +98,6 @@ final class RegistrationController extends Controller
 
         if ($registration === null) {
             return $this->redirect('/register');
-        }
-
-        // Rows from before contributions were optional may still be pending payment.
-        if ($registration['status'] === 'pending' && $registration['payment_status'] === 'unpaid') {
-            return $this->redirect('/register/pay?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
         }
 
         return $this->view('register/confirmed', [

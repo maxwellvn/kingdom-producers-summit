@@ -21,7 +21,7 @@ final class KingsChatNotifier
 
         $support = '';
         if (is_paid_path((string) $registration['participation']) && ($registration['payment_status'] ?? '') === 'not_required') {
-            $support = "Attending is free. If you would like to support the programme, a contribution of "
+            $support = "If you would like to support the programme, a contribution of "
                 . espees_price(price_pence((string) $registration['participation'])) . " is suggested: "
                 . site_url() . '/register/method?resume=' . rawurlencode(PaymentService::resumeToken($reference)) . "\n\n";
         }
@@ -48,57 +48,7 @@ final class KingsChatNotifier
         return $this->deliver($registration, $text);
     }
 
-    /** Acknowledgement for a place that is held until payment is confirmed. */
-    public function sendPaymentPending(array $registration): array
-    {
-        $name = trim((string) $registration['first_name']);
-        $reference = (string) $registration['reference'];
-        $amount = espees_price(price_pence((string) $registration['participation']));
-        $link = site_url() . '/register/pay?resume='
-            . rawurlencode(PaymentService::resumeToken($reference));
-
-        $text = "Almost there, {$name}.\n\n"
-            . "Reference: {$reference}\n"
-            . "To pay: {$amount}\n\n"
-            . "Complete your payment here: {$link}\n\n"
-            . 'The Loveworld Consulate, United Kingdom';
-
-        return $this->deliver($registration, $text);
-    }
-
-    /** A day on and still unpaid: the place is not held until it is paid for. */
-    public function sendPaymentReminder(array $registration): array
-    {
-        $name = trim((string) $registration['first_name']);
-        $reference = (string) $registration['reference'];
-        $amount = espees_price(price_pence((string) $registration['participation']));
-        $payUrl = site_url() . '/register/pay?resume=' . rawurlencode(PaymentService::resumeToken($reference));
-
-        $text = "Hello {$name}, your place at the Kingdom Producers Summit is not yet secured.\n\n"
-            . "You registered a day ago and the {$amount} has not reached us. Registration alone does not hold a place; payment does. "
-            . "Places are limited and go to whoever pays first. If payment has not reached us three days from now, this place is released.\n\n"
-            . "Secure your place: {$payUrl}\n"
-            . "Reference: {$reference}\n\n"
-            . "If you have already paid, thank you; you can ignore this message.\n\n"
-            . 'The Loveworld Consulate, United Kingdom';
-
-        return $this->deliver($registration, $text);
-    }
-
-    /** The grace period passed unpaid, so the place went back to the pool. */
-    public function sendPlaceReleased(array $registration): array
-    {
-        $name = trim((string) $registration['first_name']);
-        $text = "Hello {$name}, we did not receive payment for your place at the Kingdom Producers Summit, "
-            . "so reference {$registration['reference']} has been released for someone else.\n\n"
-            . "You are welcome to register again while places remain: " . site_url() . "/register\n\n"
-            . "If you believe you did pay, reply here and we will put it right.\n\n"
-            . 'The Loveworld Consulate, United Kingdom';
-
-        return $this->deliver($registration, $text);
-    }
-
-    /** Their payment has been logged and is waiting on an organiser. */
+    /** Their contribution has been logged and is waiting on an organiser. */
     public function sendClaimReceived(array $registration): array
     {
         $name = trim((string) $registration['first_name']);

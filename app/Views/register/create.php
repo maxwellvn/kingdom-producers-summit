@@ -9,7 +9,6 @@
  * @var array    $hearAbout
  * @var string[] $countries
  * @var array    $summit
- * @var int      $seatsLeft
  */
 $errors = \App\Core\Session::get('_errors', []);
 $oldMode = \App\Core\Session::get('_old', [])['participation'] ?? null;
@@ -59,7 +58,6 @@ $stageLabels = [
           <dl class="reg__facts mono">
             <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
-            <div><dt>Cost</dt><dd>Free to attend</dd></div>
           </dl>
         </div>
       </div>
@@ -121,7 +119,6 @@ $stageLabels = [
                 <span class="ticket__label"><?= e($label) ?></span>
                 <span class="ticket__desc"><?= e($desc) ?></span>
                 <span class="ticket__cost">
-                  <strong class="ticket__amount">Free</strong>
                   <span class="ticket__was mono">Confirmed on registration</span>
                 </span>
                 <?php if ($value === 'online'): ?>
@@ -392,10 +389,7 @@ $stageLabels = [
 
         <div class="form__submit">
           <button type="submit" class="btn btn--stamp btn--lg" id="submitBtn">
-            <span class="btn__label"
-                  data-pay-label-onsite="Continue to payment &mdash; <?= e(espees_price(price_pence('onsite'))) ?>"
-                  data-pay-label-online="Continue to payment &mdash; <?= e(espees_price(price_pence('online'))) ?>"
-                  data-free-label="Complete registration">Complete registration</span>
+            <span class="btn__label">Complete registration</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </button>
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>

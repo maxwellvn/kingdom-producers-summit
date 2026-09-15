@@ -1,8 +1,8 @@
 <?php
-/** @var int $seatsLeft @var int $capacity @var string $flash */
+/** @var string $flash */
 $errors = \App\Core\Session::get('_errors', []);
 $paths = [
-    'onsite'     => ['Onsite in Rainham', 'Full access to the room. Counts against the ' . number_format($capacity) . ' places.'],
+    'onsite'     => ['Onsite in Rainham', 'Full access to the room.'],
     'online'     => ['Online', 'Livestream access. No limit on numbers.'],
     'initiative' => ['Initiative only', 'On the register, not attending the summit.'],
 ];
@@ -13,7 +13,6 @@ $paths = [
       <p class="eyebrow"><span class="eyebrow__dot"></span>Registrations</p>
       <h1 class="adm-page__title">Issue <span class="adm-page__title-sub">a place</span></h1>
     </div>
-    <p class="adm-page__meta mono"><?= number_format($seatsLeft) ?> of <?= number_format($capacity) ?> onsite places left</p>
   </header>
 
   <?php if ($flash !== ''): ?>
@@ -30,7 +29,7 @@ $paths = [
   <?php endif; ?>
 
   <p class="adm-muted" style="max-width:70ch;margin-bottom:1.6rem">
-    Gives someone a confirmed place with nothing to pay, for guests, speakers and anyone comped.
+    Registers someone on their behalf, for guests, speakers and anyone you add by hand.
     They are emailed their reference and pass straight away, and messaged on KingsChat if you add a username.
   </p>
 

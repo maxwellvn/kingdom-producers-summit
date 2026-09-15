@@ -70,7 +70,6 @@ $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsr
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/stream/announce', [AdminController::class, 'announce'], [VerifyCsrf::class, RequireAdmin::class]);
-$router->post('/admin/registrations/resend-payment', [AdminController::class, 'resendPaymentEmail'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);

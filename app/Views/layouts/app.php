@@ -75,15 +75,14 @@ $summit = $summit ?? config('app.summit');
             'name' => $summit['organiser'],
             'url' => $origin . url('/'),
         ],
+        'isAccessibleForFree' => true,
         'offers' => [
-            ['@type' => 'Offer', 'name' => 'Onsite place',
-             'price' => number_format(price_pence('onsite') / 100, 2, '.', ''),
-             'priceCurrency' => 'GBP', 'availability' => 'https://schema.org/InStock',
-             'url' => $origin . url('/register') . '?mode=onsite', 'validFrom' => '2026-01-01T00:00:00+00:00'],
-            ['@type' => 'Offer', 'name' => 'Online place',
-             'price' => number_format(price_pence('online') / 100, 2, '.', ''),
-             'priceCurrency' => 'GBP', 'availability' => 'https://schema.org/InStock',
-             'url' => $origin . url('/register') . '?mode=online', 'validFrom' => '2026-01-01T00:00:00+00:00'],
+            ['@type' => 'Offer', 'name' => 'Onsite place', 'price' => '0', 'priceCurrency' => 'GBP',
+             'availability' => 'https://schema.org/InStock', 'url' => $origin . url('/register') . '?mode=onsite',
+             'validFrom' => '2026-01-01T00:00:00+00:00'],
+            ['@type' => 'Offer', 'name' => 'Online place', 'price' => '0', 'priceCurrency' => 'GBP',
+             'availability' => 'https://schema.org/InStock', 'url' => $origin . url('/register') . '?mode=online',
+             'validFrom' => '2026-01-01T00:00:00+00:00'],
         ],
     ];
     ?>

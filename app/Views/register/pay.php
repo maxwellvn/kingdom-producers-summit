@@ -49,7 +49,7 @@
         <p class="form__fine mono">We never see your card details. Contributing is optional.</p>
       </form>
 
-      <p class="pay__fine mono">Not registered yet? <a href="<?= url('/register') ?>">Register here</a> — attending is free.</p>
+      <p class="pay__fine mono">Not registered yet? <a href="<?= url('/register') ?>">Register here</a>.</p>
     </div>
   </div>
 </section>

@@ -212,46 +212,19 @@ final class AdminController extends Controller
         ], 'layouts/admin');
     }
 
-    /** Mark an offline payment (Espees / bank claim) as received. Issues the pass by email. */
+    /** Record a contribution as received. Sends the thank-you. */
     public function confirmPayment(Request $request): Response
     {
         $registration = Registration::find((int) $request->input('id', 0));
 
         if ($registration !== null
             && is_paid_path((string) $registration['participation'])
-            && in_array($registration['payment_status'], ['not_required', 'unpaid', 'claimed'], true)) {
+            && in_array($registration['payment_status'], ['not_required', 'claimed'], true)) {
             (new PaymentService())->markPaid(
                 (string) $registration['reference'],
                 'manual-' . date('Ymd-His'),
                 price_pence((string) $registration['participation'])
             );
-        }
-
-        return $this->redirect('/admin/registrations');
-    }
-
-    /** Send the "complete your payment" email and KingsChat message again. */
-    public function resendPaymentEmail(Request $request): Response
-    {
-        $registration = Registration::find((int) $request->input('id', 0));
-
-        if ($registration === null
-            || !is_paid_path((string) $registration['participation'])
-            || $registration['payment_status'] !== 'unpaid'
-            || $registration['status'] !== 'pending') {
-            Session::flash('admin_flash', 'That registration has nothing outstanding to pay.');
-            return $this->redirect('/admin/registrations');
-        }
-
-        try {
-            (new RegistrationMail())->sendAcknowledgement($registration);
-            Registration::markPaymentEmailResent((int) $registration['id']);
-            [$messaged] = (new KingsChatNotifier())->sendPaymentPending($registration);
-            Session::flash('admin_flash', 'Payment email sent again to ' . $registration['email']
-                . ($messaged ? ', and a KingsChat message with it.' : '.'));
-        } catch (\Throwable $e) {
-            error_log('Payment email could not be re-sent: ' . $e->getMessage());
-            Session::flash('admin_flash', 'The email could not be sent. Check the mail settings and try again.');
         }
 
         return $this->redirect('/admin/registrations');
@@ -471,12 +444,9 @@ final class AdminController extends Controller
     /** Issue a place by hand, for guests, speakers and anyone comped. */
     public function issueForm(Request $request): Response
     {
-        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
 
         return $this->view('admin/issue', [
             'title'     => 'Issue a place',
-            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
-            'capacity'  => $capacity,
             'flash'     => (string) Session::get('admin_flash', ''),
         ], 'layouts/admin');
     }

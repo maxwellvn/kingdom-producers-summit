@@ -33,8 +33,8 @@ $row = static function (string $label, string $value): void {
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Payments</p>
-      <h1 class="adm-page__title">Payment <span class="adm-page__title-sub">methods</span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Support</p>
+      <h1 class="adm-page__title">Ways <span class="adm-page__title-sub">to give</span></h1>
     </div>
   </header>
 
@@ -54,7 +54,7 @@ $row = static function (string $label, string $value): void {
       <?php $toggle('pay_stripe_enabled', $stripeOn, $stripeOn ? 'On — offered to registrants' : 'Off — hidden from registrants'); ?>
       <?php $row('Keys', $stripeReady ? 'Set (' . $stripeKeyKind . ' mode)' : 'Not set — add STRIPE_SECRET_KEY to the environment'); ?>
       <?php $row('Webhook', $stripeWebhook ? 'Signing secret set' : 'Not set — add the endpoint ' . rtrim(site_url(), '/') . '/webhooks/stripe in the Stripe dashboard and put its signing secret in STRIPE_WEBHOOK_SECRET'); ?>
-      <?php $row('Charges', 'Onsite ' . espees_price(price_pence('onsite')) . ' · Online ' . espees_price(price_pence('online')) . ', taken in pounds sterling. The registrant lands on the confirmation page the moment Stripe reports the payment.'); ?>
+      <?php $row('Charges', 'Suggested contributions: onsite ' . espees_price(price_pence('onsite')) . ', online ' . espees_price(price_pence('online')) . ', taken in pounds sterling. The contribution is recorded against the registration and a thank-you goes out the moment Stripe reports it.'); ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
@@ -76,9 +76,9 @@ $row = static function (string $label, string $value): void {
       ?>
       <?php if ($shared): ?>
         <div class="form__alert" role="alert" style="margin-bottom:1rem">
-          <strong>The same link is set for both prices.</strong>
+          <strong>The same link is set for both suggested amounts.</strong>
           <span>A Revolut checkout link charges the amount it was created for, so one link cannot take
-          <?= e(espees_price(price_pence('onsite'))) ?> from onsite registrants and
+          <?= e(espees_price(price_pence('onsite'))) ?> from onsite supporters and
           <?= e(espees_price(price_pence('online'))) ?> from online ones. Create a second link and paste it below.</span>
         </div>
       <?php endif; ?>
@@ -88,7 +88,7 @@ $row = static function (string $label, string $value): void {
             'pay_revolut_url_' . $pence,
             ucfirst($path) . ' link (' . espees_price($pence) . ')',
             PaymentService::revolutUrl($pence),
-            'A Revolut checkout link is normally fixed-amount, so give each price its own link.'
+            'A Revolut checkout link is normally fixed-amount, so give each suggested amount its own link.'
         ); ?>
       <?php endforeach; ?>
     </fieldset>
@@ -97,7 +97,7 @@ $row = static function (string $label, string $value): void {
       <legend class="mono" style="padding:0 .6rem;font-size:.8rem;letter-spacing:2px;text-transform:uppercase">Contact — for enquiries only</legend>
       <?php $row('KingsChat', trim((string) config('payments.proof.kingschat')) !== '' ? config('payments.proof.kingschat') : 'Not set'); ?>
       <?php $row('Email', trim((string) config('payments.proof.email')) !== '' ? config('payments.proof.email') : (string) config('app.mail.reply_to')); ?>
-      <p class="mono" style="margin:.8rem 0 0;font-size:.75rem;opacity:.7">Delegates are never asked to send proof of payment. Confirm each claim yourself under Registrations.</p>
+      <p class="mono" style="margin:.8rem 0 0;font-size:.75rem;opacity:.7">Supporters are never asked to send proof. Confirm each claimed contribution yourself under Registrations.</p>
     </fieldset>
 
     <div><button type="submit" class="adm-btn adm-btn--dark">Save switches</button></div>

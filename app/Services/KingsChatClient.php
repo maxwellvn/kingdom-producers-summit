@@ -207,6 +207,13 @@ final class KingsChatClient
      */
     public static function refreshIfDue(): void
     {
+        // Runs from ordinary traffic, so look no more than every fifteen minutes.
+        $last = (int) Setting::get('kingschat_refresh_checked_at', '0');
+        if (time() - $last < 900) {
+            return;
+        }
+        Setting::set('kingschat_refresh_checked_at', (string) time());
+
         if (!self::isConnected()) {
             return;
         }

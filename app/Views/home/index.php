@@ -1,8 +1,6 @@
 <?php
 /**
  * @var array $summit
- * @var int   $capacity
- * @var int   $seatsLeft
  */
 ?>
 
@@ -96,10 +94,9 @@
         <div class="path__head">
           <h3 class="path__title">
             Attend in Essex
-            <span class="path__meta mono">Free to attend</span>
+            <span class="path__meta mono">In the room</span>
           </h3>
           <p class="path__cost">
-            <strong>Free</strong>
             <span class="mono">Your place is confirmed on registration</span>
           </p>
         </div>
@@ -122,7 +119,6 @@
             <span class="path__meta mono">Unlimited places</span>
           </h3>
           <p class="path__cost">
-            <strong>Free</strong>
             <span class="mono">Your place is confirmed on registration</span>
           </p>
         </div>
@@ -174,7 +170,7 @@
     </div>
 
     <div class="perks__foot" data-reveal>
-      <p class="mono">Free to attend · confirmed on registration</p>
+      <p class="mono">Your place is confirmed on registration</p>
       <a href="<?= url('/register') ?>?mode=onsite" class="btn btn--ink"><span class="btn__label">Register to attend onsite</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
     </div>
   </div>
@@ -245,7 +241,7 @@
       $faqs = [
         ['Who is the summit for?', 'Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet.'],
         ['When exactly is it?', 'The summit is on Saturday 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
-        ['Is there a cost to attend?', 'No. Attending onsite or online is free, and your place is confirmed the moment you register. Those who wish to support the programme can do so after registering; it is entirely optional and does not affect your place.'],
+        ['Is there a cost to attend?', 'No. Your place is confirmed the moment you register. Those who wish to support the programme can do so after registering; it is entirely optional and does not affect your place.'],
         ['Should I attend onsite or online?', 'Attend onsite if you want to be worked with: the 1-to-1 facilitator engagement, working rooms, networking and product showcases only happen in the room, and only part of the programme is livestreamed. Choose online if travelling to Rainham is genuinely not possible for you.'],
         ['I cannot travel to Essex. Can I still take part?', 'Yes. Choose "Attend online" for the livestreamed sessions, or use the separate "Join the initiative" path and take part in the 30, 60 and 90 day production journey from wherever you are.'],
         ['What is the Kingdom Producers portal?', 'A portal for initiative participants containing methods, case studies, capital pathways, a producer directory, summit resources and opportunities. Participants are notified as it opens.'],

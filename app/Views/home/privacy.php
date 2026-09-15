@@ -26,7 +26,7 @@
         <li><strong>Your church, zone and group</strong> — so organisers know which part of the Loveworld community you belong to.</li>
         <li><strong>Your field, stage and interests</strong> — to shape the programme and put you with the right people.</li>
         <li><strong>Your age group</strong> — for planning and safeguarding.</li>
-        <li><strong>Payment status</strong> — we record what you owe and whether it is settled. We never see or store card details: payment happens on Revolut's own pages or in your Espees wallet.</li>
+        <li><strong>Contributions</strong> — if you choose to support the programme we record the amount and how it was given. We never see or store card details: card payments happen on Stripe's or Revolut's own pages, and Espees in your Espees wallet.</li>
       </ul>
       <p>
         Onsite attendees may also tell us about <strong>dietary or access requirements</strong>. These can reveal
@@ -36,7 +36,7 @@
 
       <h2>Our lawful basis</h2>
       <ul>
-        <li><strong>Performing our agreement with you</strong> — administering your registration, your payment and your access to the summit.</li>
+        <li><strong>Performing our agreement with you</strong> — administering your registration, any contribution you choose to make, and your access to the summit.</li>
         <li><strong>Legitimate interests</strong> — running the initiative, keeping the event secure and understanding how the site is used.</li>
         <li><strong>Your consent</strong> — for optional marketing about other programmes, and for dietary or access requirements. You may withdraw either at any time.</li>
       </ul>
@@ -45,14 +45,14 @@
       <p>
         We do not sell your details or share them for anyone else's marketing. They are handled by our own
         organisers, and by the services we use to run the event: our email provider, KingsChat where you give us a
-        username, and Revolut where you pay. Those providers act on our instructions and are based in the UK or the
+        username, and Stripe or Revolut if you choose to contribute. Those providers act on our instructions and are based in the UK or the
         European Economic Area, or covered by approved safeguards where they are not.
       </p>
 
       <h2>How long we keep it</h2>
       <ul>
         <li><strong>Registrations</strong> — for the edition you registered for and two years afterwards, so we can support you through the initiative, then deleted.</li>
-        <li><strong>Payment records</strong> — six years, as tax law requires.</li>
+        <li><strong>Contribution records</strong> — six years, as tax law requires.</li>
         <li><strong>Website traffic</strong> — six months, and it never identifies you: see below.</li>
         <li><strong>Sign-in attempts</strong> — one day.</li>
       </ul>

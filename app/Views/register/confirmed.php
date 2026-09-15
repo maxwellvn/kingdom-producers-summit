@@ -94,7 +94,7 @@ $next = [
         <section class="support" aria-labelledby="supportTitle">
           <span class="mono support__kicker">Optional</span>
           <h3 class="support__title" id="supportTitle">Support the programme</h3>
-          <p class="support__lede">Attending is free. If you would like to help fund the summit and the initiative, a contribution of <strong><?= e(espees_price(price_pence((string) $r['participation']))) ?></strong> is suggested. Any amount is welcome, and so is none at all.</p>
+          <p class="support__lede">If you would like to help fund the summit and the initiative, a contribution of <strong><?= e(espees_price(price_pence((string) $r['participation']))) ?></strong> is suggested. Any amount is welcome, and so is none at all.</p>
           <a class="btn btn--stamp" href="<?= e($supportUrl) ?>"><span class="btn__label">Support the programme</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
         </section>
       <?php elseif (in_array($r['payment_status'] ?? '', ['paid', 'claimed'], true)): ?>

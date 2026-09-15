@@ -17,7 +17,7 @@ use RuntimeException;
 
 final class PaymentController extends Controller
 {
-    /** Method choice after registering, or after resuming payment. */
+    /** The ways to give, reached from the confirmation page or an emailed link. */
     public function methodPage(Request $request): Response
     {
         $registration = $this->sessionRegistration(false, $request);
@@ -43,7 +43,7 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /** Offline instructions: the Espees code or bank details, with their reference. */
+    /** How to give by Espees or Revolut, with their reference. */
     public function instructions(Request $request): Response
     {
         $type = $request->str('type');
@@ -91,7 +91,7 @@ final class PaymentController extends Controller
             );
         } catch (\Throwable $e) {
             error_log('Stripe checkout could not be opened: ' . $e->getMessage());
-            Session::flash('_errors', ['pay' => 'Card payment is not available right now. Choose another way to pay, or try again in a moment.']);
+            Session::flash('_errors', ['pay' => 'Card giving is not available right now. Choose another way, or try again in a moment.']);
             return $this->redirect('/register/method?resume=' . $resume);
         }
 
@@ -159,7 +159,7 @@ final class PaymentController extends Controller
         return Response::json(['ok' => true]);
     }
 
-    /** "Have you paid?" — the confirmation step before a claim is recorded. */
+    /** "Have you sent it?" — the confirmation step before a claim is recorded. */
     public function claimForm(Request $request): Response
     {
         $type = $request->str('type');
@@ -185,7 +185,7 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /** Record the registrant's payment claim; an admin verifies before the pass is issued. */
+    /** Record the registrant's contribution claim; an organiser confirms it later. */
     public function claim(Request $request): Response
     {
         $type = $request->str('type');
@@ -209,7 +209,7 @@ final class PaymentController extends Controller
         return $this->redirect('/register/awaiting?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
     }
 
-    /** Claim received — payment pending organiser confirmation. Organisers verify it themselves. */
+    /** Claim received — awaiting an organiser's confirmation. */
     public function awaiting(Request $request): Response
     {
         $registration = $this->sessionRegistration(false, $request);
@@ -218,7 +218,7 @@ final class PaymentController extends Controller
         }
 
         // Nothing has been claimed yet, so there is nothing to await.
-        if ($registration['payment_status'] === 'unpaid') {
+        if ($registration['payment_status'] === 'not_required') {
             return $this->redirect('/register/method?resume='
                 . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])));
         }
@@ -233,7 +233,7 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /** Resume-payment page (reached via cancel link or after a failed attempt). */
+    /** The support page reached from an email link, or after a cancelled card attempt. */
     public function payForm(Request $request): Response
     {
         // Someone who already claimed should see their status, not a payment form.
@@ -245,7 +245,7 @@ final class PaymentController extends Controller
 
         // A signed link from an email or a KingsChat message already identifies
         // them, so send them straight to the payment methods.
-        if ($request->str('resume') !== '' && $claimed !== null && in_array($claimed['payment_status'], ['not_required', 'unpaid'], true)) {
+        if ($request->str('resume') !== '' && $claimed !== null && $claimed['payment_status'] === 'not_required') {
             return $this->redirect('/register/method?resume='
                 . rawurlencode(PaymentService::resumeToken((string) $claimed['reference'])));
         }
@@ -316,11 +316,11 @@ final class PaymentController extends Controller
     }
 
     /** A pending paid registration held by the current session. */
-    private function sessionRegistration(bool $unpaidOnly = true, ?Request $request = null): ?array
+    private function sessionRegistration(bool $notYetGiven = true, ?Request $request = null): ?array
     {
         $reference = Session::get('last_registration');
 
-        // Someone who left the site to pay may come back without their session.
+        // Someone who left the site to give may come back without their session.
         // A signed resume link identifies them without asking for anything.
         if ((!is_string($reference) || $reference === '') && $request !== null) {
             $reference = PaymentService::referenceFromResumeToken($request->str('resume'));
@@ -337,8 +337,8 @@ final class PaymentController extends Controller
             || $registration['status'] === 'cancelled') {
             return null;
         }
-        // Nothing given yet (not_required, or unpaid on older rows), or a claim awaiting confirmation.
-        $statuses = $unpaidOnly ? ['not_required', 'unpaid'] : ['not_required', 'unpaid', 'claimed'];
+        // Nothing given yet, or a claim awaiting confirmation.
+        $statuses = $notYetGiven ? ['not_required'] : ['not_required', 'claimed'];
         if (!in_array($registration['payment_status'], $statuses, true)) {
             return null;
         }

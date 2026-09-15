@@ -1,12 +1,11 @@
 <?php /** @var array $summit @var array $registration @var array $methods @var string $amount */
-$standard = espees_price(standard_price_pence((string) $registration['participation']));
 ?>
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Optional contribution</p>
       <h1 class="pay__title">Support the programme</h1>
-      <p class="pay__lede">Your place is confirmed and attending is free. If you would like to help fund the summit and the initiative, a contribution of <strong><?= e($amount) ?> Espees</strong> is suggested. Choose how you would like to give. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
+      <p class="pay__lede">Your place is confirmed. If you would like to help fund the summit and the initiative, a contribution of <strong><?= e($amount) ?> Espees</strong> is suggested. Choose how you would like to give. Registration reference <strong class="mono"><?= e($registration['reference']) ?></strong>.</p>
 
       <?php $payError = \App\Core\Session::get('_errors', [])['pay'] ?? ''; ?>
       <?php if ($payError !== ''): ?>

@@ -88,7 +88,7 @@
 <section class="cta section section--stamp">
   <div class="container cta__inner">
     <div class="cta__copy" data-reveal>
-      <p class="cta__status mono">Free to join</p>
+      <p class="cta__status mono">Registration open</p>
       <h2 class="cta__title" data-split>Put your name<br>on the register.</h2>
     </div>
     <div class="cta__actions" data-reveal>

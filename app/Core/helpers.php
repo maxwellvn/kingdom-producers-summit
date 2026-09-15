@@ -56,8 +56,8 @@ function amount_for(string $method, int $amountPence): string
 }
 
 /**
- * What a registrant paid, or is due to pay, in the currency of their chosen
- * method. Before a method is chosen the amount is shown in Espees.
+ * What a registrant contributed, or the suggested amount if nothing yet, in
+ * the currency of their chosen method. Before a method is chosen it is Espees.
  */
 function paid_amount(array $registration): string
 {
@@ -110,16 +110,10 @@ function payment_method_label(?string $method): string
     return ['espees' => 'Espees', 'revolut' => 'Revolut', 'stripe' => 'card'][(string) $method] ?? 'your chosen method';
 }
 
-/** What a participation path costs after the inaugural discount, in pence. */
+/** The suggested contribution for a path, in pence. Zero for paths that are never asked. */
 function price_pence(string $participation): int
 {
     return (int) (config('pricing.prices')[$participation]['due'] ?? 0);
-}
-
-/** A path's full price before the inaugural discount, in pence. */
-function standard_price_pence(string $participation): int
-{
-    return (int) (config('pricing.prices')[$participation]['standard'] ?? 0);
 }
 
 /** True when a path has a suggested contribution: onsite and online. Attending is free either way. */

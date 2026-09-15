@@ -42,10 +42,10 @@ final class Router
         // Record the visit before the page is built, so a slow page still counts.
         \App\Services\VisitorTracker::record($request);
 
-        // Housekeeping that needs no scheduler: chase unpaid registrations.
+        // Housekeeping that needs no scheduler: keep the KingsChat token fresh.
         // Throttled inside, so it costs one cheap read on most requests.
         if (!$request->isPost()) {
-            \App\Services\PaymentReminders::runIfDue();
+            \App\Services\KingsChatClient::refreshIfDue();
         }
 
         [$class, $action, $middleware] = $match;

@@ -82,12 +82,7 @@ final class RegistrationService
 
         $email = mb_strtolower($request->str('email'));
         // One registration per email. Changing path is an organiser action until there is an event manager.
-        // A place that was released for non-payment is the exception: that person may start again.
         $existing = $email !== '' ? Registration::findByEmail($email) : null;
-        if ($existing !== null && $existing['status'] === 'cancelled' && !empty($existing['released_at'])) {
-            Registration::delete((int) $existing['id']);
-            $existing = null;
-        }
         if (!isset($errors['email']) && $existing !== null) {
             $errors['email'] = self::duplicateMessage($email) ?? 'This email is already registered.';
         }
@@ -144,7 +139,7 @@ final class RegistrationService
     }
 
     /**
-     * Create a registration on an organiser's behalf, with nothing to pay.
+     * Create a registration on an organiser's behalf.
      * Only the details needed to reach the person are asked for; the rest of
      * the form is optional here.
      *
@@ -225,7 +220,6 @@ final class RegistrationService
             'consent_terms'     => 1,
             'consent_marketing' => 0,
             'issued_by'         => mb_substr($issuedBy, 0, 190),
-            // Issued places are settled: nothing to pay and no pending state.
             'status'            => 'confirmed',
             'payment_status'    => 'not_required',
             'payment_amount'    => null,

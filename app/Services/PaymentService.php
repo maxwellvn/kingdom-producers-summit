@@ -9,7 +9,7 @@ use App\Models\Setting;
 
 final class PaymentService
 {
-    /** The pay methods shown to the registrant, in display order. */
+    /** The ways to give, in display order. */
     public static function methods(int $amountPence = 0): array
     {
         $amountPence = $amountPence ?: price_pence('onsite');
@@ -77,15 +77,15 @@ final class PaymentService
     public static function unavailableMessage(): ?string
     {
         if (self::availableMethods() === []) {
-            return 'Payment is not available yet. Your registration is saved. Please contact the organisers to complete payment; you do not need to register again.';
+            return 'Contributions are not open yet. Your place is confirmed regardless.';
         }
 
         return null;
     }
 
     /**
-     * Mark a registration paid and send the confirmation email.
-     * Returns false when it was already paid (idempotent for webhook + return URL).
+     * Record a contribution and send the thank-you.
+     * Returns false when it was already recorded (idempotent for webhook + return URL).
      */
     public function markPaid(string $reference, string $sessionId, int $amountPence = 0, ?string $method = null): bool
     {
@@ -114,7 +114,7 @@ final class PaymentService
     }
 
     /**
-     * A signed link back into the payment flow, so someone who leaves to pay
+     * A signed link back into the support flow, so someone who leaves to give
      * and returns is not stopped by a lost session.
      */
     public static function resumeToken(string $reference): string
@@ -145,8 +145,7 @@ final class PaymentService
         return substr(hash_hmac('sha256', 'KPSPAY1|' . $reference, $key), 0, 32);
     }
 
-    /** Find a pending unpaid registration by reference + email (resume payment). */
-    /** The unpaid registration behind an email address or KingsChat handle. */
+    /** The registration that may still contribute, behind an email address or KingsChat handle. */
     public function findPayable(string $identifier): ?array
     {
         return Registration::findPayableByIdentifier($identifier);

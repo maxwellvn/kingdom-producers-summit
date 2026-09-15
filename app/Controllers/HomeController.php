@@ -13,7 +13,6 @@ final class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
-        $capacity = max(1, (int) config('app.summit.onsite_capacity'));
 
         return $this->view('home/index', [
             'title'     => config('app.name') . ' — ' . config('app.summit.edition'),
@@ -22,8 +21,6 @@ final class HomeController extends Controller
                 . config('app.summit.date_day') . ' in ' . config('app.summit.city')
                 . '. Attend in person, watch online, or join the Kingdom Producers initiative.',
             'summit'    => config('app.summit'),
-            'capacity'  => $capacity,
-            'seatsLeft' => max(0, $capacity - Registration::onsiteSeatsTaken()),
         ]);
     }
 
