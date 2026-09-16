@@ -156,8 +156,12 @@ final class RegistrationMail
                 . '<p style="margin:14px 0 0"><a href="' . $supportUrl . '" style="display:inline-block;padding:12px 18px;border:2px solid #1b2242;color:#1b2242;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-size:13px">Support the programme</a></p>';
         }
 
+        $v = (array) config('app.summit.venue');
+        $venueLine = htmlspecialchars($v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'], ENT_QUOTES, 'UTF-8');
+        $directions = htmlspecialchars('https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']), ENT_QUOTES, 'UTF-8');
         $passBlock = $onsite
-            ? '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
+            ? '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6"><strong style="color:#1b2242">Where:</strong> ' . $venueLine . ' &middot; <a href="' . $directions . '" style="color:#b4232b">Directions</a></p>'
+              . '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
               . '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe and present the QR access pass at the attendance desk when you arrive.</p>'
             : ((string) $registration['participation'] === 'online'
                 ? '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Your live viewing link is sent to this email address before the programme begins. There is no pass to bring, and nothing further to do until then — just keep this reference safe.</p>'
@@ -191,7 +195,9 @@ final class RegistrationMail
             . "Registration reference: {$registration['reference']}\n"
             . "Your path: " . html_entity_decode($path) . "\n\n"
             . ($onsite
-                ? "Present your QR access pass at the attendance desk when you arrive.\n"
+                ? "Where: " . $v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'] . "\n"
+                  . "Directions: https://www.google.com/maps/dir/?api=1&destination=" . rawurlencode((string) $v['query']) . "\n"
+                  . "Present your QR access pass at the attendance desk when you arrive.\n"
                 : ((string) $registration['participation'] === 'online'
                     ? "Your live viewing link is sent to this email address before the programme begins.\n"
                     : ''))

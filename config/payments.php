@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    // Payment methods shown to paying registrants, in display order: Espees → Revolut.
+    // Ways to give, shown to anyone who chooses to support the programme.
     // Edit here and redeploy; a method only appears publicly when its details are filled.
 
     'espees' => [

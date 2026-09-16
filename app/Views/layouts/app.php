@@ -65,9 +65,12 @@ $summit = $summit ?? config('app.summit');
         'image' => [$shareImage],
         'url' => $canonical,
         'location' => [
-            ['@type' => 'Place', 'name' => $summit['city'],
-             'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Rainham',
-                           'addressRegion' => 'Essex', 'addressCountry' => 'GB']],
+            ['@type' => 'Place', 'name' => (string) config('app.summit.venue.name'),
+             'address' => ['@type' => 'PostalAddress',
+                           'streetAddress' => config('app.summit.venue.unit') . ', ' . config('app.summit.venue.name') . ', ' . config('app.summit.venue.street'),
+                           'addressLocality' => (string) config('app.summit.venue.town'),
+                           'addressRegion' => 'Essex', 'postalCode' => (string) config('app.summit.venue.postcode'),
+                           'addressCountry' => 'GB']],
             ['@type' => 'VirtualLocation', 'url' => $origin . url('/watch')],
         ],
         'organizer' => [

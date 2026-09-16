@@ -19,6 +19,8 @@
     <div class="footer__col footer__col--brand">
       <span class="footer__kicker mono"><?= e(config('app.summit.edition')) ?></span>
       <p class="footer__office"><?= e($summit['office']) ?></p>
+      <?php $fv = (array) config('app.summit.venue'); ?>
+      <p class="footer__venue mono"><?= e($fv['unit']) ?>, <?= e($fv['name']) ?>, <?= e($fv['street']) ?>, <?= e($fv['town']) ?> <?= e($fv['postcode']) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
     </div>
 
@@ -26,6 +28,7 @@
       <h4 class="footer__heading mono">Summit</h4>
       <a href="<?= url('/') ?>#summit">About the summit</a>
       <a href="<?= url('/') ?>#pathways">Ways to join</a>
+      <a href="<?= url('/') ?>#getting-there">Getting there</a>
       <a href="<?= url('/') ?>#faq">Questions</a>
       <a href="<?= url('/register') ?>">Register</a>
     </div>

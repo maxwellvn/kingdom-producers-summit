@@ -230,6 +230,46 @@
 </section>
 
 <!-- ============ FAQ ============ -->
+<section class="venue section" id="getting-there">
+  <div class="container venue__grid">
+    <div class="venue__copy" data-reveal>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Getting there</p>
+      <h2 class="section__title">Find us in Rainham.</h2>
+      <?php $v = (array) config('app.summit.venue'); $mapQuery = rawurlencode((string) $v['query']); ?>
+      <address class="venue__address">
+        <strong><?= e($v['name']) ?></strong><br>
+        <?= e($v['unit']) ?>, <?= e($v['street']) ?><br>
+        <?= e($v['town']) ?>, <?= e($v['region']) ?> <span class="mono"><?= e($v['postcode']) ?></span>
+      </address>
+      <div class="venue__maps">
+        <a class="btn btn--ink" href="https://www.google.com/maps/dir/?api=1&destination=<?= $mapQuery ?>" target="_blank" rel="noopener"><span class="btn__label">Directions on Google Maps</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
+        <a class="btn btn--outline" href="https://maps.apple.com/?daddr=<?= $mapQuery ?>" target="_blank" rel="noopener"><span class="btn__label">Apple Maps</span></a>
+        <a class="btn btn--outline" href="https://citymapper.com/directions?endaddress=<?= $mapQuery ?>" target="_blank" rel="noopener"><span class="btn__label">Citymapper</span></a>
+      </div>
+      <p class="venue__everyone"><strong>The summit is for everyone.</strong> Whatever your age, your field or how far along you are, if you want to move from consuming to producing, this day is for you. Come as you are.</p>
+    </div>
+
+    <dl class="venue__how" data-reveal>
+      <div>
+        <dt class="mono">By train</dt>
+        <dd>Rainham station is on the c2c line from London Fenchurch Street, about 25 minutes, with trains also from Limehouse, West Ham and Barking. The venue is a short walk or a few minutes by taxi from the station.</dd>
+      </div>
+      <div>
+        <dt class="mono">By bus</dt>
+        <dd>Routes 103, 165, 287 and 372 serve Rainham. Check the stop nearest Barlow Way on the day, as routes change.</dd>
+      </div>
+      <div>
+        <dt class="mono">By car</dt>
+        <dd>Off the A1306 and close to the A13, with the M25 at junction 30 a short drive away. Use the postcode <span class="mono"><?= e($v['postcode']) ?></span> for satnav. Parking is available at the business centre.</dd>
+      </div>
+      <div>
+        <dt class="mono">Arriving</dt>
+        <dd>Doors open before the <?= e($summit['date_text']) ?> start. Bring your QR pass on your phone or printed, and give your name at the desk if you have neither.</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
 <section class="faq section" id="faq">
   <div class="container faq__grid">
     <div class="faq__head" data-reveal>
@@ -239,7 +279,8 @@
     <div class="faq__list" data-reveal>
       <?php
       $faqs = [
-        ['Who is the summit for?', 'Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet.'],
+        ['Who is the summit for?', 'Everyone. Anyone who wants to move from consuming to producing: founders, creatives, engineers, students, teachers, ministers and professionals of every age and field. You do not need a business yet, and you do not need to be a member of anything.'],
+        ['Where exactly is the venue?', 'Unit C2, Thamesview Business Centre, Barlow Way, Rainham, London RM13 8BT. See Getting there above for train, bus and car directions and one-tap map links.'],
         ['When exactly is it?', 'The summit is on Saturday 19th September 2026 at 12 noon in Rainham, Essex, United Kingdom.'],
         ['Is there a cost to attend?', 'No. Your place is confirmed the moment you register. Those who wish to support the programme can do so after registering; it is entirely optional and does not affect your place.'],
         ['Should I attend onsite or online?', 'Attend onsite if you want to be worked with: the 1-to-1 facilitator engagement, working rooms, networking and product showcases only happen in the room, and only part of the programme is livestreamed. Choose online if travelling to Rainham is genuinely not possible for you.'],

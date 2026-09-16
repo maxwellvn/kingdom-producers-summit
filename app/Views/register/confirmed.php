@@ -4,7 +4,7 @@ $r = $registration;
 $pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
-    'Join us on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
+    'Join us on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' at ' . config('app.summit.venue.unit') . ', ' . config('app.summit.venue.name') . ', ' . config('app.summit.venue.street') . ', Rainham ' . config('app.summit.venue.postcode') . '. Directions are on the summit page.',
     'Your reference code is your ticket reference. Keep it — you will be asked for it at registration on the day.',
     'The programme and travel notes will follow by email.',
   ],
