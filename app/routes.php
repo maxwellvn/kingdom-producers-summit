@@ -22,6 +22,8 @@ $router->get('/privacy', [HomeController::class, 'privacy']);
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
 $router->get('/register/confirmed', [RegistrationController::class, 'confirmed']);
+$router->get('/register/calendar.ics', [RegistrationController::class, 'calendar']);
+$router->post('/register/resend', [RegistrationController::class, 'resend'], [VerifyCsrf::class]);
 
 // The protected stream.
 $router->get('/watch', [WatchController::class, 'show']);

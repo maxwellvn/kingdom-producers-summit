@@ -63,6 +63,9 @@ $stageLabels = [
       </div>
     </aside>
 
+    <?php if ($notice = \App\Core\Session::get('_notice')): ?>
+      <p class="form__alert form__alert--ok" role="status"><?= e($notice) ?></p>
+    <?php endif; ?>
     <!-- ===== Form ===== -->
     <form class="form" method="post" action="<?= url('/register') ?>" novalidate id="regForm">
       <?= csrf_field() ?>
@@ -395,6 +398,13 @@ $stageLabels = [
           <p class="form__fine mono">You'll receive a reference code on the next page.</p>
         </div>
       </fieldset>
+    </form>
+    <form class="lost-pass" method="post" action="<?= url('/register/resend') ?>" id="lost-pass">
+      <?= csrf_field() ?>
+      <span class="mono">Already registered but lost your pass?</span>
+      <label class="sr-only" for="resendEmail">Email address</label>
+      <input type="email" id="resendEmail" name="email" required autocomplete="email" placeholder="The email you registered with">
+      <button type="submit" class="btn btn--outline"><span class="btn__label">Resend my pass</span></button>
     </form>
   </div>
 </section>

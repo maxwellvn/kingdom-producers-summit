@@ -40,6 +40,9 @@ return [
             // What the maps apps are given, so everyone lands on the same pin.
             'query'    => 'Unit C2, Thamesview Business Centre, Barlow Way, Rainham RM13 8BT',
         ],
+        // ISO start/end drive the countdown and the calendar file; the text lines are for reading.
+        'starts_at' => '2026-09-19T12:00:00+01:00',
+        'ends_at'   => '2026-09-19T18:00:00+01:00',
         'date_text' => 'Saturday 19th September 2026, 12 noon',
         'date_day'  => 'Saturday 19th September 2026',
         'time'      => '12 noon',

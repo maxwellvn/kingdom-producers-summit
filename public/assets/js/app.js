@@ -422,11 +422,6 @@
     function applyPath(path) {
       conditionals.forEach(function (el) { el.classList.toggle('is-active', el.getAttribute('data-only') === path); });
       onsiteHide.forEach(function (el) { el.style.display = path === 'onsite' ? 'none' : ''; });
-      var submitLabel = document.querySelector('#submitBtn .btn__label');
-      if (submitLabel) {
-        var label = submitLabel.getAttribute('data-pay-label-' + path) || submitLabel.getAttribute('data-free-label');
-        if (label) submitLabel.innerHTML = label;
-      }
     }
 
     function stepFromScroll() {
@@ -678,6 +673,22 @@
   }
 
   /* ---------- Copy-to-clipboard buttons ---------- */
+  // "Starting in 3d 4h" on the pass; hides itself once the day arrives.
+  document.querySelectorAll('[data-countdown]').forEach(function (el) {
+    var at = Date.parse(el.getAttribute('data-countdown'));
+    var out = el.querySelector('span');
+    if (isNaN(at) || !out) return;
+    var tick = function () {
+      var left = Math.floor((at - Date.now()) / 1000);
+      if (left <= 0) { el.hidden = true; return; }
+      var d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600), m = Math.floor(left % 3600 / 60);
+      out.textContent = d > 0 ? d + 'd ' + h + 'h' : h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+      el.hidden = false;
+    };
+    tick();
+    setInterval(tick, 60000);
+  });
+
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       // data-copy holds the text itself, or a #id whose text should be copied.

@@ -9,7 +9,7 @@ $next = [
     'The programme and travel notes will follow by email.',
   ],
   'online' => [
-    'Watch the main sessions by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — your link arrives by email.',
+    'Watch the main sessions by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . '. Open ' . site_url() . '/watch and sign in with this email or your reference.',
     'The workshops, mentoring, clinic and networking happen in the room and are not part of online access.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
@@ -27,7 +27,8 @@ $next = [
     <p class="mono confirmed__edition"><?= e($summit['short']) ?> · <?= e($summit['edition']) ?></p>
     <div class="confirmed__headline">
       <h1 class="confirmed__title">You're in,<br><?= e($r['first_name']) ?>.</h1>
-      <p>Your place is registered. Keep this page or save your reference—the access pass is ready when you arrive.</p>
+      <p>Your place is registered. A copy of this pass has been sent to <strong><?= e($r['email']) ?></strong>.</p>
+      <p class="mono confirmed__countdown" data-countdown="<?= e($summit['starts_at']) ?>" hidden>Starting in <span></span></p>
     </div>
   </div>
 
@@ -59,7 +60,8 @@ $next = [
           <?php if ($onsite): ?>
             <p>Present this QR code to the attendance team. It confirms your arrival without exposing your registration details.</p>
           <?php elseif ($r['participation'] === 'online'): ?>
-            <p>Your live viewing link is sent to this email address before the programme begins. There is no pass to bring, and nothing further to do until then.</p>
+            <p>On the day, sign in with this email or your reference to watch. There is no pass to bring.</p>
+            <a class="btn btn--stamp" href="<?= url('/watch') ?>"><span class="btn__label">Open the live room</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
           <?php else: ?>
             <p>Keep this reference for any correspondence with us about the initiative.</p>
           <?php endif; ?>
@@ -101,6 +103,28 @@ $next = [
         <p class="support__thanks mono">Thank you for supporting the programme.</p>
       <?php endif; ?>
 
+<?php
+$gcal = 'https://calendar.google.com/calendar/render?' . http_build_query([
+  'action' => 'TEMPLATE',
+  'text' => $summit['short'] . ' — ' . $summit['edition'],
+  'dates' => gmdate('Ymd\THis\Z', strtotime($summit['starts_at'])) . '/' . gmdate('Ymd\THis\Z', strtotime($summit['ends_at'])),
+  'location' => $summit['venue']['query'],
+  'details' => site_url(),
+]);
+$shareText = "I've registered for " . $summit['short'] . ' (' . $summit['date_day'] . '). Join me: ' . site_url() . '/register';
+?>
+      <div class="confirmed__tools">
+        <span class="mono confirmed__tools-label">Add to calendar</span>
+        <div class="confirmed__tools-row">
+          <a class="btn btn--outline" href="<?= e($gcal) ?>" target="_blank" rel="noopener"><span class="btn__label">Google</span></a>
+          <a class="btn btn--outline" href="<?= url('/register/calendar.ics') ?>" download><span class="btn__label">Apple / Outlook (.ics)</span></a>
+        </div>
+        <span class="mono confirmed__tools-label">Invite a friend</span>
+        <div class="confirmed__tools-row">
+          <a class="btn btn--outline" href="https://wa.me/?text=<?= rawurlencode($shareText) ?>" target="_blank" rel="noopener"><span class="btn__label">WhatsApp</span></a>
+          <button type="button" class="btn btn--outline" data-copy="<?= e(site_url() . '/register') ?>"><span class="btn__label">Copy link</span></button>
+        </div>
+      </div>
       <div class="confirmed__actions">
         <a class="btn btn--ink" href="<?= url('/about') ?>"><span class="btn__label">Read about the initiative</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
         <a class="btn btn--outline" href="<?= url('/') ?>"><span class="btn__label">Back to the summit</span></a>

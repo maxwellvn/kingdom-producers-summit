@@ -114,6 +114,54 @@ final class RegistrationController extends Controller
         ]);
     }
 
+    /** The summit as a calendar file, the same for everyone; no details of the registrant in it. */
+    public function calendar(): Response
+    {
+        $s = config('app.summit');
+        $venue = (string) $s['venue']['query'];
+        $stamp = fn (string $iso): string => gmdate('Ymd\THis\Z', strtotime($iso));
+        $fold = fn (string $v): string => str_replace(["\\", ";", ",", "\n"], ["\\\\", "\\;", "\\,", "\\n"], $v);
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//' . $fold((string) $s['organiser']) . '//Summit//EN', 'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            'UID:summit-' . md5((string) $s['starts_at'] . site_url()) . '@' . parse_url(site_url(), PHP_URL_HOST),
+            'DTSTAMP:' . gmdate('Ymd\THis\Z'),
+            'DTSTART:' . $stamp((string) $s['starts_at']),
+            'DTEND:' . $stamp((string) $s['ends_at']),
+            'SUMMARY:' . $fold($s['short'] . ' — ' . $s['edition']),
+            'LOCATION:' . $fold($venue),
+            'DESCRIPTION:' . $fold('Your pass and details: ' . site_url() . '/register'),
+            'URL:' . site_url(),
+            'END:VEVENT', 'END:VCALENDAR', '',
+        ]);
+
+        return (new Response($ics, 200))
+            ->header('Content-Type', 'text/calendar; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="producers-summit.ics"');
+    }
+
+    /** Re-sends the confirmation email. Always answers the same way, so nobody can probe which emails are registered. */
+    public function resend(Request $request): Response
+    {
+        // ponytail: per-session cap; move to an IP table if abuse shows up in the mail logs.
+        $sent = (int) Session::get('resend_count', 0);
+        $email = strtolower(trim($request->str('email')));
+        if ($sent < 3 && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Session::put('resend_count', $sent + 1);
+            $registration = Registration::findByEmail($email);
+            if ($registration !== null && $registration['status'] !== 'cancelled') {
+                try {
+                    (new RegistrationMail())->send($registration);
+                } catch (\Throwable $e) {
+                    error_log('Confirmation email could not be re-sent.');
+                }
+            }
+        }
+        Session::flash('_notice', 'If that email is registered, your pass is on its way. Check spam or promotions too.');
+
+        return $this->redirect('/register#lost-pass');
+    }
+
     /** The attendee's access-pass QR as a PNG (embedded in confirmation emails). */
     public function qr(Request $request): Response
     {
