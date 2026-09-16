@@ -19,7 +19,7 @@ Create a new Coolify resource from this repository and select **Docker Compose**
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_ENCRYPTION` — SMTP connection settings
 - `MAIL_USERNAME`, `MAIL_PASSWORD` — authenticated mailbox credentials
 
-Payment methods, the Espees code and the Revolut links are edited in Admin > Payments and take effect immediately.
+Attending is free. The optional ways to give, the Espees code and the Revolut links are edited in Admin > Support and take effect immediately.
 
 The application container waits for MySQL and runs outstanding migrations whenever it starts. Database data is retained in the `producers_db` volume.
 

@@ -47,10 +47,9 @@ try {
     verify(str_contains(RegistrationService::duplicateMessage(strtoupper($row['email'])), 'already registered'), 'duplicate message is case insensitive');
     [$errors] = $service->validate($request);
     verify(str_contains($errors['email'] ?? '', 'already registered'), 'duplicate form submission is refused');
-    // Rows from before contributions were optional: pending and unpaid never reach the door.
     $update = $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ?, participation = ? WHERE reference = ?');
-    $update->execute(['pending', 'unpaid', 'onsite', $ref]);
-    verify($scan($token)['ok'] === false, 'an older unconfirmed row is still refused at the door');
+    $update->execute(['pending', 'not_required', 'onsite', $ref]);
+    verify($scan($token)['ok'] === false, 'an unconfirmed row is refused at the door');
     verify($scan(substr($token, 0, -1) . (str_ends_with($token, 'a') ? 'b' : 'a'))['ok'] === false, 'tampered QR rejected');
     verify(AttendanceService::referenceFromToken('https://example.org/admin/scanner?token=' . rawurlencode($token)) === $ref, 'copied scanner URL decodes');
     $update->execute(['confirmed', 'not_required', 'onsite', $ref]);
@@ -106,11 +105,7 @@ try {
     verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
         'an initiative place may not watch');
     $pdo->prepare('UPDATE registrations SET participation = ?, payment_status = ? WHERE reference = ?')
-        ->execute(['online', 'unpaid', $watcher['reference']]);
-    verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
-        'an older unpaid row may not watch');
-    $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')
-        ->execute(['not_required', $watcher['reference']]);
+        ->execute(['online', 'not_required', $watcher['reference']]);
     verify(App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
         'a free online place may watch');
     $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')
@@ -160,9 +155,7 @@ try {
     verify($gate($watchEmail), 'a confirmed onsite delegate may watch online');
     $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
         ->execute(['pending', 'claimed', $watchRef]);
-    verify($gate($watchEmail), 'an onsite delegate awaiting payment confirmation may still watch');
-    $pdo->prepare('UPDATE registrations SET payment_status = ? WHERE reference = ?')->execute(['unpaid', $watchRef]);
-    verify(!$gate($watchEmail), 'an unpaid registration still cannot watch');
+    verify($gate($watchEmail), 'an onsite delegate whose contribution awaits confirmation may still watch');
     $pdo->prepare('UPDATE registrations SET status = ?, payment_status = ? WHERE reference = ?')
         ->execute(['cancelled', 'paid', $watchRef]);
     verify(!$gate($watchEmail), 'a cancelled registration cannot watch');
@@ -191,30 +184,24 @@ try {
         'an organiser can clear the whole board');
     App\Models\Setting::set('comments_enabled', $wasOpen);
 
-    // Someone who says they have paid is never chased or released.
+    // Contributions are optional. A claim simply waits for an organiser; nothing else happens to it.
     $claimEmail = 'claim-' . bin2hex(random_bytes(8)) . '@example.org';
     [$claimErrors, $claimClean] = $service->validate(new Request('POST', '/register', [], [
-        'participation' => 'onsite', 'first_name' => 'Claimed', 'last_name' => 'Payer',
+        'participation' => 'onsite', 'first_name' => 'Claimed', 'last_name' => 'Giver',
         'email' => $claimEmail, 'phone' => '+447700900143', 'country' => 'United Kingdom',
         'age_band' => '25-34', 'zone' => 'UK Zone 1', 'field' => Registration::FIELDS[0],
         'producer_stage' => 'build', 'consent_terms' => '1',
     ], []));
-    verify($claimErrors === [], 'claimed-payer registration validates');
+    verify($claimErrors === [], 'giver registration validates');
     $claimRow = $service->register($claimClean);
-    $pdo->prepare('UPDATE registrations SET created_at = DATE_SUB(NOW(), INTERVAL 30 HOUR) WHERE id = ?')->execute([$claimRow['id']]);
-    verify(!in_array($claimRow['id'], array_column(Registration::dueForPaymentReminder(), 'id')), 'a free place is never reminded');
-    verify(!in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'a free place is never released');
-    $pdo->prepare("UPDATE registrations SET status = 'pending', payment_status = 'unpaid',
-                   payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?")->execute([$claimRow['id']]);
-    verify(in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'an older unpaid row past the grace period would be released');
-    $pdo->prepare("UPDATE registrations SET payment_status = 'claimed', payment_method = 'espees',
-                   payment_reminder_sent_at = NULL WHERE id = ?")->execute([$claimRow['id']]);
-    verify(!in_array($claimRow['id'], array_column(Registration::dueForPaymentReminder(), 'id')), 'a claimed payment is not reminded');
-    $pdo->prepare('UPDATE registrations SET payment_reminder_sent_at = DATE_SUB(NOW(), INTERVAL 80 HOUR) WHERE id = ?')
-        ->execute([$claimRow['id']]);
-    verify(!in_array($claimRow['id'], array_column(Registration::dueForRelease(), 'id')), 'a claimed payment is not released');
-    verify(!Registration::release((int) $claimRow['id']), 'release refuses a claimed payment even if asked directly');
-    verify(Registration::find($claimRow['id'])['status'] === 'pending', 'the claimed registration is untouched');
+    verify($claimRow['status'] === 'confirmed' && $claimRow['payment_status'] === 'not_required', 'a new registration owes nothing');
+    verify(Registration::claimPayment((string) $claimRow['reference'], 'espees'), 'a contribution can be claimed');
+    $claimed = Registration::find($claimRow['id']);
+    verify($claimed['status'] === 'confirmed' && $claimed['payment_status'] === 'claimed', 'a claim leaves the place confirmed');
+    verify(!Registration::claimPayment((string) $claimRow['reference'], 'revolut'), 'a claim cannot be made twice');
+    verify(Registration::markPaid((string) $claimRow['reference'], 'manual', 5000, 'espees'), 'an organiser can confirm the contribution');
+    verify(!Registration::markPaid((string) $claimRow['reference'], 'manual', 5000, 'espees'), 'confirming twice does nothing');
+    verify(str_contains(RegistrationService::duplicateMessage($claimEmail), 'thank you for supporting'), 'the supporter is thanked if they register again');
 
     // A place issued by an organiser is settled: confirmed, nothing to pay.
     $issued = new Request('POST', '/admin/issue', [], [
@@ -272,11 +259,10 @@ try {
     [, $namedClean] = $service->validate($namedField);
     verify($namedClean['field_other'] === null, 'a named field stores no other text');
 
-    // There is no cap on onsite places: the old capacity figure is exceeded without complaint.
-    $capacity = max(1, (int) config('app.summit.onsite_capacity'));
+    // There is no cap on onsite places.
     $filler = $pdo->prepare('INSERT INTO registrations (reference, participation, first_name, last_name, email, country, age_band, status, payment_status) '
         . "VALUES (?, 'onsite', 'Seat', 'Filler', ?, 'United Kingdom', '25-34', 'confirmed', 'not_required')");
-    for ($i = Registration::onsiteSeatsTaken(); $i <= $capacity; $i++) {
+    for ($i = 0; $i < 120; $i++) {
         $filler->execute(['KPS26-F' . str_pad((string) $i, 5, '0', STR_PAD_LEFT), "seat-{$i}-" . bin2hex(random_bytes(4)) . '@example.org']);
     }
     $overflow = new Request('POST', '/register', [], [
@@ -286,7 +272,7 @@ try {
         'zone' => 'UK Zone 1', 'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
     ], []);
     [$overflowErrors] = $service->validate($overflow);
-    verify($overflowErrors === [], 'onsite registration is accepted past the old capacity');
+    verify($overflowErrors === [], 'onsite registration is accepted however many are already in');
 } finally {
     $pdo->rollBack();
 }

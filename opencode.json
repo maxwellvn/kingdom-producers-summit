@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "nexa-hub": {
+      "type": "remote",
+      "url": "http://127.0.0.1:4257/nexa-hub/mcp",
+      "enabled": true
+    },
+    "remotion-mcp": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@remotion/mcp@latest"
+      ],
+      "enabled": true
+    }
+  }
+}
