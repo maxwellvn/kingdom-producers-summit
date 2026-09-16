@@ -624,6 +624,7 @@ body.menu-open { overflow: hidden; }
 .form__row--title { grid-template-columns: 120px 1fr 1fr; }
 .form__alert { padding: 1rem 1.2rem; border-left: 3px solid var(--stamp); background: rgba(180,35,43,.06); color: var(--stamp-deep); display: flex; flex-direction: column; gap: .2rem; font-size: .95rem; }
 .form__alert--ok { border-left-color: var(--ink); background: rgba(27,34,66,.06); color: var(--ink); margin-bottom: 1.5rem; }
+.reg__grid > :not(.reg__aside) { grid-column: 2; }
 .lost-pass { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; max-width: 760px; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(27,34,66,.18); }
 .lost-pass > span { flex-basis: 100%; color: var(--muted-2); }
 .lost-pass input { flex: 1 1 16rem; padding: .8rem 1rem; border: 1px solid rgba(27,34,66,.3); background: var(--paper); font: inherit; }
@@ -901,6 +902,7 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .perk__desc { max-width: none; }
   .reg__grid { grid-template-columns: 1fr; }
   .reg__aside { position: static; }
+  .reg__grid > :not(.reg__aside) { grid-column: 1; }
   .reg__steps { display: none; }
   .tickets { grid-template-columns: 1fr; }
   .ticket__punch { display: none; }
