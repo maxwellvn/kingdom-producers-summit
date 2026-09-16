@@ -26,9 +26,17 @@ final class KingsChatNotifier
                 . site_url() . '/register/method?resume=' . rawurlencode(PaymentService::resumeToken($reference)) . "\n\n";
         }
 
+        $where = '';
+        if ((string) $registration['participation'] === 'onsite') {
+            $v = (array) config('app.summit.venue');
+            $where = "Where: {$v['unit']}, {$v['name']}, {$v['street']}, {$v['town']} {$v['postcode']}\n"
+                . 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n\n";
+        }
+
         $text = "You are registered, {$name}.\n\n"
             . "Reference: {$reference}\n"
             . "Summit: {$summit['date_text']}, {$summit['city']}\n\n"
+            . $where
             . "Your pass and full details: {$link}\n\n"
             . $support
             . 'The Loveworld Consulate, United Kingdom';

@@ -160,7 +160,8 @@ final class RegistrationMail
         $venueLine = htmlspecialchars($v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'], ENT_QUOTES, 'UTF-8');
         $directions = htmlspecialchars('https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']), ENT_QUOTES, 'UTF-8');
         $passBlock = $onsite
-            ? '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6"><strong style="color:#1b2242">Where:</strong> ' . $venueLine . ' &middot; <a href="' . $directions . '" style="color:#b4232b">Directions</a></p>'
+            ? '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6"><strong style="color:#1b2242">Where:</strong> ' . $venueLine . '</p>'
+              . '<p style="margin:12px 0 0"><a href="' . $directions . '" style="display:inline-block;padding:12px 18px;border:2px solid #1b2242;color:#1b2242;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-size:13px">Get directions</a></p>'
               . '<div style="margin:24px 0 6px;text-align:center"><img src="' . $qrUrl . '" width="180" height="180" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
               . '<p style="margin:26px 0 0;color:#6e6857;font-size:15px;line-height:1.6">Keep this reference safe and present the QR access pass at the attendance desk when you arrive.</p>'
             : ((string) $registration['participation'] === 'online'
@@ -196,7 +197,7 @@ final class RegistrationMail
             . "Your path: " . html_entity_decode($path) . "\n\n"
             . ($onsite
                 ? "Where: " . $v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'] . "\n"
-                  . "Directions: https://www.google.com/maps/dir/?api=1&destination=" . rawurlencode((string) $v['query']) . "\n"
+                  . "Get directions: https://www.google.com/maps/dir/?api=1&destination=" . rawurlencode((string) $v['query']) . "\n"
                   . "Present your QR access pass at the attendance desk when you arrive.\n"
                 : ((string) $registration['participation'] === 'online'
                     ? "Your live viewing link is sent to this email address before the programme begins.\n"
