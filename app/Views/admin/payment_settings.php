@@ -1,4 +1,4 @@
-<?php /** @var array $flash @var bool $paymentsLive */
+<?php /** @var array $flash @var bool $paymentsLive @var array $sponsorships @var int $sponsorTotal */
 use App\Models\Setting;
 use App\Services\PaymentService;
 $espeesOn = Setting::get('pay_espees_enabled', '1') === '1';
@@ -91,6 +91,7 @@ $row = static function (string $label, string $value): void {
             'A Revolut checkout link is normally fixed-amount, so give each suggested amount its own link.'
         ); ?>
       <?php endforeach; ?>
+      <?php $textField('pay_revolut_url_sponsor', 'Sponsor link (open amount)', PaymentService::sponsorRevolutUrl(), 'Used on /sponsor. Make this one an open-amount link so the giver types their own figure.'); ?>
     </fieldset>
 
     <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.4rem">
@@ -102,4 +103,35 @@ $row = static function (string $label, string $value): void {
 
     <div><button type="submit" class="adm-btn adm-btn--dark">Save switches</button></div>
   </form>
+
+  <h2 class="adm-page__title" id="sponsorships" style="margin-top:3rem;font-size:1.6rem">Sponsorships <span class="adm-page__title-sub">from /sponsor</span></h2>
+  <p class="adm-muted mono" style="margin:.4rem 0 1.2rem">£<?= number_format($sponsorTotal / 100, 2) ?> confirmed. Card gifts confirm themselves; Espees and Revolut gifts wait here until you have seen the money.</p>
+  <?php if (!$sponsorships): ?>
+    <p class="adm-muted">No sponsorships yet. Share <a href="<?= url('/sponsor') ?>"><?= e(rtrim(site_url(), '/')) ?>/sponsor</a>.</p>
+  <?php else: ?>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead><tr><th>When</th><th>Name</th><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      <?php foreach ($sponsorships as $s): ?>
+        <tr>
+          <td class="mono"><?= e(date('j M, H:i', strtotime($s['created_at']))) ?></td>
+          <td><?= e($s['name']) ?></td>
+          <td><a href="mailto:<?= e($s['email']) ?>"><?= e($s['email']) ?></a></td>
+          <td class="mono">£<?= number_format($s['amount_pence'] / 100, 2) ?></td>
+          <td><?= e(ucfirst($s['method'])) ?></td>
+          <td><span class="adm-pill adm-pill--<?= e($s['status']) ?>"><?= e(ucfirst($s['status'])) ?></span></td>
+          <td>
+            <?php if ($s['status'] !== 'paid'): ?>
+              <form method="post" action="<?= url('/admin/sponsorships/confirm') ?>"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
+                <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem">Confirm received</button>
+              </form>
+            <?php endif; ?>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <?php endif; ?>
 </section>

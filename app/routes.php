@@ -6,6 +6,7 @@ use App\Controllers\AdminController;
 use App\Controllers\ConsentController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
+use App\Controllers\SponsorController;
 use App\Controllers\PresenceController;
 use App\Controllers\RegistrationController;
 use App\Controllers\WatchController;
@@ -45,6 +46,14 @@ $router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
 $router->get('/register/stripe', [PaymentController::class, 'stripeStart']);
 $router->get('/register/stripe/return', [PaymentController::class, 'stripeReturn']);
 // Stripe signs this itself, so it carries no CSRF token.
+$router->get('/sponsor', [SponsorController::class, 'show']);
+$router->post('/sponsor', [SponsorController::class, 'start'], [VerifyCsrf::class]);
+$router->get('/sponsor/send', [SponsorController::class, 'send']);
+$router->post('/sponsor/send', [SponsorController::class, 'claim'], [VerifyCsrf::class]);
+$router->get('/sponsor/stripe/return', [SponsorController::class, 'stripeReturn']);
+$router->get('/sponsor/thanks', [SponsorController::class, 'thanks']);
+$router->post('/admin/sponsorships/confirm', [AdminController::class, 'confirmSponsorship'], [VerifyCsrf::class, RequireAdmin::class]);
+
 $router->post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook']);
 
 // Cookie consent log: anonymous audit row only, no session/CSRF.

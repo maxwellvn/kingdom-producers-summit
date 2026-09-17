@@ -36,6 +36,7 @@
     <div class="footer__col">
       <h4 class="footer__heading mono">Initiative</h4>
       <a href="<?= url('/about') ?>">Kingdom Producers</a>
+      <a href="<?= url('/sponsor') ?>">Sponsor</a>
       <a href="<?= url('/register') ?>?mode=initiative">Join the initiative</a>
     </div>
 

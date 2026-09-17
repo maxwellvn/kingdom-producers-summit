@@ -146,7 +146,13 @@ final class PaymentController extends Controller
             || ($event['type'] ?? '') === 'checkout.session.async_payment_succeeded') {
             $session = (array) ($event['data']['object'] ?? []);
             $reference = (string) ($session['client_reference_id'] ?? '');
-            if ($reference !== '' && ($session['payment_status'] ?? '') === 'paid') {
+            if (($session['metadata']['kind'] ?? '') === 'sponsorship' && ($session['payment_status'] ?? '') === 'paid') {
+                \App\Models\Sponsorship::markPaid(
+                    (int) ($session['metadata']['sponsorship_id'] ?? 0),
+                    (string) ($session['id'] ?? 'stripe'),
+                    (int) ($session['amount_total'] ?? 0)
+                );
+            } elseif ($reference !== '' && ($session['payment_status'] ?? '') === 'paid') {
                 (new PaymentService())->markPaid(
                     $reference,
                     (string) ($session['id'] ?? 'stripe'),

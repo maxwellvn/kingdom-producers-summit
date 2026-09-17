@@ -14,6 +14,7 @@ use App\Models\Comment;
 use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
+use App\Models\Sponsorship;
 use App\Services\Announcer;
 use App\Services\AttendanceService;
 use App\Services\StreamService;
@@ -239,7 +240,20 @@ final class AdminController extends Controller
             'title'      => 'Payment methods',
             'flash'      => (string) Session::get('admin_flash', ''),
             'paymentsLive' => PaymentService::unavailableMessage() === null,
+            'sponsorships' => Sponsorship::recent(),
+            'sponsorTotal' => Sponsorship::totalPaidPence(),
         ], 'layouts/admin');
+    }
+
+    /** An Espees or Revolut gift has shown up in the account: mark it paid. */
+    public function confirmSponsorship(Request $request): Response
+    {
+        $s = Sponsorship::find((int) $request->input('id', 0));
+        if ($s !== null && $s['status'] !== 'paid') {
+            Sponsorship::markPaid((int) $s['id'], 'manual-' . date('Ymd-His'), (int) $s['amount_pence']);
+        }
+
+        return $this->redirect('/admin/payments#sponsorships');
     }
 
     public function savePaymentSettings(Request $request): Response
@@ -249,6 +263,11 @@ final class AdminController extends Controller
         }
 
         Setting::set('pay_espees_code', mb_substr(trim($request->str('pay_espees_code')), 0, 120));
+
+        $sponsorUrl = trim($request->str('pay_revolut_url_sponsor'));
+        if ($sponsorUrl === '' || filter_var($sponsorUrl, FILTER_VALIDATE_URL)) {
+            Setting::set('pay_revolut_url_sponsor', $sponsorUrl);
+        }
 
         // A Revolut checkout link is usually fixed-amount, so each price has its own.
         foreach (Registration::PARTICIPATION as $path) {

@@ -448,6 +448,18 @@
     window.addEventListener('resize', stepFromScroll);
     stepFromScroll();
 
+    // Coming back with the browser's back button restores the page as it was
+    // left, button disabled and all. Put it back the way it started.
+    window.addEventListener('pageshow', function () {
+      var btn = document.getElementById('submitBtn');
+      if (btn && btn.disabled) {
+        btn.disabled = false;
+        btn.classList.remove('is-loading');
+        var label = btn.querySelector('.btn__label');
+        if (label && btn.dataset.prev) label.textContent = btn.dataset.prev;
+      }
+    });
+
     // Gentle live validation feedback on submit
     form.addEventListener('submit', function () {
       var btn = document.getElementById('submitBtn');
@@ -688,6 +700,31 @@
     tick();
     setInterval(tick, 60000);
   });
+
+  // Sponsor amount chips are radios, so the browser brings them back after
+  // a back-button return; the amount box is refilled from whichever is checked.
+  var amountBox = document.getElementById('amount');
+  var presets = document.querySelectorAll('input[name="preset"]');
+  if (amountBox && presets.length) {
+    var fillFromPreset = function (focusOther) {
+      var checked = document.querySelector('input[name="preset"]:checked');
+      if (!checked) return;
+      if (checked.value) amountBox.value = checked.value;
+      else if (focusOther) { amountBox.value = ''; amountBox.focus(); }
+    };
+    presets.forEach(function (r) { r.addEventListener('change', function () { fillFromPreset(true); }); });
+    amountBox.addEventListener('input', function () {
+      var match = document.querySelector('input[name="preset"][value="' + amountBox.value.replace(/"/g, '') + '"]');
+      (match || presets[presets.length - 1]).checked = true;
+    });
+    window.addEventListener('pageshow', function () { if (!amountBox.value) fillFromPreset(false); });
+  }
+
+  // A form that came back with errors: bring the first one into view.
+  var firstError = document.querySelector('.field__error, .form__error');
+  if (firstError && !location.hash) {
+    firstError.closest('.field, fieldset, form').scrollIntoView({ block: 'center' });
+  }
 
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
     btn.addEventListener('click', function () {

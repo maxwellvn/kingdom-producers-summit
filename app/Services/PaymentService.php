@@ -68,6 +68,14 @@ final class PaymentService
         return trim((string) config('payments.revolut.url'));
     }
 
+    /** The open-amount Revolut link for sponsors: admin panel first, then config. */
+    public static function sponsorRevolutUrl(): string
+    {
+        $saved = trim(Setting::get('pay_revolut_url_sponsor', ''));
+
+        return $saved !== '' ? $saved : trim((string) config('payments.revolut.sponsor_url'));
+    }
+
     /** Only the methods an actual registrant may use right now. */
     public static function availableMethods(int $amountPence = 0): array
     {

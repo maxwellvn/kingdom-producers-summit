@@ -44,6 +44,7 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
       <a href="<?= url('/') ?>#summit" class="mobile-menu__link">The Summit</a>
       <a href="<?= url('/') ?>#pathways" class="mobile-menu__link">Ways to Join</a>
       <a href="<?= url('/about') ?>" class="mobile-menu__link">The Initiative</a>
+      <a href="<?= url('/sponsor') ?>" class="mobile-menu__link">Sponsor</a>
     </nav>
     <div class="mobile-menu__action">
       <p class="mono">Registration is open</p>

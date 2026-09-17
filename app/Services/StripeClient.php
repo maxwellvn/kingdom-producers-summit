@@ -57,6 +57,31 @@ final class StripeClient
         return $url;
     }
 
+    /** A Checkout session for a gift from the sponsor page. The sponsorship id rides in metadata. */
+    public static function createSponsorCheckout(array $sponsorship, string $successUrl, string $cancelUrl): string
+    {
+        $session = self::request('POST', '/checkout/sessions', [
+            'mode' => 'payment',
+            'customer_email' => (string) $sponsorship['email'],
+            'success_url' => $successUrl,
+            'cancel_url' => $cancelUrl,
+            'line_items[0][quantity]' => 1,
+            'line_items[0][price_data][currency]' => (string) config('payments.stripe.currency'),
+            'line_items[0][price_data][unit_amount]' => (int) $sponsorship['amount_pence'],
+            'line_items[0][price_data][product_data][name]' => config('app.name') . ' — Sponsorship',
+            'metadata[kind]' => 'sponsorship',
+            'metadata[sponsorship_id]' => (string) $sponsorship['id'],
+            'payment_intent_data[description]' => config('app.name') . ' sponsorship #' . $sponsorship['id'],
+        ], 'sponsor-' . $sponsorship['id']);
+
+        $url = (string) ($session['url'] ?? '');
+        if ($url === '') {
+            throw new RuntimeException('Stripe did not return a checkout URL.');
+        }
+
+        return $url;
+    }
+
     /** Read a Checkout session back, to see whether it was paid. */
     public static function session(string $id): array
     {

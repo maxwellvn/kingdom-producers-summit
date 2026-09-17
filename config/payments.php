@@ -15,6 +15,8 @@ return [
     'revolut' => [
         'enabled' => true,
         'url'     => 'https://checkout.revolut.com/pay/be6a58e7-4418-4854-b243-f1845e33f86d',
+        // Open-amount link used on /sponsor; editable in the admin panel.
+        'sponsor_url' => 'https://checkout.revolut.com/pay/26b11f6d-bc0d-457a-a363-2c70e7c91023',
         'note'    => '',
     ],
 
