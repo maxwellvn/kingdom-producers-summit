@@ -17,3 +17,4 @@ storage/loadtest.log
 storage/loadtest/
 storage/bulk-send.json
 storage/bulk-send.log
+public/assets/media/*.mp4

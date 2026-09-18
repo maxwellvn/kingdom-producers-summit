@@ -124,7 +124,7 @@ $summit = $summit ?? config('app.summit');
   <?php if ($showIntro): ?>
     <div class="site-intro" id="siteIntro" aria-label="Loveworld Kingdom Producers Summit introduction">
       <video class="site-intro__video" autoplay muted playsinline preload="auto" aria-hidden="true">
-        <source src="<?= e(asset('media/producers-opening-ident-higgsfield-trimmed-v1.mp4')) ?>" type="video/mp4">
+        <source src="<?= e(media('producers-opening-ident-higgsfield-trimmed-v1.mp4')) ?>" type="video/mp4">
       </video>
       <button type="button" class="site-intro__skip mono" data-intro-skip>Skip</button>
     </div>

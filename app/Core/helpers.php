@@ -37,6 +37,16 @@ function asset(string $path): string
     return Url::to('assets/' . ltrim($path, '/')) . $version;
 }
 
+/**
+ * Large media (video) lives outside git. MEDIA_URL points at where it is hosted;
+ * unset, it falls back to public/assets/media for local work.
+ */
+function media(string $file): string
+{
+    $base = rtrim((string) env('MEDIA_URL', ''), '/');
+    return $base !== '' ? $base . '/' . ltrim($file, '/') : asset('media/' . $file);
+}
+
 /** An amount expressed in the event's Espees currency. Defaults to the onsite price. */
 function espees_price(?int $amountPence = null, int $decimals = 0): string
 {
