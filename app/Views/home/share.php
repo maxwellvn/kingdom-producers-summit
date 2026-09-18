@@ -4,7 +4,7 @@
     <div class="pay__card" data-share data-url="<?= e($shareUrl) ?>" data-text="<?= e($shareText) ?>" data-title="<?= e($summit['short']) ?>">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> Share the summit</p>
       <h1 class="pay__title">Bring someone with you.</h1>
-      <p class="pay__lede">Registration is free, onsite and online. The link below is copied already; send it wherever you like.</p>
+      <p class="pay__lede">Onsite or online, a place is confirmed the moment someone registers. The link below is copied already; send it wherever you like.</p>
       <div class="sponsor__espees sponsor__espees--inline" style="align-self:stretch">
         <span class="mono">Registration link</span>
         <strong class="sponsor__code" id="shareLink" style="font-size:clamp(1.1rem,3vw,1.5rem);letter-spacing:0;text-transform:none;overflow-wrap:anywhere"><?= e($shareUrl) ?></strong>

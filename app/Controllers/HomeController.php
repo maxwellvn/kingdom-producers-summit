@@ -35,7 +35,7 @@ final class HomeController extends Controller
             'bodyClass' => 'page-register',
             'summit'    => $summit,
             'shareUrl'  => site_url() . '/register',
-            'shareText' => 'The Inaugural LoveWorld Kingdom Producers Summit — ' . $summit['edition'] . ', ' . $summit['date_text'] . '. Onsite in London and live online worldwide. Registration is free.',
+            'shareText' => 'The Inaugural LoveWorld Kingdom Producers Summit — ' . $summit['edition'] . ', ' . $summit['date_text'] . '. Onsite in London and live online worldwide. Register at the link.',
         ]);
     }
 

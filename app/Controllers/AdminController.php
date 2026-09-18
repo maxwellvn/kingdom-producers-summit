@@ -469,6 +469,15 @@ final class AdminController extends Controller
     {
         $action = $request->str('action');
         $who = (string) Session::get('admin_email', 'admin');
+
+        // Custom holding words belong to the state they were written for: a
+        // "back in five minutes" headline must not survive into Ended.
+        $newState = ['live' => 'soon', 'pause' => 'paused', 'end' => 'ended', 'soon' => 'soon'][$action] ?? null;
+        if ($newState !== null && $newState !== Setting::get('stream_state', 'soon')) {
+            Setting::set('stream_headline', '');
+            Setting::set('stream_message', '');
+        }
+
         switch ($action) {
             case 'live':
                 if (StreamService::url() === '') {
@@ -558,15 +567,10 @@ final class AdminController extends Controller
         Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');
 
         // The holding screen: what people see before, between and after.
-        $stateChanged = false;
         $startsAt = trim($request->str('stream_starts_at'));
         Setting::set('stream_starts_at', $startsAt !== '' && strtotime($startsAt) !== false ? date('Y-m-d H:i:s', strtotime($startsAt)) : '');
-        // Custom words belong to the state they were written for. Changing state
-        // drops them, unless they were rewritten in the same save.
-        $headline = mb_substr(trim($request->str('stream_headline')), 0, 120);
-        $message = mb_substr(trim($request->str('stream_message')), 0, 300);
-        Setting::set('stream_headline', $stateChanged && $headline === Setting::get('stream_headline', '') ? '' : $headline);
-        Setting::set('stream_message', $stateChanged && $message === Setting::get('stream_message', '') ? '' : $message);
+        Setting::set('stream_headline', mb_substr(trim($request->str('stream_headline')), 0, 120));
+        Setting::set('stream_message', mb_substr(trim($request->str('stream_message')), 0, 300));
         Setting::set('stream_now', mb_substr(trim($request->str('stream_now')), 0, 160));
 
         StreamEvent::log('stream', 'Stream settings saved by ' . Session::get('admin_email', 'admin'));
