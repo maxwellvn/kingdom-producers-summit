@@ -248,14 +248,16 @@ final class AdminController extends Controller
         if (!in_array($what, ['pass', 'live'], true)) {
             return $this->redirect('/admin/registrations');
         }
-        $audience = $what === 'pass' ? 'onsite' : 'all';
+        // Passes only ever go to onsite. The live link goes to the chosen group, online by default.
+        $audience = $what === 'pass' ? 'onsite'
+            : (in_array($request->str('audience'), ['online', 'onsite', 'all', 'initiative'], true) ? $request->str('audience') : 'online');
         $sent = $skipped = 0;
         foreach (Announcer::recipients($audience) as $person) {
             [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person) : Announcer::sendLiveLink($person);
             ($emailed || $messaged) ? $sent++ : $skipped++;
         }
         StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " re-sent to {$sent} people by " . Session::get('admin_email', 'admin'));
-        Session::flash('admin_flash', ($what === 'pass' ? 'Passes sent again to ' : 'Live links sent to ') . $sent . ' people' . ($skipped ? ", {$skipped} could not be reached" : '') . '.');
+        Session::flash('admin_flash', ($what === 'pass' ? 'Passes sent again to ' : 'Live links sent to ') . $sent . ' ' . ($what === 'pass' ? 'onsite ' : ($audience === 'all' ? '' : $audience . ' ')) . 'people' . ($skipped ? ", {$skipped} could not be reached" : '') . '.');
 
         return $this->redirect('/admin/registrations');
     }

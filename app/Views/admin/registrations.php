@@ -14,9 +14,14 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
         <?= csrf_field() ?><input type="hidden" name="what" value="pass">
         <button type="submit" class="adm-btn">Resend all QR passes</button>
       </form>
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Send every confirmed person their live link, by email and KingsChat?')">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('Send the live link to everyone in the chosen group, by email and KingsChat?')">
         <?= csrf_field() ?><input type="hidden" name="what" value="live">
-        <button type="submit" class="adm-btn">Send all live links</button>
+        <select name="audience" aria-label="Who gets the live link" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          <option value="online">Online registrants</option>
+          <option value="onsite">Onsite registrants</option>
+          <option value="all">Everyone confirmed</option>
+        </select>
+        <button type="submit" class="adm-btn">Send live links</button>
       </form>
       <a class="adm-btn" href="<?= url('/admin/export.csv') ?>">Export CSV ↓</a>
     </div>
