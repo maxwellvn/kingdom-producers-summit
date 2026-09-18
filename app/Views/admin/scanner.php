@@ -23,7 +23,7 @@
       </div>
       <div id="accessQrReader" class="adm-scan__reader"></div>
       <div class="adm-scan__controls">
-        <button class="adm-btn adm-btn--solid" type="button" data-scanner-start>Start camera</button>
+        <button class="adm-btn adm-btn--solid" type="button" data-scanner-start>Allow camera access</button>
         <button class="adm-btn adm-btn--dark" type="button" data-scanner-stop disabled>Stop</button>
         <label class="adm-btn adm-btn--upload">
           Scan photo
@@ -83,7 +83,11 @@
           live.textContent = 'Blocked';
           help.textContent = 'Camera is blocked for this site. Open the browser site settings, set Camera to Allow, then reload this page.';
         } else if (permission.state === 'granted') {
+          start.textContent = 'Start camera';
           help.textContent = 'Camera permission is ready. Press Start camera.';
+        } else {
+          start.textContent = 'Allow camera access';
+          help.textContent = 'Press the button; your browser will ask to use the camera.';
         }
       };
       reflectPermission();
@@ -111,6 +115,8 @@
     var missing = name === 'NotFoundError' || /not found|no camera/i.test(raw);
     var busy = name === 'NotReadableError' || /could not start|track start|notreadable/i.test(raw);
     var message = 'The camera could not start. You can scan a photo or enter the reference.';
+    var generic = /failed to load/i.test(raw);
+    if (generic) message = String(error.message);
     if (denied) message = 'Camera permission is blocked. Allow camera access in your browser settings, then try again.';
     if (missing) message = 'No camera was found on this device. Scan a photo or enter the reference.';
     if (busy) message = 'The camera is being used by another app. Close it there, then try again.';
@@ -142,15 +148,10 @@
   }
 
   start.addEventListener('click', function () {
-    if (!window.Html5Qrcode) {
-      paint({status: 'invalid', message: 'Camera scanner failed to load. Use the reference field.'});
-      return;
-    }
     start.dataset.label = start.textContent;
     start.textContent = 'Requesting camera';
     live.textContent = 'Connecting';
     root.classList.add('is-connecting');
-    reader = reader || new Html5Qrcode('accessQrReader');
     if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       cameraFailure(new Error('Camera access requires HTTPS or localhost.'));
       start.textContent = start.dataset.label || 'Start camera';
@@ -165,6 +166,8 @@
       var track = permissionStream.getVideoTracks()[0];
       var deviceId = track && track.getSettings ? track.getSettings().deviceId : '';
       permissionStream.getTracks().forEach(function (item) { item.stop(); });
+      if (!window.Html5Qrcode) { throw new Error('Camera scanner failed to load. Reload the page, or scan a photo.'); }
+      reader = reader || new Html5Qrcode('accessQrReader');
       return reader.start(
         deviceId || {facingMode: {ideal: 'environment'}},
         {fps: 10, qrbox: function (w, h) { var size = Math.floor(Math.min(w, h) * .68); return {width: size, height: size}; }},
@@ -180,7 +183,7 @@
       root.classList.remove('is-connecting');
       root.classList.add('is-scanning');
     }).catch(function (error) {
-      start.textContent = start.dataset.label || 'Start camera';
+      start.textContent = 'Start camera';
       live.textContent = 'Unavailable';
       root.classList.remove('is-connecting');
       cameraFailure(error);
