@@ -162,13 +162,16 @@ final class Announcer
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
             '{register_url}' => site_url() . '/register',
+            // The person's own QR pass: the confirmation page carries it, signed to them. Onsite only.
+            '{qr_url}'      => $path === 'onsite' ? site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
+            '{qr_image_url}' => $path === 'onsite' ? site_url() . '/access/qr?token=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{share_url}'   => site_url() . '/share',
             '{sponsor_url}' => site_url() . '/sponsor',
         ]);
     }
 
     /** The placeholders an organiser may type, for the hint under the box. */
-    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
+    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
 
     /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
     public static function summary(array $r): string
@@ -191,7 +194,10 @@ final class Announcer
             // "Watch here: https://…" becomes text plus a button; the raw address stays out of the way.
             if (preg_match('/^(.*?)\\s*(https?:\\/\\/\\S+)$/s', $paragraph, $m)) {
                 $url = $m[2];
-                $label = str_contains($url, 'google.com/maps') ? 'Get directions' : (str_contains($url, '/watch') ? 'Watch live' : (str_ends_with($url, '/share') ? 'Share the registration link' : 'Open'));
+                $label = str_contains($url, 'google.com/maps') ? 'Get directions'
+                    : (str_contains($url, '/watch') ? 'Watch live'
+                    : (str_contains($url, '/register/confirmed?access=') ? 'Open my QR pass'
+                    : (str_ends_with($url, '/share') ? 'Share the registration link' : 'Open')));
                 $lead = rtrim(trim($m[1]), ':');
                 $body .= ($lead !== '' ? '<p style="margin:0 0 10px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br(htmlspecialchars($lead, ENT_QUOTES, 'UTF-8')) . '</p>' : '')
                     . $button($label, $url);
