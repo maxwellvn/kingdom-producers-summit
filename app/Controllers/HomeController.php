@@ -24,6 +24,21 @@ final class HomeController extends Controller
         ]);
     }
 
+    /** Copies the registration link and opens the device share sheet; for links in messages. */
+    public function share(): Response
+    {
+        $summit = config('app.summit');
+
+        return $this->view('home/share', [
+            'title'     => 'Share the summit — ' . config('app.name'),
+            'noIndex'   => true,
+            'bodyClass' => 'page-register',
+            'summit'    => $summit,
+            'shareUrl'  => site_url() . '/register',
+            'shareText' => 'The Inaugural LoveWorld Kingdom Producers Summit — ' . $summit['edition'] . ', ' . $summit['date_text'] . '. Onsite in London and live online worldwide. Registration is free.',
+        ]);
+    }
+
     public function privacy(Request $request): Response
     {
         return $this->view('home/privacy', [

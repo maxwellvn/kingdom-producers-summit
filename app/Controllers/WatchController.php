@@ -100,6 +100,7 @@ final class WatchController extends Controller
             'live'      => StreamService::isLive(),
             'kind'      => StreamService::kind(),
             'note'      => StreamService::note(),
+            'holding'   => StreamService::holding(),
             'commentsOn' => Comment::enabled(),
             'summit'    => config('app.summit'),
         ]);
@@ -181,15 +182,16 @@ final class WatchController extends Controller
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
         if (!StreamService::isLive()) {
-            return Response::json(['ok' => true, 'live' => false]);
+            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding()]);
         }
+        $holding = StreamService::holding();
 
         $kind = StreamService::kind();
         $source = $kind === 'hls' && StreamService::proxyEnabled()
             ? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH))))
             : ($kind === 'iframe' ? StreamService::embedUrl() : StreamService::url());
 
-        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source]);
+        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now']]);
     }
 
     /** Heartbeat: keeps the pass alive and reports when it has been taken. */
@@ -487,6 +489,7 @@ final class WatchController extends Controller
             'noIndex'   => true,
             'live'      => StreamService::isLive(),
             'note'      => StreamService::note(),
+            'holding'   => StreamService::holding(),
             'errors'    => $errors,
             'summit'    => config('app.summit'),
         ]);

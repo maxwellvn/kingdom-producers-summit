@@ -218,22 +218,57 @@
     var loaded = false;
     var hls = null;
 
-    function say(message, note) {
+    // The holding screen: state, headline, message, countdown, now/next.
+    var hold = {
+      label: placeholder.querySelector('[data-holding-label]'),
+      headline: placeholder.querySelector('[data-holding-headline]'),
+      message: placeholder.querySelector('[data-holding-message]'),
+      countdown: placeholder.querySelector('[data-holding-countdown]'),
+      startsText: placeholder.querySelector('[data-holding-starts-text]'),
+      now: placeholder.querySelector('[data-holding-now]')
+    };
+    var startsAt = parseInt(placeholder.getAttribute('data-holding-starts') || '0', 10) || 0;
+    var nowLine = document.querySelector('[data-watch-now]');
+
+    function setState(state) {
+      placeholder.className = placeholder.className.replace(/holding--\w+/g, '').trim() + ' holding--' + state;
+      placeholder.setAttribute('data-holding-state', state);
+    }
+    function say(message, note, state) {
       placeholder.hidden = false;
       video.hidden = true;
       frame.hidden = true;
-      placeholder.innerHTML = '';
-      var line = document.createElement('p');
-      line.className = 'mono';
-      line.textContent = message;
-      placeholder.appendChild(line);
-      if (note) {
-        var second = document.createElement('p');
-        second.className = 'watch__note';
-        second.textContent = note;
-        placeholder.appendChild(second);
-      }
+      if (hold.label) hold.label.textContent = message;
+      if (hold.headline) hold.headline.textContent = note ? message : hold.headline.textContent;
+      if (hold.message && note) hold.message.textContent = note;
+      if (state) setState(state);
     }
+    function showHolding(h) {
+      placeholder.hidden = false;
+      video.hidden = true;
+      frame.hidden = true;
+      setState(h.state || 'soon');
+      if (hold.label) hold.label.textContent = h.label || '';
+      if (hold.headline) hold.headline.textContent = h.headline || '';
+      if (hold.message) hold.message.textContent = h.message || '';
+      startsAt = h.starts_at ? parseInt(h.starts_at, 10) : 0;
+      if (hold.startsText) { hold.startsText.textContent = h.starts_text || ''; hold.startsText.hidden = !h.starts_text; }
+      if (hold.now) { hold.now.textContent = h.now || ''; hold.now.hidden = !h.now; }
+      if (statusLabel) statusLabel.textContent = h.label || '';
+      tickCountdown();
+    }
+    function tickCountdown() {
+      if (!hold.countdown) return;
+      if (!startsAt) { hold.countdown.hidden = true; return; }
+      var left = startsAt - Math.floor(Date.now() / 1000);
+      if (left <= 0) { hold.countdown.textContent = 'Any moment now'; hold.countdown.hidden = false; return; }
+      var d = Math.floor(left / 86400), hrs = Math.floor(left % 86400 / 3600), m = Math.floor(left % 3600 / 60), sec = left % 60;
+      var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+      hold.countdown.textContent = (d ? d + 'd ' : '') + pad(hrs) + ':' + pad(m) + ':' + pad(sec);
+      hold.countdown.hidden = false;
+    }
+    window.setInterval(tickCountdown, 1000);
+    tickCountdown();
 
     function stop(message, note) {
       if (hls) { hls.destroy(); hls = null; }
@@ -295,11 +330,15 @@
           var data = res.body;
           if (!data.ok) return;
           if (!data.live) {
-            if (statusLabel) statusLabel.textContent = 'Not started yet';
-            stop('The stream has not started', 'This page will start it the moment it goes live.');
+            if (hls) { hls.destroy(); hls = null; }
+            video.removeAttribute('src');
+            loaded = false;
+            showHolding(data.holding || { state: 'soon', label: 'Starting soon', headline: 'We are about to begin.', message: '' });
             return;
           }
           if (statusLabel) statusLabel.textContent = 'Live now';
+          if (nowLine) { nowLine.textContent = data.now || ''; nowLine.hidden = !data.now; }
+          if (loaded) return; // already playing: only the now/next line was refreshed
           play(data);
         })
         .catch(function () {});
@@ -322,7 +361,8 @@
     check();
     beat();
     window.setInterval(beat, 25000);
-    window.setInterval(function () { if (!loaded) check(); }, 15000);
+    // Every 15s: start the video the moment it goes live, follow pauses and the now/next line while it plays.
+    window.setInterval(check, 15000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) beat(); });
   })();
 

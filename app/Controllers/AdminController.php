@@ -327,6 +327,12 @@ final class AdminController extends Controller
             'streamTitle' => StreamService::title(),
             'note'      => StreamService::note(),
             'proxy'     => StreamService::proxyEnabled(),
+            'holding'   => StreamService::holding(),
+            'holdingStates' => StreamService::HOLDING_STATES,
+            'startsAtValue' => trim(Setting::get('stream_starts_at', '')) !== '' ? date('Y-m-d\TH:i', strtotime(Setting::get('stream_starts_at'))) : '',
+            'headlineValue' => Setting::get('stream_headline', ''),
+            'messageValue'  => Setting::get('stream_message', ''),
+            'nowValue'      => Setting::get('stream_now', ''),
             'watchers'  => Analytics::watchers(),
             'loadTest'      => LoadTester::state(),
             'loadTestRunning' => LoadTester::running(),
@@ -443,6 +449,21 @@ final class AdminController extends Controller
         Setting::set('stream_note', mb_substr(trim($request->str('stream_note')), 0, 255));
         Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');
         Setting::set('stream_enabled', $request->input('stream_enabled') === '1' ? '1' : '0');
+
+        // The holding screen: what people see before, between and after.
+        $state = $request->str('stream_state');
+        $state = isset(StreamService::HOLDING_STATES[$state]) ? $state : 'soon';
+        $stateChanged = $state !== Setting::get('stream_state', 'soon');
+        Setting::set('stream_state', $state);
+        $startsAt = trim($request->str('stream_starts_at'));
+        Setting::set('stream_starts_at', $startsAt !== '' && strtotime($startsAt) !== false ? date('Y-m-d H:i:s', strtotime($startsAt)) : '');
+        // Custom words belong to the state they were written for. Changing state
+        // drops them, unless they were rewritten in the same save.
+        $headline = mb_substr(trim($request->str('stream_headline')), 0, 120);
+        $message = mb_substr(trim($request->str('stream_message')), 0, 300);
+        Setting::set('stream_headline', $stateChanged && $headline === Setting::get('stream_headline', '') ? '' : $headline);
+        Setting::set('stream_message', $stateChanged && $message === Setting::get('stream_message', '') ? '' : $message);
+        Setting::set('stream_now', mb_substr(trim($request->str('stream_now')), 0, 160));
 
         StreamEvent::log('stream', StreamService::isLive()
             ? 'Stream switched ON (' . StreamService::kind() . ', proxy ' . (StreamService::proxyEnabled() ? 'on' : 'off') . ') by ' . Session::get('admin_email', 'admin')

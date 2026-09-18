@@ -1,5 +1,5 @@
 <?php
-/** @var array $viewer @var bool $live @var string $kind @var string $note @var array $summit @var bool $commentsOn */
+/** @var array $viewer @var bool $live @var string $kind @var string $note @var array $summit @var bool $commentsOn @var array $holding */
 $notice = (string) \App\Core\Session::get('watch_notice', '');
 ?>
 <section class="watch">
@@ -8,9 +8,10 @@ $notice = (string) \App\Core\Session::get('watch_notice', '');
       <div>
         <p class="mono watch__status">
           <span class="watch__dot <?= $live ? 'is-live' : '' ?>" aria-hidden="true"></span>
-          <span data-watch-status><?= $live ? 'Live now' : 'Not started yet' ?></span>
+          <span data-watch-status><?= $live ? 'Live now' : e($holding['label']) ?></span>
         </p>
         <h1 class="watch__title"><?= e(\App\Services\StreamService::title()) ?></h1>
+        <p class="mono watch__now" data-watch-now <?= $live && $holding['now'] ? '' : 'hidden' ?>><?= e($holding['now']) ?></p>
       </div>
       <div class="watch__viewer">
         <?php if (!empty($viewer['is_organiser'])): ?>
@@ -34,9 +35,14 @@ $notice = (string) \App\Core\Session::get('watch_notice', '');
     <div class="watch__stage" data-watch
          data-source-url="<?= e(url('/watch/source')) ?>"
          data-beat-url="<?= e(url('/watch/beat')) ?>">
-      <div class="watch__placeholder" data-watch-placeholder>
-        <p class="mono"><?= $live ? 'Connecting…' : 'The stream has not started' ?></p>
-        <p class="watch__note"><?= e($note) ?></p>
+      <div class="watch__placeholder holding holding--<?= e($holding['state']) ?>" data-watch-placeholder
+           data-holding-state="<?= e($holding['state']) ?>" data-holding-starts="<?= $holding['starts_at'] ? (int) $holding['starts_at'] : '' ?>">
+        <p class="mono holding__kicker"><span class="holding__dot" aria-hidden="true"></span><span data-holding-label><?= $live ? 'Connecting…' : e($holding['label']) ?></span></p>
+        <h2 class="holding__headline" data-holding-headline><?= $live ? 'One moment.' : e($holding['headline']) ?></h2>
+        <p class="holding__message" data-holding-message><?= $live ? 'Loading the stream.' : e($holding['message']) ?></p>
+        <p class="mono holding__countdown" data-holding-countdown <?= $holding['starts_at'] ? '' : 'hidden' ?>></p>
+        <p class="mono holding__starts" data-holding-starts-text <?= $holding['starts_text'] ? '' : 'hidden' ?>><?= e($holding['starts_text']) ?></p>
+        <p class="mono holding__now" data-holding-now <?= $holding['now'] ? '' : 'hidden' ?>><?= e($holding['now']) ?></p>
       </div>
       <video class="watch__video" data-watch-video playsinline controls hidden></video>
       <div class="watch__frame" data-watch-frame hidden></div>

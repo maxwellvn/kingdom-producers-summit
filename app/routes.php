@@ -19,6 +19,7 @@ use App\Middleware\VerifyCsrf;
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/about', [HomeController::class, 'about']);
 $router->get('/privacy', [HomeController::class, 'privacy']);
+$router->get('/share', [HomeController::class, 'share']);
 
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);

@@ -48,10 +48,39 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
           <input type="text" name="stream_title" value="<?= e($streamTitle) ?>" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
         </label>
 
-        <label style="display:block">
-          <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Line shown while it is off</span>
-          <input type="text" name="stream_note" value="<?= e($note) ?>" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-        </label>
+        <fieldset style="border:1px solid rgba(0,0,0,.15);padding:1.1rem 1.2rem 1.2rem;margin:0">
+          <legend class="mono" style="padding:0 .6rem;font-size:.75rem;letter-spacing:2px;text-transform:uppercase">Holding screen — before, between and after</legend>
+          <p class="adm-muted" style="margin:0 0 .9rem;font-size:.9rem">What people signed in to the watch page see whenever no video is playing. Changes appear on their screens within fifteen seconds, no refresh needed.</p>
+
+          <div style="display:grid;gap:.5rem;margin-bottom:1rem">
+            <?php foreach ($holdingStates as $key => $def): ?>
+              <label style="display:flex;gap:.6rem;align-items:flex-start">
+                <input type="radio" name="stream_state" value="<?= e($key) ?>" <?= $holding['state'] === $key ? 'checked' : '' ?> style="margin-top:.25rem">
+                <span><strong><?= e($def['label']) ?></strong> <span class="adm-muted">— "<?= e($def['headline']) ?>"</span></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+
+          <label style="display:block;margin-bottom:.9rem">
+            <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Starts at <span style="text-transform:none;letter-spacing:0;color:#756f60">(optional; shows a countdown while "Starting soon")</span></span>
+            <input type="datetime-local" name="stream_starts_at" value="<?= e($startsAtValue) ?>" style="padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          </label>
+
+          <label style="display:block;margin-bottom:.9rem">
+            <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Headline <span style="text-transform:none;letter-spacing:0;color:#756f60">(blank uses the default for the state)</span></span>
+            <input type="text" name="stream_headline" value="<?= e($headlineValue) ?>" maxlength="120" placeholder="<?= e($holding['headline']) ?>" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          </label>
+
+          <label style="display:block;margin-bottom:.9rem">
+            <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Message</span>
+            <textarea name="stream_message" rows="2" maxlength="300" placeholder="<?= e($holding['message']) ?>" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff;font:inherit"><?= e($messageValue) ?></textarea>
+          </label>
+
+          <label style="display:block">
+            <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Now / next <span style="text-transform:none;letter-spacing:0;color:#756f60">(shown while live too, e.g. "Now: Opening session · Next: Masterclass, 13:00")</span></span>
+            <input type="text" name="stream_now" value="<?= e($nowValue) ?>" maxlength="160" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          </label>
+        </fieldset>
 
         <div>
           <button type="submit" class="adm-btn adm-btn--dark">Save</button>

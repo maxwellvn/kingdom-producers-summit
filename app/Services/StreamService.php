@@ -36,6 +36,43 @@ final class StreamService
         return $saved !== '' ? $saved : (string) config('stream.title');
     }
 
+    /** States the watch page can be in when no video is playing. */
+    public const HOLDING_STATES = [
+        'soon'   => ['label' => 'Starting soon', 'headline' => 'We are about to begin.',
+                     'message' => 'The stream starts here automatically the moment we go live. Keep this page open.'],
+        'paused' => ['label' => 'Back shortly', 'headline' => 'A short pause.',
+                     'message' => 'We will be back in a few minutes. Stay on this page and the stream resumes on its own.'],
+        'ended'  => ['label' => 'Ended', 'headline' => 'That is a wrap.',
+                     'message' => 'Thank you for joining us. Look out for the recording and the next steps by email.'],
+    ];
+
+    /**
+     * What the watch page shows when there is no video: a state, a headline,
+     * a message, an optional start time to count down to, and an optional
+     * "now" line. Organisers edit these from the stream page.
+     */
+    public static function holding(): array
+    {
+        $state = Setting::get('stream_state', 'soon');
+        if (!isset(self::HOLDING_STATES[$state])) {
+            $state = 'soon';
+        }
+        $defaults = self::HOLDING_STATES[$state];
+        $startsAt = trim(Setting::get('stream_starts_at', ''));
+        $ts = $startsAt !== '' ? strtotime($startsAt) : false;
+
+        return [
+            'live'      => self::isLive(),
+            'state'     => $state,
+            'label'     => $defaults['label'],
+            'headline'  => trim(Setting::get('stream_headline', '')) ?: $defaults['headline'],
+            'message'   => trim(Setting::get('stream_message', '')) ?: $defaults['message'],
+            'now'       => trim(Setting::get('stream_now', '')),
+            'starts_at' => $ts !== false && $state === 'soon' ? $ts : null,
+            'starts_text' => $ts !== false && $state === 'soon' ? date('l j F, H:i', $ts) : '',
+        ];
+    }
+
     public static function note(): string
     {
         $saved = trim(Setting::get('stream_note', ''));

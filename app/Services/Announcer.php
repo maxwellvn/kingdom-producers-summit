@@ -40,7 +40,7 @@ final class Announcer
                 . "{online_only}WHERE: LIVE ONLINE, wherever you are in the world\n\n"
                 . "Whether you are on the icy slopes of Antarctica, at the peak of Mount Everest, in the sunshine of Los Angeles or deep in the Amazon, your seat is ready. This link is yours alone and signs you straight in from 12 noon:\n\n"
                 . "Watch live: {watch_url}\n\n{/online_only}"
-                . "Know someone who should be there? Registration is FREE, onsite and online. Share it: {share_url}",
+                . "Know someone who should be there? Registration is FREE, onsite and online. Share this link anywhere: {share_url}",
         ],
         'today' => [
             'label'   => 'It is today',
@@ -162,13 +162,10 @@ final class Announcer
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
             '{register_url}' => site_url() . '/register',
-            // A WhatsApp share of the public invitation, ready to forward.
-            '{share_url}'   => 'https://wa.me/?text=' . rawurlencode(self::SHARE_TEXT . ' ' . site_url() . '/register'),
+            '{share_url}'   => site_url() . '/share',
             '{sponsor_url}' => site_url() . '/sponsor',
         ]);
     }
-
-    public const SHARE_TEXT = "GET READY. GET SET… PRODUCE! The Inaugural LoveWorld Kingdom Producers Summit — London Edition 2026 is tomorrow, Saturday 19 September, 12 noon (GMT+1), onsite in London and LIVE ONLINE worldwide. Registration is FREE. Secure your place:";
 
     /** The placeholders an organiser may type, for the hint under the box. */
     public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
@@ -194,7 +191,7 @@ final class Announcer
             // "Watch here: https://…" becomes text plus a button; the raw address stays out of the way.
             if (preg_match('/^(.*?)\\s*(https?:\\/\\/\\S+)$/s', $paragraph, $m)) {
                 $url = $m[2];
-                $label = str_contains($url, 'google.com/maps') ? 'Get directions' : (str_contains($url, '/watch') ? 'Watch live' : (str_contains($url, 'wa.me') ? 'Share on WhatsApp' : 'Open'));
+                $label = str_contains($url, 'google.com/maps') ? 'Get directions' : (str_contains($url, '/watch') ? 'Watch live' : (str_ends_with($url, '/share') ? 'Share the registration link' : 'Open'));
                 $lead = rtrim(trim($m[1]), ':');
                 $body .= ($lead !== '' ? '<p style="margin:0 0 10px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br(htmlspecialchars($lead, ENT_QUOTES, 'UTF-8')) . '</p>' : '')
                     . $button($label, $url);

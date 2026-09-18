@@ -1,5 +1,5 @@
 <?php
-/** @var bool $live @var string $note @var array $errors @var array $summit */
+/** @var bool $live @var string $note @var array $errors @var array $summit @var array $holding */
 $errors = $errors ?: \App\Core\Session::get('_errors', []);
 ?>
 <section class="reg">
@@ -7,7 +7,7 @@ $errors = $errors ?: \App\Core\Session::get('_errors', []);
     <div class="pay__card">
       <p class="mono pay__kicker">
         <span class="pay__dot <?= $live ? 'is-live' : '' ?>" aria-hidden="true"></span>
-        <?= $live ? 'Live now' : 'Not started yet' ?>
+        <?= $live ? 'Live now' : e($holding['label']) ?>
       </p>
       <h1 class="pay__title">Watch the summit</h1>
 
