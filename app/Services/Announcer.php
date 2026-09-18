@@ -15,12 +15,12 @@ final class Announcer
         'live' => [
             'label'   => 'We are live now',
             'subject' => 'We are live — join the summit now',
-            'body'    => "The Kingdom Producers Summit is live now.\n\n{online_only}Watch here, no sign-in needed: {watch_url}\n\nThe link is yours alone; please do not forward it.{/online_only}{onsite_only}Doors are open at {summit_venue}. Bring your reference {reference}.\n\nDirections: {directions_url}{/onsite_only}",
+            'body'    => "The Kingdom Producers Summit is live now.\n\n{online_only}Watch here, no sign-in needed: {watch_url}\n\nThe link is yours alone; please do not forward it.{/online_only}{onsite_only}Doors are open at {summit_venue}. Bring your reference {reference}.\n\nDirections: {directions_url}\n\nNot able to be in the room? Watch online instead: {watch_url}{/onsite_only}",
         ],
         'starting_soon' => [
             'label'   => 'Starting in an hour',
             'subject' => 'The summit starts in an hour',
-            'body'    => "The Kingdom Producers Summit starts in an hour.\n\n{online_only}Watch here when it begins: {watch_url}{/online_only}{onsite_only}Heading to {summit_venue}? Directions: {directions_url}\n\nHave your reference {reference} ready at the door.{/onsite_only}",
+            'body'    => "The Kingdom Producers Summit starts in an hour.\n\n{online_only}Watch here when it begins: {watch_url}{/online_only}{onsite_only}Heading to {summit_venue}? Directions: {directions_url}\n\nNot able to be in the room? Watch online instead: {watch_url}\n\nHave your reference {reference} ready at the door.{/onsite_only}",
         ],
         'week_before' => [
             'label'   => 'One week to go',
@@ -45,7 +45,7 @@ final class Announcer
         'today' => [
             'label'   => 'It is today',
             'subject' => 'The summit is today',
-            'body'    => "Today is the day, {first_name}.\n\n{summit_date}\n\n{online_only}Watch online here: {watch_url}{/online_only}{onsite_only}See you at {summit_venue}. Directions: {directions_url}\n\nYour reference is {reference}.{/onsite_only}",
+            'body'    => "Today is the day, {first_name}.\n\n{summit_date}\n\n{online_only}Watch online here: {watch_url}{/online_only}{onsite_only}See you at {summit_venue}. Directions: {directions_url}\n\nIf you cannot make it to the room, watch online: {watch_url}\n\nYour reference is {reference}.{/onsite_only}",
         ],
     ];
 
@@ -152,8 +152,8 @@ final class Announcer
             '{first_name}'  => (string) $person['first_name'],
             '{last_name}'   => (string) $person['last_name'],
             '{reference}'   => (string) $person['reference'],
-            // The stream is for online viewers; an onsite person gets directions instead.
-            '{watch_url}'   => $path === 'online' ? site_url() . '/watch?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
+            // Online and onsite both get a signed watch link: an onsite person may follow from elsewhere.
+            '{watch_url}'   => in_array($path, ['online', 'onsite'], true) ? site_url() . '/watch?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{directions_url}' => 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) ($summit['venue']['query'] ?? '')),
             '{summit_date}' => (string) ($summit['date_text'] ?? ''),
             '{summit_city}' => (string) ($summit['city'] ?? ''),

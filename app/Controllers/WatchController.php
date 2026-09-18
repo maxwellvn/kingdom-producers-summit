@@ -182,7 +182,7 @@ final class WatchController extends Controller
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
         if (!StreamService::isLive()) {
-            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding()]);
+            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding(), 'watching' => Analytics::watchingCount()]);
         }
         $holding = StreamService::holding();
 
@@ -191,7 +191,7 @@ final class WatchController extends Controller
             ? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH))))
             : ($kind === 'iframe' ? StreamService::embedUrl() : StreamService::url());
 
-        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now']]);
+        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now'], 'watching' => Analytics::watchingCount()]);
     }
 
     /** Heartbeat: keeps the pass alive and reports when it has been taken. */
@@ -237,6 +237,7 @@ final class WatchController extends Controller
             'ok' => true,
             'enabled' => true,
             'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
+            'watching' => Analytics::watchingCount(),
         ]);
     }
 

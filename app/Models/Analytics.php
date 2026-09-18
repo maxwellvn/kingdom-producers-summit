@@ -112,6 +112,19 @@ final class Analytics
     }
 
     /** Everyone currently in the stream, newest arrival first. */
+    /** How many people are on the watch page right now. */
+    public static function watchingCount(): int
+    {
+        $stmt = Database::connection()->query(
+            'SELECT COUNT(*) FROM presence p
+             LEFT JOIN registrations r ON r.reference = p.reference
+             WHERE p.context = "watch" AND (r.id IS NOT NULL OR p.reference = "ORGANISER")
+               AND p.last_seen_at > (NOW() - INTERVAL ' . self::PRESENCE_WINDOW . ' SECOND)'
+        );
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public static function watchers(): array
     {
         $stmt = Database::connection()->query(

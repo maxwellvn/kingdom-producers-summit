@@ -229,6 +229,10 @@
     };
     var startsAt = parseInt(placeholder.getAttribute('data-holding-starts') || '0', 10) || 0;
     var nowLine = document.querySelector('[data-watch-now]');
+    var pill = document.querySelector('[data-watch-pill]');
+    function setLive(on) {
+      if (pill) pill.classList.toggle('is-live', !!on);
+    }
 
     function setState(state) {
       placeholder.className = placeholder.className.replace(/holding--\w+/g, '').trim() + ' holding--' + state;
@@ -333,11 +337,15 @@
             if (hls) { hls.destroy(); hls = null; }
             video.removeAttribute('src');
             loaded = false;
+            setLive(false);
             showHolding(data.holding || { state: 'soon', label: 'Starting soon', headline: 'We are about to begin.', message: '' });
+            if (typeof data.watching === 'number') showWatching(data.watching);
             return;
           }
-          if (statusLabel) statusLabel.textContent = 'Live now';
+          if (statusLabel) statusLabel.textContent = 'Live';
+          setLive(true);
           if (nowLine) { nowLine.textContent = data.now || ''; nowLine.hidden = !data.now; }
+          if (typeof data.watching === 'number') showWatching(data.watching);
           if (loaded) return; // already playing: only the now/next line was refreshed
           play(data);
         })
@@ -811,6 +819,12 @@
     initGsap();
   }
 
+  /* Viewer count, shown in the header and over the video. Shared by the player and the chat polls. */
+  function showWatching(n) {
+    var text = n === 1 ? '1 watching' : n + ' watching';
+    document.querySelectorAll('[data-watch-count]').forEach(function (el) { el.textContent = text; el.hidden = n < 1; });
+  }
+
   /* ---------- Comment board on the watch page ---------- */
   (function () {
     var board = document.querySelector('[data-comments]');
@@ -841,14 +855,15 @@
         total++;
         var li = document.createElement('li');
         li.className = 'chat__item';
+        var initials = c.author.replace(/&[^;]+;/g, '').split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase() || '•';
         // The server escapes author and body, so this markup is already safe.
-        li.innerHTML = '<p class="chat__meta"><span class="chat__author">' + c.author +
-                       '</span><span>' + c.at + '</span></p>' +
-                       '<p class="chat__body">' + c.body + '</p>';
+        li.innerHTML = '<span class="chat__initials mono" aria-hidden="true">' + initials + '</span><div>' +
+                       '<p class="chat__meta"><span class="chat__author">' + c.author + '</span><span>' + c.at + '</span></p>' +
+                       '<p class="chat__body">' + c.body + '</p></div>';
         list.appendChild(li);
       });
       if (empty && empty.parentNode) empty.remove();
-      count.textContent = total + (total === 1 ? ' comment' : ' comments');
+      count.textContent = total + (total === 1 ? ' message' : ' messages');
       if (stick) list.scrollTop = list.scrollHeight;
     }
 
@@ -863,6 +878,7 @@
           if (!d || !d.ok) return;
           if (!d.enabled) { closeBoard(); return; }
           render(d.comments || []);
+          if (typeof d.watching === 'number') showWatching(d.watching);
         })
         .catch(function () {});
     }
@@ -891,7 +907,7 @@
         .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
         .then(function (res) {
           if (res.data && res.data.ok) {
-            input.value = '';
+            input.value = ''; input.style.height = 'auto';
             render(res.data.comments || []);
             list.scrollTop = list.scrollHeight;
             return;
@@ -902,6 +918,9 @@
         .catch(function () { say('That did not send. Try again.', true); })
         .then(function () { button.disabled = false; });
     });
+
+    // The composer grows with the message, up to a few lines.
+    input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 96) + 'px'; });
 
     // Enter sends, shift+enter starts a new line.
     input.addEventListener('keydown', function (e) {
