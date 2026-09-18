@@ -28,8 +28,7 @@
       <p class="hero__lede">
         A summit and a working initiative for people who are done
         consuming — and ready to
-        <em class="produce-trigger" data-video-trigger
-            data-video-src="<?= e(asset('media/cwe-tradefair.mp4')) ?>">produce</em>.
+        <em class="produce-trigger">produce</em>.
       </p>
 
       <dl class="hero__date" aria-label="Summit date, time and place">
