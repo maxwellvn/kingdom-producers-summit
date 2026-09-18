@@ -83,6 +83,7 @@ $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/stream/state', [AdminController::class, 'setStreamState'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/notifications', [AdminController::class, 'notifications'], [RequireAdmin::class]);
 $router->post('/admin/notifications', [AdminController::class, 'queueNotification'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/notifications/cancel', [AdminController::class, 'cancelNotification'], [VerifyCsrf::class, RequireAdmin::class]);
