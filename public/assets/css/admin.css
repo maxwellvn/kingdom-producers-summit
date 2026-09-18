@@ -306,3 +306,4 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .promptcard__pct { text-align: right; font-family: var(--font-mono); font-size: .8rem; color: var(--ink); }
 .promptcard__reply { padding: .5rem 0; border-top: 1px solid var(--paper-line); font-size: .9rem; }
 .promptcard__reply .mono { color: var(--muted-2); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; margin-right: .5rem; }
+.resend { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }

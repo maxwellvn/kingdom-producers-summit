@@ -219,6 +219,51 @@ final class AdminController extends Controller
         ], 'layouts/admin');
     }
 
+    /** Send one person their pass or their live link again. */
+    public function resend(Request $request): Response
+    {
+        $registration = Registration::find((int) $request->input('id', 0));
+        $what = $request->str('what');
+        if ($registration === null || $registration['status'] !== 'confirmed' || !in_array($what, ['pass', 'live'], true)) {
+            Session::flash('admin_flash', 'Nothing was sent: that registration is not confirmed.');
+            return $this->redirect('/admin/registrations');
+        }
+
+        $channel = in_array($request->str('channel'), ['email', 'kingschat', 'both'], true) ? $request->str('channel') : 'both';
+        [$emailed, $messaged] = $what === 'pass'
+            ? Announcer::sendPass($registration, $channel !== 'kingschat', $channel !== 'email')
+            : Announcer::sendLiveLink($registration, $channel !== 'kingschat', $channel !== 'email');
+        $name = trim($registration['first_name'] . ' ' . $registration['last_name']);
+        Session::flash('admin_flash', ($emailed || $messaged)
+            ? ($what === 'pass' ? 'Pass sent again to ' : 'Live link sent to ') . $name . ' by ' . implode(' and ', array_filter([$emailed ? 'email' : '', $messaged ? 'KingsChat' : ''])) . '.'
+            : 'Nothing could be sent to ' . $name . '. ' . ($what === 'pass' ? 'Passes go to onsite registrations only.' : 'Live links go to onsite and online registrations only.'));
+
+        return $this->redirect('/admin/registrations?' . http_build_query(array_filter(['type' => $request->str('type'), 'q' => $request->str('q'), 'page' => $request->str('page')])));
+    }
+
+    /** Send every confirmed person their pass (onsite) or their live link (onsite and online) again. */
+    public function resendAll(Request $request): Response
+    {
+        $what = $request->str('what');
+        if (!in_array($what, ['pass', 'live'], true)) {
+            return $this->redirect('/admin/registrations');
+        }
+        $audience = $what === 'pass' ? 'onsite' : 'all';
+        $sent = $skipped = 0;
+        foreach (Announcer::recipients($audience) as $person) {
+            if ($what === 'live' && !in_array((string) $person['participation'], ['onsite', 'online'], true)) {
+                $skipped++;
+                continue;
+            }
+            [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person) : Announcer::sendLiveLink($person);
+            ($emailed || $messaged) ? $sent++ : $skipped++;
+        }
+        StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " re-sent to {$sent} people by " . Session::get('admin_email', 'admin'));
+        Session::flash('admin_flash', ($what === 'pass' ? 'Passes sent again to ' : 'Live links sent to ') . $sent . ' people' . ($skipped ? ", {$skipped} could not be reached" : '') . '.');
+
+        return $this->redirect('/admin/registrations');
+    }
+
     /** Record a contribution as received. Sends the thank-you. */
     public function confirmPayment(Request $request): Response
     {
@@ -294,22 +339,6 @@ final class AdminController extends Controller
 
     /** Permanently remove a registration and its attendance record (e.g. wrong entry, erasure request). */
     /** The watch link to one person, by email, KingsChat, or both. */
-    public function sendStreamLink(Request $request): Response
-    {
-        $r = Registration::find((int) $request->input('id', 0));
-        $channel = $request->str('channel');
-        if ($r !== null && in_array($channel, ['email', 'kingschat', 'both'], true)) {
-            $t = Announcer::TEMPLATES['live'];
-            [$emailed, $messaged] = Announcer::deliver($r, $t['subject'], $t['body'], $channel !== 'kingschat', $channel !== 'email');
-            $bits = array_filter([$emailed ? 'emailed' : '', $messaged ? 'messaged on KingsChat' : '']);
-            Session::flash('admin_flash', $bits
-                ? ($r['participation'] === 'online' ? 'Stream link ' : 'Directions ') . implode(' and ', $bits) . ' to ' . $r['first_name'] . ' (' . $r['reference'] . ').'
-                : 'Could not reach ' . $r['first_name'] . ' (' . $r['reference'] . '). Check the address, the KingsChat username, and that KingsChat is connected.');
-        }
-
-        return $this->redirect('/admin/registrations?' . http_build_query(array_filter(['type' => $request->str('type'), 'q' => $request->str('q'), 'page' => $request->str('page')])));
-    }
-
     public function deleteRegistration(Request $request): Response
     {
         Registration::delete((int) $request->input('id', 0));

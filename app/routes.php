@@ -74,8 +74,9 @@ $router->get('/admin/registrations', [AdminController::class, 'registrations'], 
 $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmin::class]);
 $router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [RequireAdmin::class]);
 $router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/registrations/resend', [AdminController::class, 'resend'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/registrations/resend-all', [AdminController::class, 'resendAll'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/confirm-payment', [AdminController::class, 'confirmPayment'], [VerifyCsrf::class, RequireAdmin::class]);
-$router->post('/admin/registrations/send-stream', [AdminController::class, 'sendStreamLink'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/delete', [AdminController::class, 'deleteRegistration'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);

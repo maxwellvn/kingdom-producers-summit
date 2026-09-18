@@ -9,7 +9,17 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
       <p class="eyebrow"><span class="eyebrow__dot"></span>Registrations</p>
       <h1 class="adm-page__title"><?= number_format($result['total']) ?> <span class="adm-page__title-sub">record<?= $result['total'] === 1 ? '' : 's' ?></span></h1>
     </div>
-    <a class="adm-btn" href="<?= url('/admin/export.csv') ?>">Export CSV ↓</a>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Send every confirmed onsite person their QR pass again, by email and KingsChat?')">
+        <?= csrf_field() ?><input type="hidden" name="what" value="pass">
+        <button type="submit" class="adm-btn">Resend all QR passes</button>
+      </form>
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Send every confirmed onsite and online person their live link, by email and KingsChat?')">
+        <?= csrf_field() ?><input type="hidden" name="what" value="live">
+        <button type="submit" class="adm-btn">Send all live links</button>
+      </form>
+      <a class="adm-btn" href="<?= url('/admin/export.csv') ?>">Export CSV ↓</a>
+    </div>
   </header>
 
   <?php $flash = (string) \App\Core\Session::get('admin_flash', ''); ?>
@@ -77,16 +87,22 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                   <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
                 </form>
               <?php endif; ?>
-              <form method="post" action="<?= url('/admin/registrations/send-stream') ?>" style="margin-top:.4rem;display:flex;gap:.3rem;align-items:center">
+              <?php if ($r['status'] === 'confirmed' && in_array($r['participation'], ['onsite', 'online'], true)): ?>
+              <form method="post" action="<?= url('/admin/registrations/resend') ?>" class="resend" style="margin-top:.4rem">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
                 <input type="hidden" name="type" value="<?= e($participation) ?>"><input type="hidden" name="q" value="<?= e($search) ?>"><input type="hidden" name="page" value="<?= (int) $result['page'] ?>">
-                <select name="channel" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-                  <option value="email">Email</option>
-                  <?php if (!empty($r['kingschat_username'])): ?><option value="kingschat">KingsChat</option><option value="both">Both</option><?php endif; ?>
+                <select name="what" aria-label="What to send" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+                  <?php if ($r['participation'] === 'onsite'): ?><option value="pass">QR pass</option><?php endif; ?>
+                  <option value="live">Live link</option>
                 </select>
-                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem"><?= $r['participation'] === 'online' ? 'Send stream link' : 'Send directions' ?></button>
+                <select name="channel" aria-label="How to send it" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+                  <?php if (!empty($r['kingschat_username'])): ?><option value="both">Email + KingsChat</option><option value="kingschat">KingsChat</option><?php endif; ?>
+                  <option value="email">Email</option>
+                </select>
+                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Send</button>
               </form>
+              <?php endif; ?>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">

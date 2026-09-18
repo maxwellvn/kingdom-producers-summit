@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Database;
+use App\Models\Registration;
 
 /**
  * Sends one announcement to a group of registrants, by email and KingsChat.
@@ -127,6 +128,46 @@ final class Announcer
             } catch (\Throwable $e) {
                 error_log('Announcement KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
             }
+        }
+
+        return [$emailed, (bool) $messaged];
+    }
+
+    /** The live-link message, sent to one person by email and KingsChat. Onsite and online only. */
+    public const LIVE_LINK = [
+        'subject' => 'Your link to watch the summit live',
+        'body'    => "Hello {first_name},\n\nHere is your personal link to watch the Kingdom Producers Summit live. It is yours alone and signs you straight in; please do not forward it.\n\nWatch live: {watch_url}\n\n{onsite_only}You are registered to attend in the room, so this is for following along from elsewhere if you need to. Directions: {directions_url}{/onsite_only}\n\nThe Loveworld Consulate, United Kingdom",
+    ];
+
+    /** Send someone their watch link again. */
+    public static function sendLiveLink(array $person, bool $byEmail = true, bool $byKingsChat = true): array
+    {
+        if (!in_array((string) $person['participation'], ['onsite', 'online'], true)) {
+            return [false, false];
+        }
+
+        return self::deliver($person, self::LIVE_LINK['subject'], self::LIVE_LINK['body'], $byEmail, $byKingsChat);
+    }
+
+    /** Send an onsite person their pass again: the confirmation email with the QR, and the KingsChat confirmation. */
+    public static function sendPass(array $person, bool $byEmail = true, bool $byKingsChat = true): array
+    {
+        if ((string) $person['participation'] !== 'onsite') {
+            return [false, false];
+        }
+        // The confirmation email needs the whole row, not the slice announcements use.
+        $person = Registration::findByReference((string) $person['reference']) ?? $person;
+        $emailed = $messaged = false;
+        if ($byEmail) {
+            try {
+                (new RegistrationMail())->send($person);
+                $emailed = true;
+            } catch (\Throwable $e) {
+                error_log('Pass email failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            }
+        }
+        if ($byKingsChat) {
+            [$messaged] = (new KingsChatNotifier())->sendConfirmation($person);
         }
 
         return [$emailed, (bool) $messaged];
