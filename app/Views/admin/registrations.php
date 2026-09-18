@@ -85,7 +85,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                   <option value="email">Email</option>
                   <?php if (!empty($r['kingschat_username'])): ?><option value="kingschat">KingsChat</option><option value="both">Both</option><?php endif; ?>
                 </select>
-                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Send stream link</button>
+                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem"><?= $r['participation'] === 'online' ? 'Send stream link' : 'Send directions' ?></button>
               </form>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
                 <?= csrf_field() ?>

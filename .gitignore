@@ -13,3 +13,5 @@ storage/sessions/
 tmp/
 output/
 storage/loadtest.json
+storage/loadtest.log
+storage/loadtest/

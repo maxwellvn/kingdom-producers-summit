@@ -12,6 +12,7 @@ use App\Models\Analytics;
 use App\Models\Comment;
 use App\Models\LoginAttempt;
 use App\Services\SafeUrl;
+use App\Services\AttendanceService;
 use App\Services\StreamService;
 use App\Services\VisitorTracker;
 
@@ -32,6 +33,23 @@ final class WatchController extends Controller
         $organiser = $this->organiser();
         if ($organiser !== null) {
             return $this->player($organiser);
+        }
+
+        // A signed link from an organiser's message signs the person straight in.
+        $passRef = AttendanceService::referenceFromToken($request->str('pass'));
+        if ($passRef !== null) {
+            $holder = \App\Models\Registration::findByReference($passRef);
+            if ($holder !== null && StreamService::mayWatch($holder)) {
+                StreamService::claimPass(
+                    $passRef,
+                    VisitorTracker::sessionHash(),
+                    Analytics::device($request->userAgent()),
+                    substr(hash_hmac('sha256', $request->ip(), (string) config('app.key')), 0, 32)
+                );
+                Session::put(self::SESSION_KEY, $passRef);
+            }
+
+            return $this->redirect('/watch'); // drop the token from the address bar
         }
 
         $reference = Session::get(self::SESSION_KEY);

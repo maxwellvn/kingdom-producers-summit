@@ -9,4 +9,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
 
-App\Services\LoadTester::run((int) ($argv[1] ?? 25), (int) ($argv[2] ?? 60));
+try {
+    App\Services\LoadTester::run((int) ($argv[1] ?? 25), (int) ($argv[2] ?? 60));
+} catch (\Throwable $e) {
+    App\Services\LoadTester::fail('The runner crashed: ' . $e->getMessage());
+    throw $e;
+}

@@ -20,6 +20,18 @@ final class LoadTester
     public const MAX_VIEWERS = 500;
     public const MAX_SECONDS = 300;
 
+    /** Cookie jars live under storage, which every user the site runs as can write. */
+    private static function jarDir(): string
+    {
+        $dir = BASE_PATH . '/storage/loadtest';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+            @chmod($dir, 0777);
+        }
+
+        return $dir;
+    }
+
     private static function stateFile(): string
     {
         return BASE_PATH . '/storage/loadtest.json';
@@ -39,6 +51,12 @@ final class LoadTester
         if ($state === null || ($state['phase'] ?? 'done') === 'done') {
             return false;
         }
+        // Still "starting" with no runner after fifteen seconds means it never came up.
+        if (($state['phase'] ?? '') === 'starting' && empty($state['pid']) && time() - (int) ($state['started_at'] ?? 0) > 15) {
+            $log = @file_get_contents(BASE_PATH . '/storage/loadtest.log');
+            self::update(['phase' => 'done', 'error' => 'The runner did not start. ' . ($log ? 'It said: ' . trim(substr((string) $log, 0, 300)) : 'Nothing was written to storage/loadtest.log.')]);
+            return false;
+        }
         // A runner that died leaves a stale file; treat anything quiet for a minute as finished.
         return time() - (int) ($state['updated_at'] ?? 0) < 60;
     }
@@ -51,10 +69,39 @@ final class LoadTester
         self::write(['phase' => 'starting', 'viewers' => $viewers, 'seconds' => $seconds, 'signed_in' => 0,
             'started_at' => time(), 'updated_at' => time(), 'log' => []]);
 
-        $php = PHP_BINARY;
+        $php = self::cli();
+        if ($php === null) {
+            self::update(['phase' => 'done', 'error' => 'The PHP command-line binary could not be found on this server, so the runner cannot be started.']);
+            return;
+        }
+        if (!function_exists('exec')) {
+            self::update(['phase' => 'done', 'error' => 'exec() is disabled on this server, so the runner cannot be started in the background.']);
+            return;
+        }
+
         $script = BASE_PATH . '/bin/load-test.php';
-        $cmd = sprintf('%s %s %d %d > /dev/null 2>&1 &', escapeshellarg($php), escapeshellarg($script), $viewers, $seconds);
+        $log = BASE_PATH . '/storage/loadtest.log';
+        // A detached subshell with no terminal attached: survives the web request ending.
+        $cmd = sprintf('(%s %s %d %d < /dev/null > %s 2>&1 &)', escapeshellarg($php), escapeshellarg($script), $viewers, $seconds, escapeshellarg($log));
         exec($cmd);
+        self::update(['command' => $cmd]);
+    }
+
+    /**
+     * The php command-line binary. Under Apache PHP_BINARY is empty, so look
+     * beside the running build, then on the PATH, then the usual places.
+     */
+    private static function cli(): ?string
+    {
+        $candidates = [PHP_BINARY, PHP_BINDIR . '/php', trim((string) @shell_exec('command -v php 2>/dev/null')),
+            '/usr/local/bin/php', '/usr/bin/php', '/opt/homebrew/bin/php'];
+        foreach ($candidates as $c) {
+            if ($c !== '' && is_executable($c) && !str_contains($c, 'httpd') && !str_contains($c, 'apache')) {
+                return $c;
+            }
+        }
+
+        return null;
     }
 
     public static function stop(): void
@@ -74,12 +121,27 @@ final class LoadTester
     private static function write(array $state, array $over = []): void
     {
         $state = array_merge($state, $over, ['updated_at' => time()]);
-        file_put_contents(self::stateFile(), json_encode($state, JSON_PRETTY_PRINT), LOCK_EX);
+        $file = self::stateFile();
+        $fresh = !file_exists($file);
+        if (@file_put_contents($file, json_encode($state, JSON_PRETTY_PRINT), LOCK_EX) === false) {
+            error_log('Load test state could not be written to ' . $file);
+            return;
+        }
+        if ($fresh) {
+            @chmod($file, 0666); // the web server and the command line may run as different users
+        }
     }
 
     private static function update(array $over): void
     {
         self::write(self::state() ?? [], $over);
+    }
+
+    /** Stop with an error: clean up and tell the page why. */
+    public static function fail(string $why): void
+    {
+        self::cleanup();
+        self::update(['phase' => 'done', 'error' => $why]);
     }
 
     /** Remove every simulated viewer and its pass. */
@@ -89,6 +151,9 @@ final class LoadTester
         $pdo->exec("DELETE FROM watch_passes WHERE reference IN (SELECT reference FROM registrations WHERE email LIKE 'load-%@loadtest.invalid')");
         $pdo->exec("DELETE FROM comments WHERE reference IN (SELECT reference FROM registrations WHERE email LIKE 'load-%@loadtest.invalid')");
         $pdo->exec("DELETE FROM registrations WHERE email LIKE 'load-%@loadtest.invalid'");
+        foreach (glob(self::jarDir() . '/*.jar') ?: [] as $jar) {
+            @unlink($jar);
+        }
     }
 
     /** The whole run. Called by bin/load-test.php, never from a web request. */
@@ -118,7 +183,7 @@ final class LoadTester
         self::update(['phase' => 'signing_in']);
         $jars = []; $csrf = []; $signedIn = 0;
         foreach ($emails as $i => $email) {
-            $jar = sys_get_temp_dir() . "/kps-load-{$i}-" . getmypid() . '.jar';
+            $jar = self::jarDir() . "/viewer-{$i}-" . getmypid() . '.jar';
             @unlink($jar); $jars[$i] = $jar;
             [, $gate] = self::http("$base/watch", $jar);
             preg_match('/name="_token" value="([^"]+)"/', $gate, $m);
@@ -200,7 +265,7 @@ final class LoadTester
             while ($info = curl_multi_info_read($mh)) {
                 $ch = $info['handle']; $h = $handles[(int) $ch];
                 $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-                $stats[$h['what']][] = [(microtime(true) - $h['start']) * 1000, $status, (int) curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD_T), $info['result'] !== CURLE_OK];
+                $stats[$h['what']][] = [(microtime(true) - $h['start']) * 1000, $status, (int) curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD), $info['result'] !== CURLE_OK];
                 curl_multi_remove_handle($mh, $ch); curl_close($ch); unset($handles[(int) $ch]); $inflight--;
             }
             if ($t - $lastWrite > 2) {

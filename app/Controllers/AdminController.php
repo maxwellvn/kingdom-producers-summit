@@ -301,7 +301,7 @@ final class AdminController extends Controller
             [$emailed, $messaged] = Announcer::deliver($r, $t['subject'], $t['body'], $channel !== 'kingschat', $channel !== 'email');
             $bits = array_filter([$emailed ? 'emailed' : '', $messaged ? 'messaged on KingsChat' : '']);
             Session::flash('admin_flash', $bits
-                ? 'Stream link ' . implode(' and ', $bits) . ' to ' . $r['first_name'] . ' (' . $r['reference'] . ').'
+                ? ($r['participation'] === 'online' ? 'Stream link ' : 'Directions ') . implode(' and ', $bits) . ' to ' . $r['first_name'] . ' (' . $r['reference'] . ').'
                 : 'Could not reach ' . $r['first_name'] . ' (' . $r['reference'] . '). Check the address, the KingsChat username, and that KingsChat is connected.');
         }
 
