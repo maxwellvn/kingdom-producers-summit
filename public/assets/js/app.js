@@ -962,10 +962,12 @@
       }
     }
 
+    var sending = false;
     if (boardOpen) form.addEventListener('submit', function (e) {
       e.preventDefault();
       var body = input.value.trim();
-      if (!body) return;
+      if (!body || sending) return; // a second press while one is in flight is ignored, not queued
+      sending = true;
       var button = form.querySelector('button[type="submit"]');
       button.disabled = true;
 
@@ -977,17 +979,25 @@
       fetch(url, { method: 'POST', body: data, headers: { 'X-Requested-With': 'fetch' } })
         .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
         .then(function (res) {
+          if (res.status === 403) { location.reload(); return; } // signed out elsewhere
           if (res.data && res.data.ok) {
             input.value = ''; input.style.height = 'auto';
             render(res.data.comments || []);
             list.scrollTop = list.scrollHeight;
+            input.focus();
             return;
           }
           if (res.data && res.data.reason === 'closed') closeBoard();
+          if (res.data && res.data.reason === 'too_fast') {
+            // Sent too soon after the last one: hold it and send again by ourselves.
+            say('Sending…');
+            window.setTimeout(function () { sending = false; button.disabled = false; form.dispatchEvent(new Event('submit', { cancelable: true })); }, Math.max(1, res.data.retry_after || 1) * 1000 + 150);
+            return 'retrying';
+          }
           say((res.data && res.data.message) || 'That did not send. Try again.', true);
         })
         .catch(function () { say('That did not send. Try again.', true); })
-        .then(function () { button.disabled = false; });
+        .then(function (outcome) { if (outcome !== 'retrying') { sending = false; button.disabled = false; } });
     });
 
     // The composer grows with the message, up to a few lines.

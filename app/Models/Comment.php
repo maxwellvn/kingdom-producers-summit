@@ -15,7 +15,7 @@ final class Comment
     public const MAX_LENGTH = 500;
 
     /** Seconds a viewer must wait between comments. */
-    public const COOLDOWN = 8;
+    public const COOLDOWN = 2;
 
     /** True only while an organiser has switched comments on. */
     public static function enabled(): bool

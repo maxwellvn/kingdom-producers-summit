@@ -272,8 +272,8 @@ final class WatchController extends Controller
         $last = (int) Session::get('comment_at', 0);
         $wait = Comment::COOLDOWN - (time() - $last);
         if ($last > 0 && $wait > 0) {
-            return Response::json(['ok' => false, 'reason' => 'too_fast',
-                'message' => "Wait {$wait} second(s) before commenting again."], 429);
+            return Response::json(['ok' => false, 'reason' => 'too_fast', 'retry_after' => $wait,
+                'message' => 'Sending…'], 429);
         }
 
         $name = trim((string) $viewer['first_name'] . ' ' . (string) $viewer['last_name']);
