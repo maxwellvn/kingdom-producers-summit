@@ -10,6 +10,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Models\Analytics;
 use App\Models\Comment;
+use App\Models\StreamEvent;
 use App\Models\LoginAttempt;
 use App\Services\SafeUrl;
 use App\Services\AttendanceService;
@@ -32,6 +33,10 @@ final class WatchController extends Controller
     {
         $organiser = $this->organiser();
         if ($organiser !== null) {
+            if (Session::get('organiser_watch_logged') !== true) {
+                Session::put('organiser_watch_logged', true);
+                StreamEvent::log('signin', 'Organiser ' . $organiser['email'] . ' opened the watch page');
+            }
             return $this->player($organiser);
         }
 
@@ -120,6 +125,7 @@ final class WatchController extends Controller
 
         $viewer = StreamService::findViewer($identifier);
         if ($viewer === null) {
+            StreamEvent::log('refused', 'Gate refused "' . mb_substr($identifier, 0, 60) . '"');
             LoginAttempt::record($throttleKey);
             usleep(random_int(200_000, 500_000)); // Slow down guessing.
 
@@ -137,8 +143,12 @@ final class WatchController extends Controller
         );
 
         Session::put(self::SESSION_KEY, (string) $viewer['reference']);
+        $who = trim($viewer['first_name'] . ' ' . $viewer['last_name']) . ' (' . $viewer['reference'] . ', ' . $viewer['participation'] . ')';
         if ($claim['takenOver']) {
+            StreamEvent::log('takeover', $who . ' signed in on a new device; the old one was signed out');
             Session::flash('watch_notice', 'You were watching on another device. That one has been signed out.');
+        } else {
+            StreamEvent::log('signin', $who . ' signed in on ' . Analytics::device($request->userAgent()));
         }
 
         return $this->redirect('/watch');
@@ -148,6 +158,7 @@ final class WatchController extends Controller
     {
         $reference = Session::get(self::SESSION_KEY);
         if (is_string($reference)) {
+            StreamEvent::log('signout', $reference . ' signed out');
             StreamService::releasePass($reference, VisitorTracker::sessionHash());
         }
         Session::forget(self::SESSION_KEY);
@@ -259,6 +270,7 @@ final class WatchController extends Controller
 
         $name = trim((string) $viewer['first_name'] . ' ' . (string) $viewer['last_name']);
         Comment::add((string) $viewer['reference'], $name, $body);
+        StreamEvent::log('comment', $name . ': ' . mb_substr($body, 0, 120));
         Session::put('comment_at', time());
 
         return Response::json([

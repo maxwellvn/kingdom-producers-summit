@@ -251,3 +251,19 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .loadtest__stat span { display: block; margin-bottom: .3rem; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-2); }
 .loadtest__stat strong { font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); }
 .loadtest__verdict { margin: 1rem 0 0; font-size: .95rem; color: var(--ink); }
+
+/* ---------- Live log ---------- */
+.livelog { max-height: 22rem; overflow-y: auto; margin: 0; padding: .6rem .8rem; list-style: none; background: var(--ink); color: rgba(243,238,226,.9); font-size: .82rem; line-height: 1.5; overscroll-behavior: contain; }
+.livelog__item { display: grid; grid-template-columns: 5.2rem 5.6rem minmax(0, 1fr); gap: .8rem; padding: .25rem 0; border-bottom: 1px solid rgba(243,238,226,.07); overflow-wrap: anywhere; }
+.livelog__at { color: rgba(243,238,226,.5); font-size: .74rem; }
+.livelog__kind { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,238,226,.7); }
+.livelog__item--signin .livelog__kind { color: #7fd48f; }
+.livelog__item--signout .livelog__kind { color: rgba(243,238,226,.5); }
+.livelog__item--takeover .livelog__kind, .livelog__item--refused .livelog__kind { color: #ff9aa2; }
+.livelog__item--comment .livelog__kind { color: #f3d27a; }
+.livelog__item--stream .livelog__kind, .livelog__item--comments .livelog__kind { color: #9ec5ff; }
+.livelog__item--loadtest .livelog__kind { color: #e0a7ff; }
+.livelog__empty { color: rgba(243,238,226,.5); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; }
+.livelog__dot { display: inline-block; width: 8px; height: 8px; margin-left: .5rem; border-radius: 50%; background: rgba(27,34,66,.25); vertical-align: middle; transition: background .2s; }
+.livelog__dot.is-on { background: #1e7d3c; }
+@media (max-width: 600px) { .livelog__item { grid-template-columns: 4.6rem minmax(0, 1fr); } .livelog__kind { display: none; } }

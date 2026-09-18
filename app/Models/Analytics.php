@@ -119,7 +119,7 @@ final class Analytics
                     r.first_name, r.last_name, r.email, r.participation
              FROM presence p
              LEFT JOIN registrations r ON r.reference = p.reference
-             WHERE p.context = "watch"
+             WHERE p.context = "watch" AND (r.id IS NOT NULL OR p.reference = "ORGANISER")
                AND p.last_seen_at > (NOW() - INTERVAL ' . self::PRESENCE_WINDOW . ' SECOND)
              ORDER BY p.started_at DESC
              LIMIT 200'

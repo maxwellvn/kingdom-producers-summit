@@ -12,6 +12,7 @@ use App\Models\AdminUser;
 use App\Models\Announcement;
 use App\Models\Analytics;
 use App\Models\Comment;
+use App\Models\StreamEvent;
 use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Models\Setting;
@@ -345,6 +346,7 @@ final class AdminController extends Controller
         }
         $viewers = (int) $request->str('viewers');
         $seconds = (int) $request->str('seconds');
+        StreamEvent::log('loadtest', "Load test started by " . Session::get('admin_email', 'admin') . ": {$viewers} viewers for {$seconds}s");
         LoadTester::start($viewers, $seconds);
         Session::flash('admin_flash', "Load test started: {$viewers} simulated viewers for {$seconds} seconds. Results update below.");
 
@@ -354,6 +356,7 @@ final class AdminController extends Controller
     public function stopLoadTest(Request $request): Response
     {
         LoadTester::stop();
+        StreamEvent::log('loadtest', 'Load test stopped by ' . Session::get('admin_email', 'admin'));
         Session::flash('admin_flash', 'Load test stopped and its test viewers removed.');
 
         return $this->redirect('/admin/stream#load-test');
@@ -364,11 +367,34 @@ final class AdminController extends Controller
         return Response::json(['ok' => true, 'running' => LoadTester::running(), 'state' => LoadTester::state(), 'server' => LoadTester::serverLoad()]);
     }
 
+    /** New log lines since an id, for the live log on the stream page. */
+    public function streamLog(Request $request): Response
+    {
+        $after = (int) $request->str('after');
+        $rows = StreamEvent::since($after, $after > 0 ? 200 : 150);
+
+        return Response::json(['ok' => true, 'events' => array_map(static fn (array $r) => [
+            'id' => (int) $r['id'],
+            'at' => date('H:i:s', strtotime((string) $r['at'])),
+            'kind' => (string) $r['kind'],
+            'detail' => e((string) $r['detail']),
+        ], $rows)]);
+    }
+
+    public function clearStreamLog(Request $request): Response
+    {
+        StreamEvent::clear();
+        Session::flash('admin_flash', 'Live log cleared.');
+
+        return $this->redirect('/admin/stream#live-log');
+    }
+
     /** Open or close the comment board. Closed is the default. */
     public function saveComments(Request $request): Response
     {
         $on = $request->input('comments_enabled') === '1';
         Setting::set('comments_enabled', $on ? '1' : '0');
+        StreamEvent::log('comments', 'Comment board ' . ($on ? 'opened' : 'closed') . ' by ' . Session::get('admin_email', 'admin'));
 
         Session::flash('admin_flash', $on
             ? 'Comments are open. Viewers holding a pass can post.'
@@ -382,6 +408,7 @@ final class AdminController extends Controller
     {
         if ($request->str('all') === '1') {
             $removed = Comment::clearAll();
+            StreamEvent::log('comments', "Board cleared ({$removed} comments) by " . Session::get('admin_email', 'admin'));
             Session::flash('admin_flash', $removed === 0
                 ? 'There were no comments to clear.'
                 : "Cleared {$removed} comment(s).");
@@ -417,6 +444,9 @@ final class AdminController extends Controller
         Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');
         Setting::set('stream_enabled', $request->input('stream_enabled') === '1' ? '1' : '0');
 
+        StreamEvent::log('stream', StreamService::isLive()
+            ? 'Stream switched ON (' . StreamService::kind() . ', proxy ' . (StreamService::proxyEnabled() ? 'on' : 'off') . ') by ' . Session::get('admin_email', 'admin')
+            : 'Stream switched OFF by ' . Session::get('admin_email', 'admin'));
         Session::flash('admin_flash', StreamService::isLive()
             ? 'The stream is live. Registrants can watch now.'
             : 'Saved. The stream is switched off.');

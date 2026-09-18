@@ -66,29 +66,6 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
     </div>
   </div>
 
-  <div class="adm-panel" style="margin-top:1.4rem">
-    <h2 class="adm-panel__title">Watching now</h2>
-    <div class="adm-table-wrap">
-      <table class="adm-table">
-        <thead><tr><th>Name</th><th>Reference</th><th>Email</th><th>Device</th><th>Since</th></tr></thead>
-        <tbody>
-          <?php if (!$watchers): ?>
-            <tr><td colspan="5" class="adm-muted">Nobody is watching at the moment.</td></tr>
-          <?php else: ?>
-            <?php foreach ($watchers as $w): ?>
-              <tr>
-                <td><?= e(trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: 'Guest') ?></td>
-                <td class="mono"><?= e($w['reference'] ?? '—') ?></td>
-                <td><?= e($w['email'] ?? '—') ?></td>
-                <td class="mono"><?= e($w['device']) ?></td>
-                <td class="mono adm-muted"><?= e(date('H:i', strtotime($w['last_seen_at']))) ?></td>
-              </tr>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
-  </div>
 </section>
 
 <section id="load-test" style="margin-top:1.4rem" data-loadtest data-status-url="<?= url('/admin/stream/load-test') ?>">
@@ -120,7 +97,7 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
       </form>
     <?php endif; ?>
 
-    <div class="loadtest" data-loadtest-out <?= $loadTest ? '' : 'hidden' ?>>
+    <div class="loadtest" data-loadtest-out>
       <p class="mono loadtest__phase" data-lt-phase></p>
       <div class="loadtest__grid">
         <div class="loadtest__stat"><span class="mono">Signed in</span><strong data-lt="signed_in">—</strong></div>
@@ -193,3 +170,139 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
   </div>
 </section>
 
+<section id="live-log" style="margin-top:1.4rem" data-livelog data-log-url="<?= url('/admin/stream/log') ?>">
+  <div class="adm-panel">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.6rem 1rem;margin-bottom:.8rem">
+      <h2 class="adm-panel__title" style="margin:0">Live log <span class="livelog__dot" data-log-dot aria-hidden="true"></span></h2>
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <label class="mono" style="display:flex;gap:.4rem;align-items:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#5C5648"><input type="checkbox" data-log-follow checked> Follow</label>
+        <form method="post" action="<?= url('/admin/stream/log/clear') ?>" onsubmit="return confirm('Clear the live log?')">
+          <?= csrf_field() ?>
+          <button type="submit" class="adm-btn" style="padding:.3rem .7rem;font-size:.7rem">Clear</button>
+        </form>
+      </div>
+    </div>
+    <p class="adm-muted" style="margin:0 0 .8rem;max-width:70ch">Sign-ins, sign-outs, takeovers, refused attempts, comments, stream switches and load-test progress, as they happen. Refreshes every two seconds.</p>
+    <ol class="livelog" data-log-list aria-live="polite"><li class="livelog__empty mono" data-log-empty>Nothing yet.</li></ol>
+  </div>
+</section>
+
+<section id="watching" style="margin-top:1.4rem">
+  <div class="adm-panel" style="margin-top:1.4rem">
+    <h2 class="adm-panel__title">Watching now</h2>
+    <div class="adm-table-wrap" style="max-height:22rem;overflow-y:auto">
+      <table class="adm-table">
+        <thead><tr><th>Name</th><th>Reference</th><th>Email</th><th>Device</th><th>Since</th></tr></thead>
+        <tbody>
+          <?php if (!$watchers): ?>
+            <tr><td colspan="5" class="adm-muted">Nobody is watching at the moment.</td></tr>
+          <?php else: ?>
+            <?php foreach ($watchers as $w): ?>
+              <tr>
+                <td><?= e(trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: 'Guest') ?></td>
+                <td class="mono"><?= e($w['reference'] ?? '—') ?></td>
+                <td><?= e($w['email'] ?? '—') ?></td>
+                <td class="mono"><?= e($w['device']) ?></td>
+                <td class="mono adm-muted"><?= e(date('H:i', strtotime($w['last_seen_at']))) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+// Picking a ready-made message fills the fields, which stay editable.
+(function () {
+  var picker = document.querySelector('[data-announce-template]');
+  if (!picker) return;
+  var subject = document.querySelector('[data-announce-subject]');
+  var body = document.querySelector('[data-announce-body]');
+  picker.addEventListener('change', function () {
+    var option = picker.options[picker.selectedIndex];
+    if (!option.value) { subject.value = ''; body.value = ''; return; }
+    subject.value = option.getAttribute('data-subject') || '';
+    body.value = option.getAttribute('data-body') || '';
+  });
+})();
+
+// Live log: append new events as they arrive; stay pinned to the bottom unless the reader scrolls up.
+(function () {
+  var root = document.querySelector('[data-livelog]');
+  if (!root) return;
+  var list = root.querySelector('[data-log-list]'), empty = root.querySelector('[data-log-empty]');
+  var follow = root.querySelector('[data-log-follow]'), dot = root.querySelector('[data-log-dot]');
+  var url = root.getAttribute('data-log-url'), last = 0, MAX = 400;
+  function add(ev) {
+    if (empty && empty.parentNode) empty.remove();
+    var li = document.createElement('li');
+    li.className = 'livelog__item livelog__item--' + ev.kind;
+    li.innerHTML = '<span class="livelog__at mono">' + ev.at + '</span><span class="livelog__kind mono">' + ev.kind + '</span><span class="livelog__detail">' + ev.detail + '</span>';
+    list.appendChild(li);
+    while (list.children.length > MAX) list.removeChild(list.firstChild);
+    last = Math.max(last, ev.id);
+  }
+  function tick() {
+    fetch(url + '?after=' + last, { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var evs = (d && d.events) || [];
+        if (evs.length) { evs.forEach(add); if (follow.checked) list.scrollTop = list.scrollHeight; dot.classList.add('is-on'); setTimeout(function () { dot.classList.remove('is-on'); }, 600); }
+      })
+      .catch(function () {})
+      .then(function () { setTimeout(tick, 2000); });
+  }
+  tick();
+})();
+
+// Load test: poll the runner's progress while it is going, and show the result when it is done.
+(function () {
+  var root = document.querySelector('[data-loadtest]');
+  if (!root) return;
+  var out = root.querySelector('[data-loadtest-out]');
+  var url = root.getAttribute('data-status-url');
+  var wasRunning = <?= $loadTestRunning ? 'true' : 'false' ?>;
+  function fmt(v) { return v === null || v === undefined ? '—' : v; }
+  function paint(d) {
+    out.hidden = false;
+    if (!d.state) {
+      root.querySelector('[data-lt-phase]').textContent = 'No test has run yet on this server.';
+      return false;
+    }
+    var s = d.state; var r = s.results || {}; var srv = s.server || d.server || {};
+    var phase = { starting: 'Starting…', registering: 'Creating test viewers…', signing_in: 'Signing viewers in…', running: 'Running', done: s.stopped ? 'Stopped' : 'Finished' }[s.phase] || s.phase || '';
+    root.querySelector('[data-lt-phase]').textContent = phase + (s.elapsed ? ' · ' + s.elapsed + 's of ' + s.seconds + 's' : '') + (s.note ? ' · ' + s.note : '') + (s.error ? ' · ' + s.error : '');
+    root.querySelector('[data-lt="signed_in"]').textContent = fmt(s.signed_in) + ' / ' + fmt(s.viewers);
+    root.querySelector('[data-lt="rps"]').textContent = fmt(r.rps);
+    root.querySelector('[data-lt="errors"]').textContent = r.total ? r.errors + ' (' + r.error_pct + '%)' : '—';
+    root.querySelector('[data-lt="mbps"]').textContent = r.mbps !== undefined ? r.mbps + ' MB/s' : '—';
+    root.querySelector('[data-lt="load"]').textContent = srv.load1 !== undefined ? srv.load1 + ' on ' + srv.cores + ' core' + (srv.cores === 1 ? '' : 's') : '—';
+    root.querySelector('[data-lt="mem"]').textContent = srv.mem_used_pct !== null && srv.mem_used_pct !== undefined ? srv.mem_used_pct + '%' : 'n/a';
+    var rows = root.querySelector('[data-lt-rows]'); rows.innerHTML = '';
+    Object.keys(r.by || {}).forEach(function (k) {
+      var b = r.by[k]; var tr = document.createElement('tr');
+      tr.innerHTML = '<td class="mono">' + k + '</td><td>' + b.count + '</td><td' + (b.errors ? ' style="color:#b4232b;font-weight:600"' : '') + '>' + b.errors + '</td><td>' + b.p50 + '</td><td>' + b.p95 + '</td><td>' + b.max + '</td><td>' + b.mb + '</td>';
+      rows.appendChild(tr);
+    });
+    var v = root.querySelector('[data-lt-verdict]');
+    if (s.phase === 'done' && r.total) {
+      var seg = (r.by || {}).segment;
+      var verdict = r.error_pct < 1 && (!seg || seg.p95 < 4000)
+        ? 'Held up: under 1% errors' + (seg ? ' and video segments arrived in good time' : '') + '. This many viewers is fine.'
+        : r.error_pct < 5 ? 'Strained: some requests failed or video arrived late. Expect buffering at this number.'
+        : 'Overloaded: ' + r.error_pct + '% of requests failed. Fewer viewers, or move the video off this server (YouTube, Vimeo, or an HLS host with the proxy switched off).';
+      v.textContent = verdict + (srv.load1 > srv.cores ? ' The server itself was saturated (load ' + srv.load1 + ' on ' + srv.cores + ' cores).' : '');
+    } else { v.textContent = ''; }
+    return d.running;
+  }
+  function poll() {
+    fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+      var running = paint(d);
+      if (running) { setTimeout(poll, 2000); } else if (wasRunning) { setTimeout(function () { location.reload(); }, 1500); }
+    }).catch(function () { setTimeout(poll, 4000); });
+  }
+  poll();
+})();
+</script>

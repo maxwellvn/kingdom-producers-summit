@@ -46,6 +46,9 @@ final class Router
         // Throttled inside, so it costs one cheap read on most requests.
         if (!$request->isPost()) {
             \App\Services\KingsChatClient::refreshIfDue();
+            if (random_int(1, 500) === 1) {
+                \App\Models\StreamEvent::prune();
+            }
         }
 
         [$class, $action, $middleware] = $match;

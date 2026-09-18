@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\Database;
 use App\Core\Request;
 use App\Models\Registration;
+use App\Models\StreamEvent;
 
 /**
  * Pretend to be a crowd. Each simulated viewer registers, signs in at the
@@ -140,6 +141,7 @@ final class LoadTester
     /** Stop with an error: clean up and tell the page why. */
     public static function fail(string $why): void
     {
+        StreamEvent::log('loadtest', 'Load test failed: ' . mb_substr($why, 0, 200));
         self::cleanup();
         self::update(['phase' => 'done', 'error' => $why]);
     }
@@ -149,6 +151,10 @@ final class LoadTester
     {
         $pdo = Database::connection();
         $pdo->exec("DELETE FROM watch_passes WHERE reference IN (SELECT reference FROM registrations WHERE email LIKE 'load-%@loadtest.invalid')");
+        $pdo->exec("DELETE FROM presence WHERE reference IN (SELECT reference FROM registrations WHERE email LIKE 'load-%@loadtest.invalid')");
+        // Anything a crashed run left behind: passes and presence with no registration.
+        $pdo->exec("DELETE FROM watch_passes WHERE reference NOT IN (SELECT reference FROM registrations)");
+        $pdo->exec("DELETE FROM presence WHERE reference IS NOT NULL AND reference <> '' AND reference NOT IN (SELECT reference FROM registrations)");
         $pdo->exec("DELETE FROM comments WHERE reference IN (SELECT reference FROM registrations WHERE email LIKE 'load-%@loadtest.invalid')");
         $pdo->exec("DELETE FROM registrations WHERE email LIKE 'load-%@loadtest.invalid'");
         foreach (glob(self::jarDir() . '/*.jar') ?: [] as $jar) {
@@ -201,6 +207,7 @@ final class LoadTester
             }
         }
         self::update(['signed_in' => $signedIn]);
+        StreamEvent::log('loadtest', "Load test: {$signedIn} of {$viewers} simulated viewers signed in");
         if ($signedIn === 0) {
             self::cleanup();
             self::update(['phase' => 'done', 'error' => 'No test viewer could sign in. Is the stream switched on?']);
@@ -274,6 +281,8 @@ final class LoadTester
             }
         }
         $elapsed = microtime(true) - ($end - $seconds);
+        $final = self::summarise($stats, $elapsed);
+        StreamEvent::log('loadtest', sprintf('Load test finished: %d requests, %s%% errors, %s MB/s, load %s', $final['total'], $final['error_pct'], $final['mbps'], self::serverLoad()['load1']));
         self::cleanup();
         foreach ($jars as $j) { @unlink($j); }
         self::update(['phase' => 'done', 'elapsed' => (int) round($elapsed), 'results' => self::summarise($stats, $elapsed), 'server' => self::serverLoad()]);

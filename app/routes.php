@@ -87,6 +87,8 @@ $router->post('/admin/notifications/cancel', [AdminController::class, 'cancelNot
 $router->post('/admin/stream/load-test', [AdminController::class, 'startLoadTest'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/stream/load-test/stop', [AdminController::class, 'stopLoadTest'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/stream/load-test', [AdminController::class, 'loadTestStatus'], [RequireAdmin::class]);
+$router->get('/admin/stream/log', [AdminController::class, 'streamLog'], [RequireAdmin::class]);
+$router->post('/admin/stream/log/clear', [AdminController::class, 'clearStreamLog'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);
