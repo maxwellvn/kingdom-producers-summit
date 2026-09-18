@@ -12,3 +12,4 @@ storage/sessions/
 # Local scratch: throwaway scripts, generated PDFs and exports (never deploy)
 tmp/
 output/
+storage/loadtest.json

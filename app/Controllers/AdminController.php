@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Models\AdminUser;
+use App\Models\Announcement;
 use App\Models\Analytics;
 use App\Models\Comment;
 use App\Models\LoginAttempt;
@@ -19,6 +20,7 @@ use App\Services\Announcer;
 use App\Services\AttendanceService;
 use App\Services\StreamService;
 use App\Services\KingsChatNotifier;
+use App\Services\LoadTester;
 use App\Services\RegistrationMail;
 use App\Services\RegistrationService;
 use App\Services\KingsChatClient;
@@ -289,6 +291,23 @@ final class AdminController extends Controller
     }
 
     /** Permanently remove a registration and its attendance record (e.g. wrong entry, erasure request). */
+    /** The watch link to one person, by email, KingsChat, or both. */
+    public function sendStreamLink(Request $request): Response
+    {
+        $r = Registration::find((int) $request->input('id', 0));
+        $channel = $request->str('channel');
+        if ($r !== null && in_array($channel, ['email', 'kingschat', 'both'], true)) {
+            $t = Announcer::TEMPLATES['live'];
+            [$emailed, $messaged] = Announcer::deliver($r, $t['subject'], $t['body'], $channel !== 'kingschat', $channel !== 'email');
+            $bits = array_filter([$emailed ? 'emailed' : '', $messaged ? 'messaged on KingsChat' : '']);
+            Session::flash('admin_flash', $bits
+                ? 'Stream link ' . implode(' and ', $bits) . ' to ' . $r['first_name'] . ' (' . $r['reference'] . ').'
+                : 'Could not reach ' . $r['first_name'] . ' (' . $r['reference'] . '). Check the address, the KingsChat username, and that KingsChat is connected.');
+        }
+
+        return $this->redirect('/admin/registrations?' . http_build_query(array_filter(['type' => $request->str('type'), 'q' => $request->str('q'), 'page' => $request->str('page')])));
+    }
+
     public function deleteRegistration(Request $request): Response
     {
         Registration::delete((int) $request->input('id', 0));
@@ -308,17 +327,41 @@ final class AdminController extends Controller
             'note'      => StreamService::note(),
             'proxy'     => StreamService::proxyEnabled(),
             'watchers'  => Analytics::watchers(),
-            'audiences' => Announcer::audiences(),
-            'templates' => Announcer::TEMPLATES,
-            'counts'    => array_map(
-                static fn (string $key) => count(Announcer::recipients($key)),
-                array_combine(array_keys(Announcer::audiences()), array_keys(Announcer::audiences()))
-            ),
+            'loadTest'      => LoadTester::state(),
+            'loadTestRunning' => LoadTester::running(),
             'commentsOn'    => Comment::enabled(),
             'commentCount'  => Comment::count(),
             'comments'      => Comment::forModeration(),
             'flash'     => (string) Session::get('admin_flash', ''),
         ], 'layouts/admin');
+    }
+
+    /** Simulate a crowd on the watch page and watch the server cope. */
+    public function startLoadTest(Request $request): Response
+    {
+        if (LoadTester::running()) {
+            Session::flash('admin_flash', 'A load test is already running. Stop it first.');
+            return $this->redirect('/admin/stream#load-test');
+        }
+        $viewers = (int) $request->str('viewers');
+        $seconds = (int) $request->str('seconds');
+        LoadTester::start($viewers, $seconds);
+        Session::flash('admin_flash', "Load test started: {$viewers} simulated viewers for {$seconds} seconds. Results update below.");
+
+        return $this->redirect('/admin/stream#load-test');
+    }
+
+    public function stopLoadTest(Request $request): Response
+    {
+        LoadTester::stop();
+        Session::flash('admin_flash', 'Load test stopped and its test viewers removed.');
+
+        return $this->redirect('/admin/stream#load-test');
+    }
+
+    public function loadTestStatus(Request $request): Response
+    {
+        return Response::json(['ok' => true, 'running' => LoadTester::running(), 'state' => LoadTester::state(), 'server' => LoadTester::serverLoad()]);
     }
 
     /** Open or close the comment board. Closed is the default. */
@@ -382,46 +425,76 @@ final class AdminController extends Controller
     }
 
     /** Tell a group of registrants something, by email and KingsChat. */
-    public function announce(Request $request): Response
+    public function notifications(): Response
+    {
+        return $this->view('admin/notifications', [
+            'title'     => 'Notifications',
+            'flash'     => (string) Session::get('admin_flash', ''),
+            'audiences' => Announcer::audiences(),
+            'templates' => Announcer::TEMPLATES,
+            'placeholders' => Announcer::PLACEHOLDERS,
+            'counts'    => array_map(
+                static fn (string $key) => count(Announcer::recipients($key)),
+                array_combine(array_keys(Announcer::audiences()), array_keys(Announcer::audiences()))
+            ),
+            'queue'     => Announcement::recent(),
+            'summitStart' => (string) config('app.summit.starts_at'),
+        ], 'layouts/admin');
+    }
+
+    /** Send now, or hold until a chosen time; bin/send-due.php sends what is due. */
+    public function queueNotification(Request $request): Response
     {
         $audience = $request->str('audience');
         if (!array_key_exists($audience, Announcer::audiences())) {
             Session::flash('admin_flash', 'Choose who the message is for.');
-            return $this->redirect('/admin/stream');
+            return $this->redirect('/admin/notifications');
         }
 
         $template = $request->str('template');
         $subject = trim($request->str('subject'));
         $body = trim($request->str('body'));
-
         if ($template !== '' && isset(Announcer::TEMPLATES[$template]) && $body === '') {
             $subject = Announcer::TEMPLATES[$template]['subject'];
             $body = Announcer::TEMPLATES[$template]['body'];
         }
-
         if ($subject === '' || $body === '') {
             Session::flash('admin_flash', 'A message needs a subject and something to say.');
-            return $this->redirect('/admin/stream');
+            return $this->redirect('/admin/notifications');
         }
 
-        $result = Announcer::send(
-            $audience,
-            $subject,
-            $body,
-            $request->input('by_email') === '1',
-            $request->input('by_kingschat') === '1'
-        );
+        $when = $request->str('when') === 'later' ? strtotime($request->str('send_at')) : time();
+        if ($when === false || $when < time() - 60) {
+            Session::flash('admin_flash', 'Pick a time that is still ahead of us.');
+            return $this->redirect('/admin/notifications');
+        }
 
-        Session::flash('admin_flash', sprintf(
-            'Sent to %d of %d: %d emailed, %d messaged on KingsChat%s.',
-            $result['sent'],
-            $result['sent'] + $result['failed'],
-            $result['emailed'],
-            $result['messaged'],
-            $result['failed'] ? ', ' . $result['failed'] . ' could not be reached' : ''
-        ));
+        Announcement::create([
+            'audience'     => $audience,
+            'subject'      => mb_substr($subject, 0, 200),
+            'body'         => $body,
+            'by_email'     => $request->input('by_email') === '1' ? 1 : 0,
+            'by_kingschat' => $request->input('by_kingschat') === '1' ? 1 : 0,
+            'send_at'      => date('Y-m-d H:i:s', $when),
+            'created_by'   => (string) Session::get('admin_email', ''),
+        ]);
 
-        return $this->redirect('/admin/stream');
+        if ($when <= time()) {
+            // ponytail: send inline so "now" means now even when the runner is not around.
+            require_once BASE_PATH . '/bin/send-due.php';
+            Session::flash('admin_flash', 'Sent. See the log below.');
+        } else {
+            Session::flash('admin_flash', 'Scheduled for ' . date('D j M, H:i', $when) . '.');
+        }
+
+        return $this->redirect('/admin/notifications');
+    }
+
+    public function cancelNotification(Request $request): Response
+    {
+        Session::flash('admin_flash', Announcement::cancel((int) $request->input('id', 0)) ? 'Cancelled.' : 'That one had already gone.');
+
+        return $this->redirect('/admin/notifications');
     }
 
     /** Traffic and who is connected, refreshed live. */

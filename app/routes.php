@@ -73,6 +73,7 @@ $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmi
 $router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [RequireAdmin::class]);
 $router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/confirm-payment', [AdminController::class, 'confirmPayment'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/registrations/send-stream', [AdminController::class, 'sendStreamLink'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/delete', [AdminController::class, 'deleteRegistration'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
@@ -80,7 +81,12 @@ $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
-$router->post('/admin/stream/announce', [AdminController::class, 'announce'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/notifications', [AdminController::class, 'notifications'], [RequireAdmin::class]);
+$router->post('/admin/notifications', [AdminController::class, 'queueNotification'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/notifications/cancel', [AdminController::class, 'cancelNotification'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/stream/load-test', [AdminController::class, 'startLoadTest'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/stream/load-test/stop', [AdminController::class, 'stopLoadTest'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/stream/load-test', [AdminController::class, 'loadTestStatus'], [RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);

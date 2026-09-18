@@ -22,6 +22,16 @@ final class Announcer
             'subject' => 'The summit starts in an hour',
             'body'    => "The Kingdom Producers Summit starts in an hour.\n\nWatch here when it begins: {watch_url}\n\nYour reference is {reference}.",
         ],
+        'week_before' => [
+            'label'   => 'One week to go',
+            'subject' => 'One week to the summit, {first_name}',
+            'body'    => "Hello {first_name},\n\nThe Kingdom Producers Summit is one week away: {summit_date}, {summit_venue}.\n\nYour reference is {reference}. Keep it handy; it is your pass on the day.\n\nSee you there.",
+        ],
+        'day_before' => [
+            'label'   => 'It is tomorrow',
+            'subject' => 'The summit is tomorrow',
+            'body'    => "{first_name}, the summit is tomorrow.\n\n{summit_date}\n{summit_venue}\n\nOnsite: bring your reference {reference} and arrive by 11:30 for registration.\nOnline: watch at {watch_url} and sign in with your email or reference.",
+        ],
         'today' => [
             'label'   => 'It is today',
             'subject' => 'The summit is today',
@@ -68,37 +78,48 @@ final class Announcer
         $result = ['sent' => 0, 'emailed' => 0, 'messaged' => 0, 'failed' => 0];
 
         foreach ($recipients as $person) {
-            $text = self::fill($body, $person);
-            $delivered = false;
-
-            if ($byEmail) {
-                try {
-                    (new Mailer())->send(
-                        (string) $person['email'],
-                        self::fill($subject, $person),
-                        self::html($text, $person),
-                        $text,
-                        ['Reply-To' => contact_email()]
-                    );
-                    $result['emailed']++;
-                    $delivered = true;
-                } catch (\Throwable $e) {
-                    error_log('Announcement email failed for ' . $person['reference'] . ': ' . $e->getMessage());
-                }
-            }
-
-            if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {
-                [$ok] = (new KingsChatClient())->send((string) $person['kingschat_username'], $text);
-                if ($ok) {
-                    $result['messaged']++;
-                    $delivered = true;
-                }
-            }
-
-            $delivered ? $result['sent']++ : $result['failed']++;
+            [$emailed, $messaged] = self::deliver($person, $subject, $body, $byEmail, $byKingsChat);
+            $result['emailed'] += (int) $emailed;
+            $result['messaged'] += (int) $messaged;
+            ($emailed || $messaged) ? $result['sent']++ : $result['failed']++;
         }
 
         return $result;
+    }
+
+    /**
+     * One person, filled in and sent by whichever channels are asked for.
+     * @return array{0:bool,1:bool} emailed, messaged
+     */
+    public static function deliver(array $person, string $subject, string $body, bool $byEmail, bool $byKingsChat): array
+    {
+        $text = self::fill($body, $person);
+        $emailed = $messaged = false;
+
+        if ($byEmail) {
+            try {
+                (new Mailer())->send(
+                    (string) $person['email'],
+                    self::fill($subject, $person),
+                    self::html($text, $person),
+                    $text,
+                    ['Reply-To' => contact_email()]
+                );
+                $emailed = true;
+            } catch (\Throwable $e) {
+                error_log('Announcement email failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            }
+        }
+
+        if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {
+            try {
+                [$messaged] = (new KingsChatClient())->send((string) $person['kingschat_username'], $text);
+            } catch (\Throwable $e) {
+                error_log('Announcement KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            }
+        }
+
+        return [$emailed, (bool) $messaged];
     }
 
     /** Swap the placeholders for this person's own details. */
@@ -113,7 +134,24 @@ final class Announcer
             '{watch_url}'   => site_url() . '/watch',
             '{summit_date}' => (string) ($summit['date_text'] ?? ''),
             '{summit_city}' => (string) ($summit['city'] ?? ''),
+            '{summit_venue}' => implode(', ', array_filter([$summit['venue']['unit'] ?? '', $summit['venue']['name'] ?? '', $summit['venue']['street'] ?? '', $summit['venue']['postcode'] ?? ''])),
+            '{email}'       => (string) ($person['email'] ?? ''),
+            '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
+            '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
+            '{register_url}' => site_url() . '/register',
+            '{sponsor_url}' => site_url() . '/sponsor',
         ]);
+    }
+
+    /** The placeholders an organiser may type, for the hint under the box. */
+    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'register_url', 'sponsor_url'];
+
+    /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
+    public static function summary(array $r): string
+    {
+        return sprintf('Sent to %d of %d: %d emailed, %d messaged on KingsChat%s.',
+            $r['sent'], $r['sent'] + $r['failed'], $r['emailed'], $r['messaged'],
+            $r['failed'] ? ', ' . $r['failed'] . ' could not be reached' : '');
     }
 
     private static function html(string $text, array $person): string

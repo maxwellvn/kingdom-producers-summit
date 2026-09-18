@@ -77,6 +77,16 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                   <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
                 </form>
               <?php endif; ?>
+              <form method="post" action="<?= url('/admin/registrations/send-stream') ?>" style="margin-top:.4rem;display:flex;gap:.3rem;align-items:center">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                <input type="hidden" name="type" value="<?= e($participation) ?>"><input type="hidden" name="q" value="<?= e($search) ?>"><input type="hidden" name="page" value="<?= (int) $result['page'] ?>">
+                <select name="channel" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+                  <option value="email">Email</option>
+                  <?php if (!empty($r['kingschat_username'])): ?><option value="kingschat">KingsChat</option><option value="both">Both</option><?php endif; ?>
+                </select>
+                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Send stream link</button>
+              </form>
               <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">

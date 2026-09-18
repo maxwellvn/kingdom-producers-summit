@@ -242,3 +242,12 @@
 .adm-tab--legacy.is-active { background: #b4232b; color: #f3eee2; }
 tr:has(.adm-pill--legacy) td { background: rgba(180,35,43,.06); }
 tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
+
+/* ---------- Load test ---------- */
+.loadtest { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--paper-line); }
+.loadtest__phase { margin: 0 0 1rem; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
+.loadtest__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .8rem; margin-bottom: 1.2rem; }
+.loadtest__stat { padding: .8rem .9rem; background: rgba(27,34,66,.04); border: 1px solid rgba(27,34,66,.1); }
+.loadtest__stat span { display: block; margin-bottom: .3rem; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-2); }
+.loadtest__stat strong { font-family: var(--font-display); font-size: 1.35rem; color: var(--ink); }
+.loadtest__verdict { margin: 1rem 0 0; font-size: .95rem; color: var(--ink); }

@@ -62,52 +62,7 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
 
     <div class="adm-panel">
       <h2 class="adm-panel__title">Tell people</h2>
-      <form method="post" action="<?= url('/admin/stream/announce') ?>" style="display:grid;gap:1rem">
-        <?= csrf_field() ?>
-
-        <label style="display:block">
-          <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Who</span>
-          <select name="audience" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-            <?php foreach ($audiences as $value => $label): ?>
-              <option value="<?= e($value) ?>"><?= e($label) ?> (<?= number_format($counts[$value] ?? 0) ?>)</option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-
-        <label style="display:block">
-          <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Ready-made message</span>
-          <select name="template" data-announce-template style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-            <option value="">Write my own</option>
-            <?php foreach ($templates as $key => $template): ?>
-              <option value="<?= e($key) ?>"
-                      data-subject="<?= e($template['subject']) ?>"
-                      data-body="<?= e($template['body']) ?>"><?= e($template['label']) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-
-        <label style="display:block">
-          <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Subject</span>
-          <input type="text" name="subject" data-announce-subject style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-        </label>
-
-        <label style="display:block">
-          <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Message</span>
-          <textarea name="body" rows="7" data-announce-body style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff;font:inherit"></textarea>
-          <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">
-            You can use {first_name}, {reference}, {watch_url} and {summit_date}.
-          </span>
-        </label>
-
-        <div style="display:flex;gap:1.2rem;flex-wrap:wrap">
-          <label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="by_email" value="1" checked> <span>Email</span></label>
-          <label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="by_kingschat" value="1" checked> <span>KingsChat</span></label>
-        </div>
-
-        <button type="submit" class="adm-btn adm-btn--dark"
-                onsubmit="return true"
-                onclick="return confirm('Send this to everyone in the chosen group?')">Send it</button>
-      </form>
+      <p class="adm-muted">Live-now and starting-soon messages, and anything scheduled ahead of the day, live under <a href="<?= url('/admin/notifications') ?>">Notifications</a>.</p>
     </div>
   </div>
 
@@ -132,6 +87,56 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
           <?php endif; ?>
         </tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<section id="load-test" style="margin-top:1.4rem" data-loadtest data-status-url="<?= url('/admin/stream/load-test') ?>">
+  <div class="adm-panel">
+    <h2 class="adm-panel__title" style="margin-bottom:.4rem">Load test</h2>
+    <p class="adm-muted" style="margin:0 0 1rem;max-width:70ch">
+      Simulates people on the watch page, each with their own sign-in, doing what the real player does: playlist and video
+      segment every six seconds when the stream passes through this server, comment poll every seven, heartbeat every
+      twenty-five. Test viewers are created and removed automatically. Run it with the stream switched on and set up as
+      it will be on the day, otherwise it measures only the light traffic.
+    </p>
+
+    <form method="post" action="<?= url('/admin/stream/load-test') ?>" style="display:flex;flex-wrap:wrap;gap:.8rem 1.2rem;align-items:flex-end">
+      <?= csrf_field() ?>
+      <label style="display:block">
+        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Viewers</span>
+        <input type="number" name="viewers" value="50" min="1" max="<?= \App\Services\LoadTester::MAX_VIEWERS ?>" required style="width:8rem;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+      </label>
+      <label style="display:block">
+        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Seconds</span>
+        <input type="number" name="seconds" value="60" min="10" max="<?= \App\Services\LoadTester::MAX_SECONDS ?>" required style="width:8rem;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+      </label>
+      <button type="submit" class="adm-btn adm-btn--dark" <?= $loadTestRunning ? 'disabled' : '' ?>>Start test</button>
+    </form>
+    <?php if ($loadTestRunning): ?>
+      <form method="post" action="<?= url('/admin/stream/load-test/stop') ?>" style="margin-top:.8rem">
+        <?= csrf_field() ?>
+        <button type="submit" class="adm-btn">Stop and clean up</button>
+      </form>
+    <?php endif; ?>
+
+    <div class="loadtest" data-loadtest-out <?= $loadTest ? '' : 'hidden' ?>>
+      <p class="mono loadtest__phase" data-lt-phase></p>
+      <div class="loadtest__grid">
+        <div class="loadtest__stat"><span class="mono">Signed in</span><strong data-lt="signed_in">—</strong></div>
+        <div class="loadtest__stat"><span class="mono">Requests / s</span><strong data-lt="rps">—</strong></div>
+        <div class="loadtest__stat"><span class="mono">Errors</span><strong data-lt="errors">—</strong></div>
+        <div class="loadtest__stat"><span class="mono">Served</span><strong data-lt="mbps">—</strong></div>
+        <div class="loadtest__stat"><span class="mono">Server load</span><strong data-lt="load">—</strong></div>
+        <div class="loadtest__stat"><span class="mono">Memory used</span><strong data-lt="mem">—</strong></div>
+      </div>
+      <div class="adm-table-wrap">
+        <table class="adm-table" style="min-width:36rem">
+          <thead><tr><th>Request</th><th>Count</th><th>Errors</th><th>Typical ms</th><th>Slow ms (p95)</th><th>Worst ms</th><th>MB</th></tr></thead>
+          <tbody data-lt-rows></tbody>
+        </table>
+      </div>
+      <p class="adm-muted loadtest__verdict" data-lt-verdict></p>
     </div>
   </div>
 </section>
@@ -188,18 +193,3 @@ $kindLabel = ['hls' => 'HLS stream (.m3u8)', 'iframe' => 'Embedded player', 'fil
   </div>
 </section>
 
-<script>
-// Picking a ready-made message fills the fields, which stay editable.
-(function () {
-  var picker = document.querySelector('[data-announce-template]');
-  if (!picker) return;
-  var subject = document.querySelector('[data-announce-subject]');
-  var body = document.querySelector('[data-announce-body]');
-  picker.addEventListener('change', function () {
-    var option = picker.options[picker.selectedIndex];
-    if (!option.value) { subject.value = ''; body.value = ''; return; }
-    subject.value = option.getAttribute('data-subject') || '';
-    body.value = option.getAttribute('data-body') || '';
-  });
-})();
-</script>
