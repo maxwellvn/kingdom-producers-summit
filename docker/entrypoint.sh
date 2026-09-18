@@ -33,4 +33,8 @@ while :; do
 done
 
 rm -f "$output_file"
+
+# Scheduled notifications: send whatever is due, once a minute, for as long as the container lives.
+( while :; do php /var/www/html/bin/send-due.php >> /var/www/html/storage/logs/notifications.log 2>&1 || true; sleep 60; done ) &
+
 exec "$@"

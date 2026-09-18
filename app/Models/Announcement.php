@@ -33,6 +33,38 @@ final class Announcement
     }
 
     /**
+     * Send whatever is due, from ordinary page traffic, no more than once a
+     * minute. A scheduled message then goes out within a minute of anyone
+     * visiting, whether or not a background runner exists on the server.
+     * The work happens after the response is sent, so the visitor is not kept waiting.
+     */
+    public static function sendDueIfAny(): void
+    {
+        $last = (int) Setting::get('announcements_swept_at', '0');
+        if (time() - $last < 60) {
+            return;
+        }
+        try {
+            $due = (int) Database::connection()->query('SELECT COUNT(*) FROM announcements WHERE sent_at IS NULL AND send_at <= NOW()')->fetchColumn();
+        } catch (\Throwable $e) {
+            return; // table not there yet
+        }
+        Setting::set('announcements_swept_at', (string) time());
+        if ($due === 0) {
+            return;
+        }
+        // Finish the page first, then send. FastCGI hands the response over; Apache mod_php just carries on.
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        ignore_user_abort(true);
+        set_time_limit(0);
+        register_shutdown_function(static function (): void {
+            require BASE_PATH . '/bin/send-due.php';
+        });
+    }
+
+    /**
      * Take one due announcement, marking it as taken in the same statement so two
      * runners cannot send it twice. Returns null when nothing is due.
      */
