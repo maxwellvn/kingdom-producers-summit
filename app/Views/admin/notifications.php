@@ -56,7 +56,7 @@ $suggest = [
           <textarea name="body" rows="9" data-announce-body style="<?= $field ?>;font:inherit"></textarea>
         </label>
         <div style="color:#5C5648;font-size:.85rem">
-          <p style="margin:0 0 .4rem">Wrap a part in <code>{online_only}…{/online_only}</code> or <code>{onsite_only}…{/onsite_only}</code> and only that group sees it. <code>{qr_url}</code> opens an onsite person's own QR pass and <code>{qr_image_url}</code> is the QR image itself; both are blank for online and initiative. <code>{watch_url}</code> is a personal sign-in link and is blank for onsite people; give them <code>{directions_url}</code>. In emails, a line ending in a link becomes a button.</p>
+          <p style="margin:0 0 .4rem">Wrap a part in <code>{online_only}…{/online_only}</code> or <code>{onsite_only}…{/onsite_only}</code> and only that group sees it. <code>{timing_lead}</code> and <code>{timing_detail}</code> say where we are in time when the message goes out ("It's tomorrow", "It starts in 3 hours", "We're live now"). <code>{qr_url}</code> opens an onsite person's own QR pass and <code>{qr_image_url}</code> is the QR image itself; both are blank for online and initiative. <code>{watch_url}</code> is a personal sign-in link and is blank for onsite people; give them <code>{directions_url}</code>. In emails, a line ending in a link becomes a button.</p>
           Click to insert:
           <?php foreach ($placeholders as $ph): ?>
             <button type="button" class="adm-btn" data-insert="{<?= e($ph) ?>}" style="padding:.15rem .5rem;font-size:.7rem;margin:.15rem .1rem 0 0">{<?= e($ph) ?>}</button>

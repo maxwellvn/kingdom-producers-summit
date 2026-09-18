@@ -44,6 +44,22 @@ final class KingsChatNotifier
         return $this->deliver($registration, $text);
     }
 
+    /** Their pass again, framed by how close the day is. Onsite only. */
+    public function sendPass(array $registration, array $timing): array
+    {
+        $name = trim((string) $registration['first_name']);
+        $reference = (string) $registration['reference'];
+        $v = (array) config('app.summit.venue');
+        $text = "{$timing['lead']}, {$name}. {$timing['detail']}\n\n"
+            . "Your QR pass for the door: " . site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor($reference)) . "\n"
+            . "Reference: {$reference}\n\n"
+            . "Where: {$v['unit']}, {$v['name']}, {$v['street']}, {$v['town']} {$v['postcode']}\n"
+            . 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n\n"
+            . 'The Loveworld Consulate, United Kingdom';
+
+        return $this->deliver($registration, $text);
+    }
+
     /** A contribution has been confirmed. */
     public function sendSupportThanks(array $registration): array
     {

@@ -133,10 +133,49 @@ final class Announcer
         return [$emailed, (bool) $messaged];
     }
 
+    /**
+     * Where we are relative to the start, in words a person would use:
+     * "It's tomorrow", "It starts in 3 hours", "We're live now", "It was on Saturday".
+     * Written so it reads as the opening of a sentence.
+     */
+    public static function timing(?int $now = null): array
+    {
+        $now ??= time();
+        $start = (int) strtotime((string) config('app.summit.starts_at'));
+        $tz = new \DateTimeZone('Europe/London');
+        $s = (new \DateTimeImmutable('@' . $start))->setTimezone($tz);
+        $n = (new \DateTimeImmutable('@' . $now))->setTimezone($tz);
+        $diff = $start - $now;
+        $days = (int) $n->setTime(0, 0)->diff($s->setTime(0, 0))->format('%r%a');
+        $timeText = $s->format('g:i') === '12:00' ? '12 noon' : $s->format('g:ia');
+
+        if ($diff <= 0 && $diff > -8 * 3600) {
+            return ['key' => 'live', 'lead' => "We're live now", 'detail' => 'The summit started at ' . $timeText . ' today.'];
+        }
+        if ($diff <= -8 * 3600) {
+            return ['key' => 'past', 'lead' => 'The summit was on ' . $s->format('l j F'), 'detail' => 'Thank you for being part of it.'];
+        }
+        if ($days === 0) {
+            $hours = (int) floor($diff / 3600);
+            $mins = (int) floor(($diff % 3600) / 60);
+            $lead = $hours >= 1 ? "It starts in {$hours} hour" . ($hours === 1 ? '' : 's') . ($mins >= 15 && $hours < 3 ? " and {$mins} minutes" : '')
+                                : "It starts in {$mins} minute" . ($mins === 1 ? '' : 's');
+            return ['key' => 'today', 'lead' => $lead, 'detail' => "Today at {$timeText}."];
+        }
+        if ($days === 1) {
+            return ['key' => 'tomorrow', 'lead' => "It's tomorrow", 'detail' => $s->format('l j F') . " at {$timeText}."];
+        }
+        if ($days <= 7) {
+            return ['key' => 'week', 'lead' => "It's this " . $s->format('l') . ", in {$days} days", 'detail' => $s->format('l j F') . " at {$timeText}."];
+        }
+
+        return ['key' => 'later', 'lead' => "It's in {$days} days", 'detail' => $s->format('l j F') . " at {$timeText}."];
+    }
+
     /** The live-link message, sent to one person by email and KingsChat. Onsite and online only. */
     public const LIVE_LINK = [
-        'subject' => 'Your link to watch the summit live',
-        'body'    => "Hello {first_name},\n\nHere is your personal link to watch the Kingdom Producers Summit live. It is yours alone and signs you straight in; please do not forward it.\n\nWatch live: {watch_url}\n\n{onsite_only}You are registered to attend in the room, so this is for following along from elsewhere if you need to. Directions: {directions_url}{/onsite_only}\n\nThe Loveworld Consulate, United Kingdom",
+        'subject' => '{timing_lead}: your link to watch the summit live',
+        'body'    => "Hello {first_name},\n\n{timing_lead}. {timing_detail}\n\nHere is your personal link to watch the Kingdom Producers Summit live. It is yours alone and signs you straight in; please do not forward it.\n\nWatch live: {watch_url}\n\n{onsite_only}You are registered to attend in the room, so this is for following along from elsewhere if you need to. Directions: {directions_url}{/onsite_only}\n\nThe Loveworld Consulate, United Kingdom",
     ];
 
     /** Send someone their watch link again. */
@@ -157,14 +196,14 @@ final class Announcer
         $emailed = $messaged = false;
         if ($byEmail) {
             try {
-                (new RegistrationMail())->send($person);
+                (new RegistrationMail())->sendPass($person, self::timing());
                 $emailed = true;
             } catch (\Throwable $e) {
                 error_log('Pass email failed for ' . $person['reference'] . ': ' . $e->getMessage());
             }
         }
         if ($byKingsChat) {
-            [$messaged] = (new KingsChatNotifier())->sendConfirmation($person);
+            [$messaged] = (new KingsChatNotifier())->sendPass($person, self::timing());
         }
 
         return [$emailed, (bool) $messaged];
@@ -200,6 +239,8 @@ final class Announcer
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
             '{register_url}' => site_url() . '/register',
+            '{timing_lead}'   => self::timing()['lead'],
+            '{timing_detail}' => self::timing()['detail'],
             // The person's own QR pass: the confirmation page carries it, signed to them. Onsite only.
             '{qr_url}'      => $path === 'onsite' ? site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{qr_image_url}' => $path === 'onsite' ? site_url() . '/access/qr?token=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
@@ -209,7 +250,7 @@ final class Announcer
     }
 
     /** The placeholders an organiser may type, for the hint under the box. */
-    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
+    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
 
     /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
     public static function summary(array $r): string

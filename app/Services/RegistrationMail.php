@@ -49,6 +49,67 @@ final class RegistrationMail
         ]);
     }
 
+    /**
+     * Their QR pass, sent again by an organiser, framed by where we are in
+     * time: "It's tomorrow", "It starts in 3 hours". Onsite only.
+     * @param array{lead:string,detail:string,key:string} $timing
+     */
+    public function sendPass(array $registration, array $timing): void
+    {
+        $firstName = htmlspecialchars((string) $registration['first_name'], ENT_QUOTES, 'UTF-8');
+        $reference = htmlspecialchars((string) $registration['reference'], ENT_QUOTES, 'UTF-8');
+        $site = site_url();
+        $lead = htmlspecialchars($timing['lead'], ENT_QUOTES, 'UTF-8');
+        $detail = htmlspecialchars($timing['detail'], ENT_QUOTES, 'UTF-8');
+        $crest = htmlspecialchars($site . '/assets/img/crest.png', ENT_QUOTES, 'UTF-8');
+        $texture = htmlspecialchars($site . '/assets/img/summit-tower-bridge-halftone-v1.jpg', ENT_QUOTES, 'UTF-8');
+        $accessToken = AttendanceService::tokenFor((string) $registration['reference']);
+        $confirmationUrl = htmlspecialchars($site . '/register/confirmed?access=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
+        $qrPng = self::qrPng($accessToken);
+        $qrCid = 'access-pass';
+        $qrUrl = $qrPng !== null ? 'cid:' . $qrCid : htmlspecialchars($site . '/access/qr?token=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
+        $v = (array) config('app.summit.venue');
+        $venueLine = htmlspecialchars($v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'], ENT_QUOTES, 'UTF-8');
+        $directions = htmlspecialchars('https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']), ENT_QUOTES, 'UTF-8');
+
+        $subject = $timing['lead'] . ' — your QR pass for the summit (' . (string) $registration['reference'] . ')';
+        $html = '<!doctype html><html><head><meta charset="utf-8">'
+            . '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">'
+            . '<style>:root{color-scheme:light only;supported-color-schemes:light only}'
+            . '[data-ogsc] .dark-safe-ink{color:#1b2242!important}[data-ogsc] .dark-safe-paper{color:#f3eee2!important}'
+            . '</style></head>'
+            . '<body style="margin:0;background:#eae3d2;color:#1b2242;font-family:Arial,Helvetica,sans-serif">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2"><tr><td align="center" style="padding:32px 16px">'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
+            . '<tr><td style="padding:26px 32px;background:#f3eee2"><img src="' . $crest . '" width="184" alt="The Loveworld Consulate, United Kingdom" style="display:block;width:184px;max-width:100%;height:auto;border:0"></td></tr>'
+            . '<tr><td bgcolor="#1b2242" background="' . $texture . '" style="padding:54px 32px;background-color:#1b2242;background-image:linear-gradient(rgba(27,34,66,.84),rgba(27,34,66,.84)),url(\'' . $texture . '\');background-size:cover;color:#f3eee2">'
+            . '<p style="margin:0 0 22px;color:#ef6166;font:12px monospace;letter-spacing:2px;text-transform:uppercase">' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . ' &middot; ' . htmlspecialchars((string) config('app.summit.date_text'), ENT_QUOTES, 'UTF-8') . '</p>'
+            . '<h1 style="margin:0 0 20px;color:#f3eee2;font:700 52px/0.95 Arial Narrow,Arial,sans-serif;letter-spacing:-1px;text-transform:uppercase" class="dark-safe-paper">' . $lead . ',<br>' . $firstName . '.</h1>'
+            . '<p style="max-width:430px;margin:0;color:#ded8cb;font-size:17px;line-height:1.55">' . $detail . ' Here is your QR pass for the door. Show it on your phone or printed.</p></td></tr>'
+            . '<tr><td style="padding:32px">'
+            . '<div style="margin:0 0 6px;text-align:center"><img src="' . $qrUrl . '" width="200" height="200" alt="Your QR access pass" style="display:block;margin:0 auto;border:1px solid #d4ccbb;background:#ffffff;padding:8px"><p style="margin:10px 0 0;color:#756f60;font:11px monospace;letter-spacing:1px;text-transform:uppercase">Show this QR at the attendance desk</p></div>'
+            . '<p style="margin:22px 0 8px;color:#b4232b;font:12px monospace;letter-spacing:1.5px;text-transform:uppercase">Registration reference</p>'
+            . '<p style="margin:0 0 22px;padding:14px 20px;background:#1b2242;color:#ffffff;font:700 34px/1.1 Arial Black,Arial Narrow,Arial,sans-serif;letter-spacing:3px;text-align:center">' . $reference . '</p>'
+            . '<p style="margin:0 0 6px;color:#6e6857;font-size:15px;line-height:1.6"><strong style="color:#1b2242">Where:</strong> ' . $venueLine . '</p>'
+            . '<p style="margin:12px 0 0"><a href="' . $directions . '" style="display:inline-block;padding:12px 18px;border:2px solid #1b2242;color:#1b2242;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-size:13px">Get directions</a>'
+            . ' <a href="' . $confirmationUrl . '" style="display:inline-block;padding:12px 18px;margin-left:8px;background:#b4232b;color:#f3eee2;text-decoration:none;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-size:13px">Open my pass</a></p>'
+            . '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6">If the QR does not show in this email, the Open my pass button carries it too. Give your name at the desk if you have neither.</p></td></tr>'
+            . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '</td></tr>'
+            . '</table></td></tr></table></body></html>';
+
+        $text = "{$timing['lead']}, {$registration['first_name']}.\n\n"
+            . "{$timing['detail']} Here is your QR pass for the door.\n\n"
+            . "Open your pass: " . $site . '/register/confirmed?access=' . rawurlencode($accessToken) . "\n"
+            . "Registration reference: {$registration['reference']}\n"
+            . "Where: " . $v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'] . "\n"
+            . "Directions: https://www.google.com/maps/dir/?api=1&destination=" . rawurlencode((string) $v['query']) . "\n\n"
+            . "The Loveworld Consulate, United Kingdom";
+
+        (new Mailer())->send((string) $registration['email'], $subject, $html, $text, [
+            'Reply-To' => (string) config('app.mail.reply_to'),
+        ], $qrPng !== null ? [$qrCid => ['data' => $qrPng, 'type' => 'image/png']] : []);
+    }
+
     /** A contribution has been confirmed. Nothing else changes: the place was already theirs. */
     public function sendSupportThanks(array $registration): void
     {
