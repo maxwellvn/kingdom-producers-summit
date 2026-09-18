@@ -88,11 +88,21 @@ final class Announcer
         $recipients = self::recipients($audience);
         $result = ['sent' => 0, 'emailed' => 0, 'messaged' => 0, 'failed' => 0];
 
-        foreach ($recipients as $person) {
-            [$emailed, $messaged] = self::deliver($person, $subject, $body, $byEmail, $byKingsChat);
-            $result['emailed'] += (int) $emailed;
-            $result['messaged'] += (int) $messaged;
-            ($emailed || $messaged) ? $result['sent']++ : $result['failed']++;
+        $work = static function () use ($recipients, $subject, $body, $byEmail, $byKingsChat, &$result): void {
+            foreach ($recipients as $person) {
+                [$emailed, $messaged] = self::deliver($person, $subject, $body, $byEmail, $byKingsChat);
+                $result['emailed'] += (int) $emailed;
+                $result['messaged'] += (int) $messaged;
+                ($emailed || $messaged) ? $result['sent']++ : $result['failed']++;
+            }
+        };
+        // One mail connection for the whole batch; if the mail server is down, fall back to per-message attempts
+        // so KingsChat-only recipients still get theirs.
+        try {
+            $byEmail ? Mailer::batch($work) : $work();
+        } catch (\Throwable $e) {
+            error_log('Announcement batch connection failed, sending one by one: ' . $e->getMessage());
+            $work();
         }
 
         return $result;

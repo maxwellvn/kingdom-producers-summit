@@ -15,3 +15,5 @@ output/
 storage/loadtest.json
 storage/loadtest.log
 storage/loadtest/
+storage/bulk-send.json
+storage/bulk-send.log

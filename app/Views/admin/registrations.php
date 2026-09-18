@@ -10,11 +10,11 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
       <h1 class="adm-page__title"><?= number_format($result['total']) ?> <span class="adm-page__title-sub">record<?= $result['total'] === 1 ? '' : 's' ?></span></h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end">
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Email every confirmed onsite person their QR pass again?')">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Email every confirmed onsite person their QR pass? It runs in the background; progress shows on this page.')">
         <?= csrf_field() ?><input type="hidden" name="what" value="pass">
         <button type="submit" class="adm-btn">Email all QR passes</button>
       </form>
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('Email the live link to everyone in the chosen group?')">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('Email the live link to everyone in the chosen group? It runs in the background; progress shows on this page.')">
         <?= csrf_field() ?><input type="hidden" name="what" value="live">
         <select name="audience" aria-label="Who gets the live link" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
           <option value="online">Online registrants</option>
@@ -31,6 +31,16 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
   <?php if ($flash !== ''): ?>
     <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5);margin-bottom:1.2rem"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
+
+  <section id="bulk" class="bulk" data-bulk data-bulk-url="<?= url('/admin/registrations/bulk-status') ?>" <?= $bulk ? '' : 'hidden' ?>>
+    <div class="bulk__head">
+      <strong data-bulk-title><?= $bulk ? (($bulk['what'] ?? '') === 'pass' ? 'Emailing passes' : 'Emailing live links') : '' ?></strong>
+      <span class="mono bulk__phase" data-bulk-phase></span>
+    </div>
+    <div class="bulk__track"><span class="bulk__fill" data-bulk-fill style="width:0%"></span></div>
+    <p class="mono bulk__line" data-bulk-line></p>
+    <ul class="bulk__failures mono" data-bulk-failures hidden></ul>
+  </section>
 
   <form class="adm-filters" method="get" action="<?= url('/admin/registrations') ?>">
     <div class="adm-tabs" role="tablist">
@@ -131,3 +141,30 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     <?php endif; ?>
   <?php endif; ?>
 </section>
+
+<script>
+// Bulk email progress: poll while it runs, show the outcome when it ends.
+(function () {
+  var root = document.querySelector('[data-bulk]'); if (!root) return;
+  var url = root.getAttribute('data-bulk-url');
+  var wasRunning = <?= !empty($bulkRunning) ? 'true' : 'false' ?>;
+  function paint(d) {
+    var s = d.state; if (!s) return false;
+    root.hidden = false;
+    root.querySelector('[data-bulk-title]').textContent = (s.what === 'pass' ? 'Emailing passes' : 'Emailing live links') + (s.audience ? ' · ' + s.audience : '');
+    var pct = s.total ? Math.round(100 * s.done / s.total) : 0;
+    root.querySelector('[data-bulk-fill]').style.width = pct + '%';
+    root.querySelector('[data-bulk-phase]').textContent = s.phase === 'done' ? (s.error ? 'Stopped' : 'Finished') : (s.phase === 'starting' ? 'Starting…' : 'Sending…');
+    root.querySelector('[data-bulk-line]').textContent = (s.error ? s.error + ' · ' : '') + s.done + ' of ' + s.total + ' · ' + s.sent + ' sent' + (s.failed ? ' · ' + s.failed + ' failed' : '') + (s.finished_at ? ' · took ' + Math.max(1, s.finished_at - s.started_at) + 's' : '');
+    var f = root.querySelector('[data-bulk-failures]'); f.innerHTML = ''; f.hidden = !(s.failures && s.failures.length);
+    (s.failures || []).slice(0, 20).forEach(function (t) { var li = document.createElement('li'); li.textContent = t; f.appendChild(li); });
+    return d.running;
+  }
+  function poll() {
+    fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+      if (paint(d)) setTimeout(poll, 2000);
+    }).catch(function () { setTimeout(poll, 4000); });
+  }
+  poll();
+})();
+</script>

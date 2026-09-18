@@ -327,3 +327,12 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 @media (max-width: 900px) {
   .adm-table, .adm-table--comments, .adm-table--loadtest { min-width: 0; }
 }
+
+/* ---------- Bulk email progress ---------- */
+.bulk { margin: 0 0 1.2rem; padding: .9rem 1.1rem 1rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); border-radius: 8px; }
+.bulk__head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: .55rem; }
+.bulk__phase { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-2); }
+.bulk__track { height: .55rem; border-radius: 999px; background: rgba(27,34,66,.1); overflow: hidden; }
+.bulk__fill { display: block; height: 100%; background: #1e7d3c; transition: width .4s ease; }
+.bulk__line { margin: .5rem 0 0; font-size: .72rem; letter-spacing: .06em; color: var(--muted); }
+.bulk__failures { margin: .5rem 0 0; padding-left: 1rem; font-size: .7rem; color: #b4232b; }

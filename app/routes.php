@@ -76,6 +76,7 @@ $router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [Re
 $router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/resend', [AdminController::class, 'resend'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/resend-all', [AdminController::class, 'resendAll'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/registrations/bulk-status', [AdminController::class, 'bulkStatus'], [RequireAdmin::class]);
 $router->post('/admin/registrations/confirm-payment', [AdminController::class, 'confirmPayment'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/delete', [AdminController::class, 'deleteRegistration'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin::class]);

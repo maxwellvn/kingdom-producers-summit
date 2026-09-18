@@ -19,6 +19,7 @@ use App\Models\Registration;
 use App\Models\Setting;
 use App\Models\Sponsorship;
 use App\Services\Announcer;
+use App\Services\BulkSender;
 use App\Services\AttendanceService;
 use App\Services\StreamService;
 use App\Services\KingsChatNotifier;
@@ -213,6 +214,8 @@ final class AdminController extends Controller
             'title'         => 'Registrations',
             'bodyClass'     => 'page-admin',
             'result'        => Registration::paginate($page, 25, $participation ?: null, $search, $support),
+            'bulk'          => BulkSender::state(),
+            'bulkRunning'   => BulkSender::running(),
             'participation' => $participation,
             'search'        => $search,
             'support'       => $support,
@@ -241,26 +244,33 @@ final class AdminController extends Controller
         return $this->redirect('/admin/registrations?' . http_build_query(array_filter(['type' => $request->str('type'), 'q' => $request->str('q'), 'page' => $request->str('page')])));
     }
 
-    /** Send every confirmed onsite person their pass again, or every confirmed person their live link. */
+    /** Email every onsite person their pass, or a chosen group their live link, in the background. */
     public function resendAll(Request $request): Response
     {
         $what = $request->str('what');
         if (!in_array($what, ['pass', 'live'], true)) {
             return $this->redirect('/admin/registrations');
         }
-        // Passes only ever go to onsite. The live link goes to the chosen group, online by default.
+        if (BulkSender::running()) {
+            Session::flash('admin_flash', 'A bulk send is already running. Wait for it to finish; progress is shown below.');
+            return $this->redirect('/admin/registrations#bulk');
+        }
         $audience = $what === 'pass' ? 'onsite'
             : (in_array($request->str('audience'), ['online', 'onsite', 'all', 'initiative'], true) ? $request->str('audience') : 'online');
-        $sent = $skipped = 0;
-        foreach (Announcer::recipients($audience) as $person) {
-            // Bulk sends go by email only; KingsChat is for one person at a time from the row.
-            [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person, true, false) : Announcer::sendLiveLink($person, true, false);
-            ($emailed || $messaged) ? $sent++ : $skipped++;
+        $by = (string) Session::get('admin_email', 'admin');
+        if (!BulkSender::start($what, $audience, $by)) {
+            Session::flash('admin_flash', 'The background sender could not be started on this server.');
+            return $this->redirect('/admin/registrations');
         }
-        StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " re-sent to {$sent} people by " . Session::get('admin_email', 'admin'));
-        Session::flash('admin_flash', ($what === 'pass' ? 'Passes sent again to ' : 'Live links sent to ') . $sent . ' ' . ($what === 'pass' ? 'onsite ' : ($audience === 'all' ? '' : $audience . ' ')) . 'people' . ($skipped ? ", {$skipped} could not be reached" : '') . '.');
+        StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " bulk email started by {$by} ({$audience})");
+        Session::flash('admin_flash', ($what === 'pass' ? 'Emailing passes to every onsite person. ' : 'Emailing live links to ' . $audience . ' registrants. ') . 'Progress is shown below; you can leave this page.');
 
-        return $this->redirect('/admin/registrations');
+        return $this->redirect('/admin/registrations#bulk');
+    }
+
+    public function bulkStatus(Request $request): Response
+    {
+        return Response::json(['ok' => true, 'running' => BulkSender::running(), 'state' => BulkSender::state()]);
     }
 
     /** Record a contribution as received. Sends the thank-you. */

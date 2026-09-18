@@ -9,10 +9,36 @@ use RuntimeException;
 final class Mailer
 {
     /**
-     * @param array<string,string> $headers
-     * @param array<string,array{data:string,type:string}> $inlineImages keyed by content id
+     * An open, authenticated connection kept for a batch. Static so every
+     * Mailer created during the batch shares it.
+     * @var resource|null
      */
-    public function send(string $to, string $subject, string $html, string $text, array $headers = [], array $inlineImages = []): void
+    private static $shared = null;
+    private static string $sharedHost = '';
+
+    /**
+     * Send many messages over one connection. Connecting and logging in is
+     * most of the cost of a message, so a batch of fifty costs one login,
+     * not fifty. The callback does the sending; the connection closes after.
+     */
+    public static function batch(callable $work): void
+    {
+        $mailer = new self();
+        try {
+            [self::$shared, self::$sharedHost] = $mailer->connect();
+            $work($mailer);
+        } finally {
+            if (is_resource(self::$shared)) {
+                try { $mailer->command(self::$shared, 'QUIT', [221]); } catch (\Throwable $e) {}
+                fclose(self::$shared);
+            }
+            self::$shared = null;
+            self::$sharedHost = '';
+        }
+    }
+
+    /** Open and authenticate. @return array{0:resource,1:string} the socket and host */
+    private function connect(): array
     {
         $cfg = config('app.mail');
         $host = (string) ($cfg['host'] ?? '');
@@ -28,24 +54,42 @@ final class Mailer
         if (!is_resource($socket)) {
             throw new RuntimeException('Could not connect to the mail server.');
         }
-
         stream_set_timeout($socket, 15);
 
-        try {
-            $this->expect($socket, [220]);
-            $this->command($socket, 'EHLO producers-summit', [250]);
-
-            if ($encryption === 'tls') {
-                $this->command($socket, 'STARTTLS', [220]);
-                if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-                    throw new RuntimeException('Could not establish encrypted mail transport.');
-                }
-                $this->command($socket, 'EHLO producers-summit', [250]);
+        $this->expect($socket, [220]);
+        $this->command($socket, 'EHLO producers-summit', [250]);
+        if ($encryption === 'tls') {
+            $this->command($socket, 'STARTTLS', [220]);
+            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                throw new RuntimeException('Could not establish encrypted mail transport.');
             }
+            $this->command($socket, 'EHLO producers-summit', [250]);
+        }
+        $this->command($socket, 'AUTH LOGIN', [334]);
+        $this->command($socket, base64_encode((string) $cfg['username']), [334]);
+        $this->command($socket, base64_encode((string) $cfg['password']), [235]);
 
-            $this->command($socket, 'AUTH LOGIN', [334]);
-            $this->command($socket, base64_encode((string) $cfg['username']), [334]);
-            $this->command($socket, base64_encode((string) $cfg['password']), [235]);
+        return [$socket, $host];
+    }
+
+    /**
+     * @param array<string,string> $headers
+     * @param array<string,array{data:string,type:string}> $inlineImages keyed by content id
+     */
+    public function send(string $to, string $subject, string $html, string $text, array $headers = [], array $inlineImages = []): void
+    {
+        $cfg = config('app.mail');
+        $batched = is_resource(self::$shared);
+        if ($batched) {
+            $socket = self::$shared;
+            $host = self::$sharedHost;
+            // A failed message must not poison the next one on the same connection.
+            try { $this->command($socket, 'RSET', [250]); } catch (\Throwable $e) {}
+        } else {
+            [$socket, $host] = $this->connect();
+        }
+
+        try {
             $this->command($socket, 'MAIL FROM:<' . $this->address((string) $cfg['from']) . '>', [250]);
             $this->command($socket, 'RCPT TO:<' . $this->address($to) . '>', [250, 251]);
             $this->command($socket, 'DATA', [354]);
@@ -99,9 +143,13 @@ final class Mailer
             $body = preg_replace('/(?m)^\./', '..', $body) ?? $body;
             fwrite($socket, $body . ".\r\n");
             $this->expect($socket, [250]);
-            $this->command($socket, 'QUIT', [221]);
+            if (!$batched) {
+                $this->command($socket, 'QUIT', [221]);
+            }
         } finally {
-            fclose($socket);
+            if (!$batched) {
+                fclose($socket);
+            }
         }
     }
 
