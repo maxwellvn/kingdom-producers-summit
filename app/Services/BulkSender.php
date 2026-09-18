@@ -23,8 +23,15 @@ final class BulkSender
     {
         $raw = @file_get_contents(self::stateFile());
         $state = $raw === false ? null : json_decode($raw, true);
+        if (!is_array($state)) {
+            return null;
+        }
+        // A finished run stays on the page for ten minutes, then the panel goes away by itself.
+        if (($state['phase'] ?? '') === 'done' && time() - (int) ($state['finished_at'] ?? 0) > 600) {
+            return null;
+        }
 
-        return is_array($state) ? $state : null;
+        return $state;
     }
 
     public static function running(): bool

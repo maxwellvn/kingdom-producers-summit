@@ -36,6 +36,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     <div class="bulk__head">
       <strong data-bulk-title><?= $bulk ? (($bulk['what'] ?? '') === 'pass' ? 'Emailing passes' : 'Emailing live links') : '' ?></strong>
       <span class="mono bulk__phase" data-bulk-phase></span>
+      <button type="button" class="bulk__close" data-bulk-close aria-label="Dismiss">×</button>
     </div>
     <div class="bulk__track"><span class="bulk__fill" data-bulk-fill style="width:0%"></span></div>
     <p class="mono bulk__line" data-bulk-line></p>
@@ -147,6 +148,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
 (function () {
   var root = document.querySelector('[data-bulk]'); if (!root) return;
   var url = root.getAttribute('data-bulk-url');
+  root.querySelector('[data-bulk-close]').addEventListener('click', function () { root.hidden = true; });
   var wasRunning = <?= !empty($bulkRunning) ? 'true' : 'false' ?>;
   function paint(d) {
     var s = d.state; if (!s) return false;
