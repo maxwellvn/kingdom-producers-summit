@@ -183,7 +183,7 @@ final class WatchController extends Controller
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
         if (!StreamService::isLive()) {
-            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding(), 'watching' => Analytics::watchingCount()]);
+            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding()] + $this->watchingFor($viewer));
         }
         $holding = StreamService::holding();
 
@@ -192,7 +192,7 @@ final class WatchController extends Controller
             ? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH))))
             : ($kind === 'iframe' ? StreamService::embedUrl() : StreamService::url());
 
-        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now'], 'watching' => Analytics::watchingCount()]);
+        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now']] + $this->watchingFor($viewer));
     }
 
     /** Heartbeat: keeps the pass alive and reports when it has been taken. */
@@ -234,16 +234,15 @@ final class WatchController extends Controller
         // it pops up within seconds whether or not the board is open.
         $prompt = self::promptFor($viewer);
         if (!Comment::enabled()) {
-            return Response::json(['ok' => true, 'enabled' => false, 'comments' => [], 'prompt' => $prompt, 'watching' => Analytics::watchingCount()]);
+            return Response::json(['ok' => true, 'enabled' => false, 'comments' => [], 'prompt' => $prompt] + $this->watchingFor($viewer));
         }
 
         return Response::json([
             'ok' => true,
             'enabled' => true,
             'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
-            'watching' => Analytics::watchingCount(),
             'prompt' => $prompt,
-        ]);
+        ] + $this->watchingFor($viewer));
     }
 
     /** Leave a comment. Only while an organiser has the board switched on. */
@@ -339,6 +338,12 @@ final class WatchController extends Controller
         }
 
         return $out;
+    }
+
+    /** The live viewer count is for organisers only; the public never sees it. */
+    private function watchingFor(array $viewer): array
+    {
+        return !empty($viewer['is_organiser']) ? ['watching' => Analytics::watchingCount()] : [];
     }
 
     /** The viewer only if they still hold the single pass for their registration. */
