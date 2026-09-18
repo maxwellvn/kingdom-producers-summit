@@ -884,6 +884,7 @@
       if (!promptBox) return;
       if (!pr) { promptBox.hidden = true; shownPromptId = 0; return; }
       if (pr.id === dismissedPromptId) return;
+      if (pr.answered && pr.id !== shownPromptId) { dismissedPromptId = pr.id; return; } // answered earlier: nothing more to show
       var fresh = pr.id !== shownPromptId;
       shownPromptId = pr.id;
       promptBox.querySelector('[data-prompt-kicker]').textContent = pr.kind === 'poll' ? 'Poll from the organisers' : 'Question from the organisers';
@@ -924,7 +925,17 @@
       Object.keys(fields).forEach(function (k) { data.append(k, String(fields[k])); });
       fetch(promptUrl, { method: 'POST', body: data, headers: { 'X-Requested-With': 'fetch' } })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d && d.ok) { showPrompt(d.prompt); } else { promptSay((d && d.message) || 'That did not send.', true); if (d && d.reason === 'closed') showPrompt(null); } })
+        .then(function (d) {
+          if (d && d.ok) {
+            showPrompt(d.prompt);
+            // Answered: let them see the result, then slide away on its own.
+            var answeredId = d.prompt && d.prompt.id;
+            window.setTimeout(function () { if (shownPromptId === answeredId && !promptBox.hidden) { dismissedPromptId = answeredId; promptBox.hidden = true; } }, 6000);
+          } else {
+            promptSay((d && d.message) || 'That did not send.', true);
+            if (d && d.reason === 'closed') showPrompt(null);
+          }
+        })
         .catch(function () { promptSay('That did not send. Try again.', true); })
         .then(function () { promptBusy = false; });
     }
