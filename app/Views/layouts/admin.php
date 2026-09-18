@@ -22,43 +22,82 @@ $current = \App\Core\Url::currentPath();
 </head>
 <body class="<?= e($bodyClass) ?>">
   <div class="grain" aria-hidden="true"></div>
+  <?php if ($authed): ?><div class="adm-shell"><?php endif; ?>
 
   <?php if ($authed): ?>
-  <header class="adm-nav">
-    <div class="adm-nav__inner">
-      <a class="adm-nav__brand" href="<?= url('/admin') ?>">
-        <span class="adm-nav__mark">Producers Summit</span>
-        <span class="mono adm-nav__sub">Registrations desk</span>
-      </a>
-      <nav class="adm-nav__links">
-        <a href="<?= url('/admin') ?>" class="<?= $current === '/admin' ? 'is-active' : '' ?>">Overview</a>
-        <a href="<?= url('/admin/registrations') ?>" class="<?= $current === '/admin/registrations' ? 'is-active' : '' ?>">Registrations</a>
-        <a href="<?= url('/admin/analytics') ?>" class="<?= str_starts_with($current, '/admin/analytics') ? 'is-active' : '' ?>">Analytics</a>
-        <a href="<?= url('/admin/stream') ?>" class="<?= str_starts_with($current, '/admin/stream') ? 'is-active' : '' ?>">Stream</a>
-        <a href="<?= url('/admin/notifications') ?>" class="<?= str_starts_with($current, '/admin/notifications') ? 'is-active' : '' ?>">Notifications</a>
-        <a href="<?= url('/admin/issue') ?>" class="<?= $current === '/admin/issue' ? 'is-active' : '' ?>">Issue a place</a>
-        <a href="<?= url('/admin/scanner') ?>" class="<?= $current === '/admin/scanner' ? 'is-active' : '' ?>">Access scanner</a>
-        <a href="<?= url('/admin/payments') ?>" class="<?= $current === '/admin/payments' ? 'is-active' : '' ?>">Support</a>
-        <a href="<?= url('/admin/kingschat') ?>" class="<?= str_starts_with($current, '/admin/kingschat') ? 'is-active' : '' ?>">KingsChat</a>
-        <a href="<?= url('/admin/admins') ?>" class="<?= $current === '/admin/admins' ? 'is-active' : '' ?>">Admin users</a>
-        <a href="<?= url('/admin/export.csv') ?>">Export CSV</a>
-        <a href="<?= url('/') ?>" target="_blank" rel="noopener">View site ↗</a>
-      </nav>
-      <form method="post" action="<?= url('/admin/logout') ?>" class="adm-nav__logout">
+  <?php
+  // Grouped like an event desk: who is coming, what happens on the day, then the plumbing.
+  $groups = [
+      ['People', [
+          ['/admin/registrations', 'Registrations', 'exact'],
+          ['/admin/issue', 'Issue a place', 'exact'],
+          ['/admin/scanner', 'Access scanner', 'exact'],
+      ]],
+      ['Event day', [
+          ['/admin/stream', 'Stream & holding screen', 'prefix'],
+          ['/admin/notifications', 'Notifications', 'prefix'],
+      ]],
+      ['Insights', [
+          ['/admin/analytics', 'Analytics', 'prefix'],
+          ['/admin/export.csv', 'Export CSV', 'none'],
+      ]],
+      ['Settings', [
+          ['/admin/payments', 'Support & payments', 'exact'],
+          ['/admin/kingschat', 'KingsChat', 'prefix'],
+          ['/admin/admins', 'Admin users', 'exact'],
+      ]],
+  ];
+  $isActive = static fn (string $path, string $mode): bool => match ($mode) {
+      'exact' => $current === $path,
+      'prefix' => str_starts_with($current, $path),
+      default => false,
+  };
+  ?>
+  <header class="adm-top">
+    <a class="adm-nav__brand" href="<?= url('/admin') ?>">
+      <span class="adm-nav__mark">Producers Summit</span>
+      <span class="mono adm-nav__sub">Admin</span>
+    </a>
+    <button type="button" class="adm-menu-btn" aria-controls="adm-side" aria-expanded="false" data-menu>Menu</button>
+  </header>
+  <aside class="adm-side" id="adm-side">
+    <nav class="adm-side__nav" aria-label="Admin">
+      <a href="<?= url('/admin') ?>" class="adm-side__link <?= $current === '/admin' ? 'is-active' : '' ?>">Overview</a>
+      <?php foreach ($groups as [$label, $links]): ?>
+      <div class="adm-side__group">
+        <span class="adm-side__label"><?= e($label) ?></span>
+        <?php foreach ($links as [$path, $text, $mode]): ?>
+        <a href="<?= url($path) ?>" class="adm-side__link <?= $isActive($path, $mode) ? 'is-active' : '' ?>"><?= e($text) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <?php endforeach; ?>
+    </nav>
+    <div class="adm-side__foot">
+      <a href="<?= url('/') ?>" target="_blank" rel="noopener" class="adm-side__link">View site ↗</a>
+      <form method="post" action="<?= url('/admin/logout') ?>">
         <?= csrf_field() ?>
         <button type="submit" class="adm-btn adm-btn--ghost">Sign out</button>
       </form>
     </div>
-  </header>
+  </aside>
   <?php endif; ?>
 
   <main class="adm-main">
     <?= $content ?>
   </main>
+  <?php if ($authed): ?></div><?php endif; ?>
   <script src="<?= asset('js/notices.js') ?>" defer></script>
   <script>
-    // On a phone the links scroll sideways; start with the current page in view.
-    (function () { var a = document.querySelector('.adm-nav__links a.is-active'); if (a && a.scrollIntoView) { try { a.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} window.scrollTo(0, 0); } })();
+    // Phone: the Menu button opens the grouped drawer; any link or the backdrop closes it.
+    (function () {
+      var btn = document.querySelector('[data-menu]'), side = document.getElementById('adm-side');
+      if (!btn || !side) return;
+      function set(open) { document.body.classList.toggle('adm-menu-open', open); btn.setAttribute('aria-expanded', String(open)); btn.textContent = open ? 'Close' : 'Menu'; }
+      btn.addEventListener('click', function () { set(!document.body.classList.contains('adm-menu-open')); });
+      side.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+      document.addEventListener('click', function (e) { if (document.body.classList.contains('adm-menu-open') && !side.contains(e.target) && !btn.contains(e.target)) set(false); });
+    })();
   </script>
 </body>
 </html>

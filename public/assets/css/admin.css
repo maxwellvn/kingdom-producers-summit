@@ -3,24 +3,37 @@
    Same paper/ink system, denser, tool-like.
    ===================================================================== */
 
-.adm-nav { position: sticky; top: 0; z-index: 50; background: var(--ink); color: var(--paper); border-bottom: 1px solid rgba(243,238,226,.14); }
-.adm-nav__inner { width: min(100% - var(--gutter) * 2, 1400px); margin-inline: auto; display: flex; align-items: center; gap: 1.5rem; padding-block: .9rem; }
-.adm-nav__brand { display: flex; align-items: center; gap: .8rem; flex: none; color: var(--paper); }
-/* The strapline is the first thing to go when the links need the room. */
-.adm-nav__sub { color: rgba(243,238,226,.55); }
-@media (max-width: 1500px) { .adm-nav__sub { display: none; } }
-.adm-nav__mark { font-family: var(--font-display); font-weight: 700; letter-spacing: .06em; white-space: nowrap; color: var(--mustard); }
-.adm-nav__links { display: flex; gap: 1.25rem; margin-left: auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.adm-nav__links::-webkit-scrollbar { display: none; }
-.adm-nav__links a { flex: none; white-space: nowrap; font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .06em; text-transform: uppercase; color: rgba(243,238,226,.78); transition: color var(--dur-fast); }
-.adm-nav__links a:hover, .adm-nav__links a.is-active { color: var(--paper); }
-.adm-nav__logout { flex: none; margin-left: 1.25rem; }
 .adm-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1rem .5rem; border: 1px solid rgba(27,34,66,.3); border-radius: var(--radius); font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); transition: background var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast), opacity var(--dur-fast); }
 .adm-btn:hover { background: rgba(27,34,66,.06); border-color: var(--ink); }
 .adm-btn:active { transform: translateY(1px); }
 .adm-btn--ghost { border-color: transparent; }
 
-.adm-main { width: min(100% - var(--gutter) * 2, 1400px); margin-inline: auto; padding-block: clamp(2rem, 4vw, 3.5rem); }
+/* ---------- Shell: brand bar, grouped sidebar, content ---------- */
+.adm-shell { --adm-top: 3.6rem; display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: auto 1fr; min-height: 100vh; }
+.adm-top { grid-column: 1 / -1; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: var(--adm-top); padding: 0 var(--gutter); background: var(--ink); color: var(--paper); border-bottom: 1px solid rgba(243,238,226,.14); }
+.adm-nav__brand { display: flex; align-items: baseline; gap: .8rem; color: var(--paper); }
+.adm-nav__mark { font-family: var(--font-display); font-weight: 700; letter-spacing: .06em; white-space: nowrap; color: var(--mustard); }
+.adm-nav__sub { color: rgba(243,238,226,.55); }
+.adm-menu-btn { display: none; font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--paper); background: none; border: 1px solid rgba(243,238,226,.3); border-radius: 4px; padding: .45rem .8rem; cursor: pointer; }
+.adm-side { overflow-y: auto; display: flex; flex-direction: column; background: var(--ink); color: var(--paper); border-right: 1px solid rgba(243,238,226,.12); padding: 1.1rem .9rem 1rem; }
+@media (min-width: 901px) { .adm-side { position: sticky; top: var(--adm-top); align-self: start; height: calc(100vh - var(--adm-top)); } }
+.adm-side__nav { display: flex; flex-direction: column; gap: .15rem; }
+.adm-side__group { margin-top: 1.1rem; display: flex; flex-direction: column; gap: .15rem; }
+.adm-side__label { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(243,238,226,.42); padding: 0 .7rem .35rem; }
+.adm-side__link { display: block; padding: .5rem .7rem; border-radius: 6px; font-size: .88rem; color: rgba(243,238,226,.8); transition: background var(--dur-fast), color var(--dur-fast); }
+.adm-side__link:hover { background: rgba(243,238,226,.07); color: var(--paper); }
+.adm-side__link.is-active { background: rgba(243,238,226,.12); color: var(--mustard); }
+.adm-side__foot { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(243,238,226,.12); display: flex; flex-direction: column; gap: .5rem; }
+.adm-main { min-width: 0; width: min(100% - var(--gutter) * 2, 1400px); margin-inline: auto; padding-block: clamp(2rem, 4vw, 3.5rem); }
+@media (max-width: 900px) {
+  .adm-shell { grid-template-columns: minmax(0, 1fr); }
+  .adm-menu-btn { display: inline-block; }
+  .adm-side { position: fixed; top: var(--adm-top); right: 0; bottom: 0; left: 0; width: 100%; z-index: 49; transform: translateX(-100%); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+  .adm-menu-open .adm-side { transform: none; }
+  .adm-menu-open { overflow: hidden; }
+  .adm-side__link { padding: .7rem .8rem; font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .adm-side { transition: none; } }
 
 .adm-page__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; margin-bottom: 2.4rem; flex-wrap: wrap; }
 .adm-page__title { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.05; text-wrap: balance; }
@@ -156,11 +169,6 @@
 .adm-login .btn--block { margin-top: .4rem; }
 
 @media (max-width: 900px) {
-  /* Brand and sign-out on the first row; the links become a swipeable row beneath, never hidden. */
-  .adm-nav__inner { flex-wrap: wrap; gap: .6rem 1rem; padding-block: .7rem .55rem; }
-  .adm-nav__links { order: 3; flex: 1 0 100%; margin-left: 0; gap: 1rem; padding: .2rem 0 .1rem; -webkit-overflow-scrolling: touch; mask-image: linear-gradient(90deg, #000 88%, transparent); }
-  .adm-nav__links a.is-active { text-decoration: underline; text-underline-offset: 5px; }
-  .adm-nav__logout { flex: none; margin-left: auto; }
   .adm-stats { grid-template-columns: 1fr 1fr; }
   .adm-grid { grid-template-columns: 1fr; }
   .adm-panel--wide { grid-column: auto; }
@@ -236,8 +244,8 @@
 
 /* Pages sit on paper, so buttons are drawn in ink. The navigation bar is the
    one dark surface, and its buttons keep the cream treatment. */
-.adm-nav .adm-btn { color: var(--paper); border-color: rgba(243,238,226,.3); }
-.adm-nav .adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
+.adm-side .adm-btn { color: var(--paper); border-color: rgba(243,238,226,.3); width: 100%; }
+.adm-side .adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
 
 /* ---------- Support states ---------- */
 .adm-pill--paid { background: #1e7d3c; color: #f3eee2; box-shadow: 0 0 0 3px rgba(30,125,60,.18); }
