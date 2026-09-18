@@ -59,7 +59,7 @@
   </div>
 </section>
 
-<script src="<?= asset('js/html5-qrcode.min.js') ?>"></script>
+<script src="<?= asset('js/html5-qrcode.min.js') ?>" onerror="window.__qrLibFailed = true"></script>
 <script>
 (function () {
   var root = document.querySelector('[data-access-scanner]');
@@ -147,6 +147,20 @@
     });
   }
 
+  // On a slow mobile connection the library can still be downloading when the button is tapped.
+  function waitForLibrary() {
+    return new Promise(function (resolve, reject) {
+      var waited = 0;
+      (function tick() {
+        if (window.Html5Qrcode) return resolve();
+        if (window.__qrLibFailed || waited >= 30000) return reject(new Error('Camera scanner failed to load. Check your connection and reload the page, or scan a photo.'));
+        start.textContent = 'Loading scanner…';
+        waited += 300;
+        window.setTimeout(tick, 300);
+      })();
+    });
+  }
+
   start.addEventListener('click', function () {
     start.dataset.label = start.textContent;
     start.textContent = 'Requesting camera';
@@ -161,12 +175,14 @@
 
     // This direct browser API call is intentional: it guarantees that the
     // permission prompt is tied to the user's click before the QR library starts.
+    var deviceId = '';
     navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}}, audio: false})
     .then(function (permissionStream) {
       var track = permissionStream.getVideoTracks()[0];
-      var deviceId = track && track.getSettings ? track.getSettings().deviceId : '';
+      deviceId = track && track.getSettings ? track.getSettings().deviceId : '';
       permissionStream.getTracks().forEach(function (item) { item.stop(); });
-      if (!window.Html5Qrcode) { throw new Error('Camera scanner failed to load. Reload the page, or scan a photo.'); }
+      return waitForLibrary();
+    }).then(function () {
       reader = reader || new Html5Qrcode('accessQrReader');
       return reader.start(
         deviceId || {facingMode: {ideal: 'environment'}},
