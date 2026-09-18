@@ -828,7 +828,8 @@
   /* ---------- Comment board on the watch page ---------- */
   (function () {
     var board = document.querySelector('[data-comments]');
-    if (!board || board.getAttribute('data-comments-open') !== '1') return;
+    if (!board) return;
+    var boardOpen = board.getAttribute('data-comments-open') === '1';
 
     var url = board.getAttribute('data-comments-url');
     var list = board.querySelector('[data-comments-list]');
@@ -871,14 +872,73 @@
       board.hidden = true;
     }
 
+    // ----- The organisers' poll or question, popping up over the page -----
+    var promptBox = document.querySelector('[data-prompt]');
+    var promptUrl = promptBox ? promptBox.getAttribute('data-prompt-url') : '';
+    var promptToken = promptBox ? promptBox.querySelector('input[name="_token"]').value : '';
+    var shownPromptId = 0, dismissedPromptId = 0, promptBusy = false;
+    function promptSay(msg, isError) {
+      var h = promptBox.querySelector('[data-prompt-hint]'); h.textContent = msg || ''; h.classList.toggle('is-error', !!isError);
+    }
+    function showPrompt(pr) {
+      if (!promptBox) return;
+      if (!pr) { promptBox.hidden = true; shownPromptId = 0; return; }
+      if (pr.id === dismissedPromptId) return;
+      var fresh = pr.id !== shownPromptId;
+      shownPromptId = pr.id;
+      promptBox.querySelector('[data-prompt-kicker]').textContent = pr.kind === 'poll' ? 'Poll from the organisers' : 'Question from the organisers';
+      promptBox.querySelector('[data-prompt-question]').innerHTML = pr.question;
+      var body = promptBox.querySelector('[data-prompt-body]'); body.innerHTML = '';
+      if (pr.kind === 'poll') {
+        var total = pr.results ? pr.results.total : 0;
+        pr.options.forEach(function (label, i) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'prompt__option' + (pr.answered ? ' is-result' : '') + (pr.my_choice === i ? ' is-mine' : '');
+          var pct = pr.results && total ? Math.round(100 * pr.results.counts[i] / total) : 0;
+          b.innerHTML = '<span class="prompt__option-fill" style="width:' + (pr.answered ? pct : 0) + '%"></span><span class="prompt__option-label">' + label + '</span>' + (pr.answered ? '<span class="mono prompt__option-pct">' + pct + '%</span>' : '');
+          if (!pr.answered) b.addEventListener('click', function () { answerPrompt({ prompt_id: pr.id, choice: i }); });
+          else b.disabled = true;
+          body.appendChild(b);
+        });
+        promptSay(pr.answered ? (total === 1 ? '1 vote so far' : total + ' votes so far') + ' · thank you' : 'Tap one to vote. One vote each.');
+      } else {
+        if (pr.answered) {
+          body.innerHTML = '<p class="prompt__thanks">Thank you, your reply has gone to the organisers.</p>';
+          promptSay('');
+        } else {
+          var wrap = document.createElement('div'); wrap.className = 'prompt__reply';
+          wrap.innerHTML = '<textarea rows="2" maxlength="500" placeholder="Your reply…"></textarea><button type="button" class="btn btn--ink prompt__send"><span class="btn__label">Send</span></button>';
+          wrap.querySelector('button').addEventListener('click', function () {
+            var t = wrap.querySelector('textarea').value.trim(); if (!t) { promptSay('Write something first.', true); return; }
+            answerPrompt({ prompt_id: pr.id, text: t });
+          });
+          body.appendChild(wrap);
+          promptSay('Only the organisers see replies.');
+        }
+      }
+      promptBox.hidden = false;
+      if (fresh) { promptBox.classList.remove('is-in'); void promptBox.offsetWidth; promptBox.classList.add('is-in'); }
+    }
+    function answerPrompt(fields) {
+      if (promptBusy) return; promptBusy = true;
+      var data = new FormData(); data.append('_token', promptToken);
+      Object.keys(fields).forEach(function (k) { data.append(k, String(fields[k])); });
+      fetch(promptUrl, { method: 'POST', body: data, headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d && d.ok) { showPrompt(d.prompt); } else { promptSay((d && d.message) || 'That did not send.', true); if (d && d.reason === 'closed') showPrompt(null); } })
+        .catch(function () { promptSay('That did not send. Try again.', true); })
+        .then(function () { promptBusy = false; });
+    }
+    if (promptBox) promptBox.querySelector('[data-prompt-dismiss]').addEventListener('click', function () { dismissedPromptId = shownPromptId; promptBox.hidden = true; });
+
     function load() {
       fetch(url + '?after=' + lastId, { headers: { 'X-Requested-With': 'fetch' } })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || !d.ok) return;
+          if (typeof d.watching === 'number') showWatching(d.watching);
+          showPrompt(d.prompt || null);
           if (!d.enabled) { closeBoard(); return; }
           render(d.comments || []);
-          if (typeof d.watching === 'number') showWatching(d.watching);
         })
         .catch(function () {});
     }
@@ -891,7 +951,7 @@
       }
     }
 
-    form.addEventListener('submit', function (e) {
+    if (boardOpen) form.addEventListener('submit', function (e) {
       e.preventDefault();
       var body = input.value.trim();
       if (!body) return;
@@ -920,10 +980,10 @@
     });
 
     // The composer grows with the message, up to a few lines.
-    input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 96) + 'px'; });
+    if (boardOpen) input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 96) + 'px'; });
 
     // Enter sends, shift+enter starts a new line.
-    input.addEventListener('keydown', function (e) {
+    if (boardOpen) input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         form.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -931,6 +991,6 @@
     });
 
     load();
-    setInterval(load, 7000);
+    setInterval(load, 3000); // comments and any poll or question, a few seconds at most
   })();
 })();

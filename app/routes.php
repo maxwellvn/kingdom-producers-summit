@@ -35,6 +35,7 @@ $router->get('/watch/source', [WatchController::class, 'source']);
 $router->post('/watch/beat', [WatchController::class, 'beat']);
 $router->get('/watch/comments', [WatchController::class, 'comments']);
 $router->post('/watch/comments', [WatchController::class, 'postComment'], [VerifyCsrf::class]);
+$router->post('/watch/prompt', [WatchController::class, 'answerPrompt'], [VerifyCsrf::class]);
 $router->get('/watch/hls', [WatchController::class, 'hls']);
 $router->get('/access/qr', [RegistrationController::class, 'qr']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
@@ -90,6 +91,9 @@ $router->post('/admin/stream/load-test/stop', [AdminController::class, 'stopLoad
 $router->get('/admin/stream/load-test', [AdminController::class, 'loadTestStatus'], [RequireAdmin::class]);
 $router->get('/admin/stream/log', [AdminController::class, 'streamLog'], [RequireAdmin::class]);
 $router->post('/admin/stream/log/clear', [AdminController::class, 'clearStreamLog'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/prompts', [AdminController::class, 'createPrompt'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/prompts/close', [AdminController::class, 'closePrompt'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/prompts/results', [AdminController::class, 'promptResults'], [RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);

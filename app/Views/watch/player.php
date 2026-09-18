@@ -86,6 +86,17 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
       </aside>
     </div>
 
+    <div class="prompt" data-prompt data-prompt-url="<?= e(url('/watch/prompt')) ?>" hidden role="dialog" aria-live="polite" aria-labelledby="promptQuestion">
+      <?= csrf_field() ?>
+      <div class="prompt__card">
+        <p class="mono prompt__kicker"><span class="prompt__dot" aria-hidden="true"></span><span data-prompt-kicker>From the organisers</span></p>
+        <h3 class="prompt__question" id="promptQuestion" data-prompt-question></h3>
+        <div class="prompt__body" data-prompt-body></div>
+        <p class="mono prompt__hint" data-prompt-hint></p>
+        <button type="button" class="prompt__dismiss mono" data-prompt-dismiss aria-label="Hide">Hide</button>
+      </div>
+    </div>
+
     <p class="watch__fine mono">
       <?php if ($isOrganiser): ?>You are watching as an organiser, without a pass, so this does not take a place from anyone.<?php else: ?>This pass is yours alone. Opening it elsewhere signs this screen out.<?php endif; ?>
       Trouble? Message <a href="https://kingschat.online/user/<?= e(contact_kingschat()) ?>" target="_blank" rel="noopener">@<?= e(contact_kingschat()) ?></a>

@@ -12,6 +12,7 @@ use App\Models\Analytics;
 use App\Models\Comment;
 use App\Models\StreamEvent;
 use App\Models\LoginAttempt;
+use App\Models\Prompt;
 use App\Services\SafeUrl;
 use App\Services\AttendanceService;
 use App\Services\StreamService;
@@ -229,8 +230,11 @@ final class WatchController extends Controller
         if ($viewer === null) {
             return Response::json(['ok' => false, 'reason' => 'signed_out'], 403);
         }
+        // The organisers' poll or question rides along with the comment poll, so
+        // it pops up within seconds whether or not the board is open.
+        $prompt = self::promptFor($viewer);
         if (!Comment::enabled()) {
-            return Response::json(['ok' => true, 'enabled' => false, 'comments' => []]);
+            return Response::json(['ok' => true, 'enabled' => false, 'comments' => [], 'prompt' => $prompt, 'watching' => Analytics::watchingCount()]);
         }
 
         return Response::json([
@@ -238,6 +242,7 @@ final class WatchController extends Controller
             'enabled' => true,
             'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
             'watching' => Analytics::watchingCount(),
+            'prompt' => $prompt,
         ]);
     }
 
@@ -280,6 +285,60 @@ final class WatchController extends Controller
             'ok' => true,
             'comments' => self::present(Comment::recent(100, (int) $request->str('after'))),
         ]);
+    }
+
+    /** Answer the organisers' poll or question. One answer per registration. */
+    public function answerPrompt(Request $request): Response
+    {
+        $viewer = $this->passHolder();
+        if ($viewer === null) {
+            return Response::json(['ok' => false, 'reason' => 'signed_out'], 403);
+        }
+        $prompt = Prompt::find((int) $request->str('prompt_id'));
+        if ($prompt === null || $prompt['status'] !== 'open') {
+            return Response::json(['ok' => false, 'reason' => 'closed', 'message' => 'That one has closed.'], 410);
+        }
+
+        $author = trim((string) $viewer['first_name'] . ' ' . (string) $viewer['last_name']);
+        if ($prompt['kind'] === 'poll') {
+            $choice = (int) $request->str('choice', '-1');
+            if (!isset($prompt['options'][$choice])) {
+                return Response::json(['ok' => false, 'reason' => 'bad_choice', 'message' => 'Pick one of the options.'], 422);
+            }
+            Prompt::answer($prompt['id'], (string) $viewer['reference'], $author, $choice, null);
+        } else {
+            $text = trim($request->str('text'));
+            if ($text === '') {
+                return Response::json(['ok' => false, 'reason' => 'empty', 'message' => 'Write something first.'], 422);
+            }
+            Prompt::answer($prompt['id'], (string) $viewer['reference'], $author, null, $text);
+        }
+
+        return Response::json(['ok' => true, 'prompt' => self::promptFor($viewer)]);
+    }
+
+    /** The active prompt as this viewer should see it: options, whether they answered, poll results if so. */
+    private static function promptFor(array $viewer): ?array
+    {
+        $prompt = Prompt::active();
+        if ($prompt === null) {
+            return null;
+        }
+        $mine = Prompt::hasAnswered($prompt['id'], (string) $viewer['reference']);
+        $out = [
+            'id' => $prompt['id'],
+            'kind' => $prompt['kind'],
+            'question' => e((string) $prompt['question']),
+            'options' => array_map(static fn ($o) => e((string) $o), $prompt['options']),
+            'answered' => $mine !== null,
+            'my_choice' => $mine['choice'] ?? null,
+        ];
+        // Poll results are shown once they have voted; a question's replies stay with the organisers.
+        if ($prompt['kind'] === 'poll' && $mine !== null) {
+            $out['results'] = Prompt::tally($prompt);
+        }
+
+        return $out;
     }
 
     /** The viewer only if they still hold the single pass for their registration. */

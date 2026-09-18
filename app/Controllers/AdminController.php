@@ -14,6 +14,7 @@ use App\Models\Analytics;
 use App\Models\Comment;
 use App\Models\StreamEvent;
 use App\Models\LoginAttempt;
+use App\Models\Prompt;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Models\Sponsorship;
@@ -337,6 +338,7 @@ final class AdminController extends Controller
             'loadTest'      => LoadTester::state(),
             'loadTestRunning' => LoadTester::running(),
             'commentsOn'    => Comment::enabled(),
+            'prompts'       => Prompt::all(20),
             'commentCount'  => Comment::count(),
             'comments'      => Comment::forModeration(),
             'flash'     => (string) Session::get('admin_flash', ''),
@@ -395,6 +397,112 @@ final class AdminController extends Controller
         return $this->redirect('/admin/stream#live-log');
     }
 
+    /** Put a poll or a question to everyone watching. */
+    public function createPrompt(Request $request): Response
+    {
+        $kind = $request->str('kind') === 'poll' ? 'poll' : 'question';
+        $question = trim($request->str('question'));
+        $options = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $request->str('options'))), static fn ($o) => $o !== ''));
+        $options = array_slice($options, 0, Prompt::MAX_OPTIONS);
+
+        if ($question === '') {
+            Session::flash('admin_flash', 'Write the question first.');
+            return $this->redirect('/admin/stream#prompts');
+        }
+        if ($kind === 'poll' && count($options) < 2) {
+            Session::flash('admin_flash', 'A poll needs at least two options, one per line.');
+            return $this->redirect('/admin/stream#prompts');
+        }
+
+        // One at a time: opening a new one closes whatever was open.
+        foreach (Prompt::all(20) as $existing) {
+            if ($existing['status'] === 'open') {
+                Prompt::close($existing['id']);
+            }
+        }
+        $id = Prompt::create($kind, $question, $options);
+        StreamEvent::log('prompt', ucfirst($kind) . ' posted by ' . Session::get('admin_email', 'admin') . ': ' . mb_substr($question, 0, 100));
+        Session::flash('admin_flash', ucfirst($kind) . ' posted. It is on every viewer\'s screen now.');
+
+        return $this->redirect('/admin/stream#prompts');
+    }
+
+    public function closePrompt(Request $request): Response
+    {
+        $id = (int) $request->str('id');
+        if ($request->str('delete') === '1') {
+            Prompt::delete($id);
+            Session::flash('admin_flash', 'Removed, answers included.');
+        } else {
+            Prompt::close($id);
+            StreamEvent::log('prompt', 'Prompt #' . $id . ' closed by ' . Session::get('admin_email', 'admin'));
+            Session::flash('admin_flash', 'Closed. Viewers can no longer answer.');
+        }
+
+        return $this->redirect('/admin/stream#prompts');
+    }
+
+    /** Live results for the admin panel. */
+    public function promptResults(Request $request): Response
+    {
+        $out = [];
+        foreach (Prompt::all(20) as $p) {
+            $item = ['id' => $p['id'], 'kind' => $p['kind'], 'question' => e((string) $p['question']), 'status' => $p['status'],
+                'answers' => (int) $p['answers'], 'options' => array_map(static fn ($o) => e((string) $o), $p['options'])];
+            if ($p['kind'] === 'poll') {
+                $item['tally'] = Prompt::tally($p);
+            } else {
+                $item['replies'] = array_map(static fn (array $r) => ['author' => e((string) $r['author']), 'text' => e((string) $r['text']), 'at' => date('H:i', strtotime((string) $r['created_at']))], Prompt::replies($p['id'], 100));
+            }
+            $out[] = $item;
+        }
+
+        return Response::json(['ok' => true, 'prompts' => $out]);
+    }
+
+    /**
+     * One click from the control bar: go live, pause, end, or reopen as
+     * starting soon. Sets the switch and the holding state together so the
+     * two can never disagree.
+     */
+    public function setStreamState(Request $request): Response
+    {
+        $action = $request->str('action');
+        $who = (string) Session::get('admin_email', 'admin');
+        switch ($action) {
+            case 'live':
+                if (StreamService::url() === '') {
+                    Session::flash('admin_flash', 'Add the stream link under Setup before going live.');
+                    return $this->redirect('/admin/stream');
+                }
+                Setting::set('stream_enabled', '1');
+                Setting::set('stream_state', 'soon'); // what they fall back to if the feed drops
+                StreamEvent::log('stream', "Went LIVE ({$who})");
+                Session::flash('admin_flash', 'You are live. Viewers\' screens switch to the video within fifteen seconds.');
+                break;
+            case 'pause':
+                Setting::set('stream_enabled', '0');
+                Setting::set('stream_state', 'paused');
+                StreamEvent::log('stream', "Paused ({$who})");
+                Session::flash('admin_flash', 'Paused. Viewers see "Back shortly". Press Resume when ready.');
+                break;
+            case 'end':
+                Setting::set('stream_enabled', '0');
+                Setting::set('stream_state', 'ended');
+                StreamEvent::log('stream', "Ended ({$who})");
+                Session::flash('admin_flash', 'Ended. Viewers see the closing screen.');
+                break;
+            case 'soon':
+                Setting::set('stream_enabled', '0');
+                Setting::set('stream_state', 'soon');
+                StreamEvent::log('stream', "Reopened as starting soon ({$who})");
+                Session::flash('admin_flash', 'Viewers see "Starting soon" again.');
+                break;
+        }
+
+        return $this->redirect('/admin/stream');
+    }
+
     /** Open or close the comment board. Closed is the default. */
     public function saveComments(Request $request): Response
     {
@@ -448,13 +556,9 @@ final class AdminController extends Controller
         Setting::set('stream_title', mb_substr(trim($request->str('stream_title')), 0, 160));
         Setting::set('stream_note', mb_substr(trim($request->str('stream_note')), 0, 255));
         Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');
-        Setting::set('stream_enabled', $request->input('stream_enabled') === '1' ? '1' : '0');
 
         // The holding screen: what people see before, between and after.
-        $state = $request->str('stream_state');
-        $state = isset(StreamService::HOLDING_STATES[$state]) ? $state : 'soon';
-        $stateChanged = $state !== Setting::get('stream_state', 'soon');
-        Setting::set('stream_state', $state);
+        $stateChanged = false;
         $startsAt = trim($request->str('stream_starts_at'));
         Setting::set('stream_starts_at', $startsAt !== '' && strtotime($startsAt) !== false ? date('Y-m-d H:i:s', strtotime($startsAt)) : '');
         // Custom words belong to the state they were written for. Changing state
@@ -465,12 +569,8 @@ final class AdminController extends Controller
         Setting::set('stream_message', $stateChanged && $message === Setting::get('stream_message', '') ? '' : $message);
         Setting::set('stream_now', mb_substr(trim($request->str('stream_now')), 0, 160));
 
-        StreamEvent::log('stream', StreamService::isLive()
-            ? 'Stream switched ON (' . StreamService::kind() . ', proxy ' . (StreamService::proxyEnabled() ? 'on' : 'off') . ') by ' . Session::get('admin_email', 'admin')
-            : 'Stream switched OFF by ' . Session::get('admin_email', 'admin'));
-        Session::flash('admin_flash', StreamService::isLive()
-            ? 'The stream is live. Registrants can watch now.'
-            : 'Saved. The stream is switched off.');
+        StreamEvent::log('stream', 'Stream settings saved by ' . Session::get('admin_email', 'admin'));
+        Session::flash('admin_flash', 'Settings saved.');
 
         return $this->redirect('/admin/stream');
     }

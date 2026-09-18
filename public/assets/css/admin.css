@@ -267,3 +267,42 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .livelog__dot { display: inline-block; width: 8px; height: 8px; margin-left: .5rem; border-radius: 50%; background: rgba(27,34,66,.25); vertical-align: middle; transition: background .2s; }
 .livelog__dot.is-on { background: #1e7d3c; }
 @media (max-width: 600px) { .livelog__item { grid-template-columns: 4.6rem minmax(0, 1fr); } .livelog__kind { display: none; } }
+
+/* ---------- Stream control bar ---------- */
+.control { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 1rem 1.6rem; padding: 1.1rem 1.4rem; background: var(--ink); color: var(--paper); border-radius: 10px; }
+.control__status { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+.control__dot { width: 14px; height: 14px; flex: none; border-radius: 50%; background: rgba(243,238,226,.35); }
+.control--live .control__dot { background: #e0384a; box-shadow: 0 0 0 0 rgba(224,56,74,.6); animation: watchPulse 1.8s ease-out infinite; }
+.control--soon .control__dot { background: #e0a23a; }
+.control--paused .control__dot { background: #9ec5ff; }
+.control__state { margin: 0; font-family: var(--font-display); font-size: 1.5rem; text-transform: uppercase; letter-spacing: .02em; line-height: 1; }
+.control__help { margin: .3rem 0 0; color: rgba(243,238,226,.7); font-size: .88rem; }
+.control__count { margin: 0; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(243,238,226,.75); white-space: nowrap; }
+.control__actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; }
+.control__actions .adm-btn { color: var(--paper); border-color: rgba(243,238,226,.35); }
+.control__actions .adm-btn:hover { background: rgba(243,238,226,.1); border-color: var(--paper); }
+.adm-btn--live { background: #e0384a; border-color: #e0384a !important; color: #fff !important; font-weight: 600; }
+.adm-btn--live:hover { background: #c92f3f !important; }
+.adm-btn--live:disabled { opacity: .45; cursor: not-allowed; }
+.adm-btn--danger { border-color: rgba(224,56,74,.6) !important; color: #ff9aa2 !important; }
+.control__warn { grid-column: 1 / -1; margin: 0; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: #f3d27a; }
+@media (max-width: 760px) { .control { grid-template-columns: 1fr; } .control__actions { justify-content: flex-start; } }
+
+/* ---------- Polls & questions (admin) ---------- */
+.promptform { display: grid; gap: .9rem; padding: 1rem 1.1rem 1.1rem; margin-bottom: 1.2rem; background: rgba(27,34,66,.04); border: 1px solid rgba(27,34,66,.12); border-radius: 8px; }
+.promptform__kind { display: flex; gap: 1.2rem; font-size: .92rem; }
+.promptform__kind label { display: flex; gap: .4rem; align-items: center; }
+.promptlist { display: grid; gap: .8rem; }
+.promptcard { padding: .9rem 1rem 1rem; border: 1px solid rgba(27,34,66,.14); border-radius: 8px; background: #fff; }
+.promptcard.is-open { border-color: rgba(30,125,60,.45); box-shadow: 0 0 0 3px rgba(30,125,60,.08); }
+.promptcard__head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin-bottom: .5rem; }
+.promptcard__kind { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); }
+.promptcard__actions { display: flex; gap: .4rem; margin-left: auto; }
+.promptcard__q { margin: 0 0 .7rem; font-size: 1.02rem; color: var(--ink); }
+.promptcard__bar { display: grid; grid-template-columns: minmax(0, 1fr) 4rem; gap: .6rem; align-items: center; margin: .3rem 0; font-size: .88rem; }
+.promptcard__track { position: relative; height: 1.4rem; border-radius: 4px; background: rgba(27,34,66,.08); overflow: hidden; }
+.promptcard__fill { position: absolute; inset: 0 auto 0 0; background: var(--ink); transition: width .4s ease; }
+.promptcard__lbl { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 .6rem; color: var(--ink); mix-blend-mode: difference; filter: invert(1) grayscale(1) contrast(9); font-size: .8rem; }
+.promptcard__pct { text-align: right; font-family: var(--font-mono); font-size: .8rem; color: var(--ink); }
+.promptcard__reply { padding: .5rem 0; border-top: 1px solid var(--paper-line); font-size: .9rem; }
+.promptcard__reply .mono { color: var(--muted-2); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; margin-right: .5rem; }

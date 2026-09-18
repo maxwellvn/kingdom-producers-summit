@@ -1168,3 +1168,31 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .watch--chat .watch__layout .chat__list { max-height: 50vh; }
 }
 @media (prefers-reduced-motion: reduce) { .watch__pill-dot, .holding__dot { animation: none; } }
+
+/* ---------- Organisers' poll or question, popping up on the watch page ---------- */
+.prompt { position: fixed; right: max(1rem, 3vw); bottom: max(1rem, 3vw); z-index: 900; width: min(24rem, calc(100% - 2rem)); }
+.prompt.is-in .prompt__card { animation: promptIn .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes promptIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+.prompt__card { position: relative; padding: 1.1rem 1.2rem 1.15rem; background: #FBF8F0; color: var(--ink); border: 1px solid rgba(27,34,66,.2); border-radius: 12px; box-shadow: 0 24px 48px -20px rgba(21,27,55,.45), 0 0 0 1px rgba(255,255,255,.4) inset; }
+.prompt__kicker { display: inline-flex; align-items: center; gap: .5rem; margin: 0 0 .5rem; font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--stamp); }
+.prompt__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stamp); box-shadow: 0 0 0 0 rgba(180,35,43,.5); animation: watchPulse 2s ease-out infinite; }
+.prompt__question { margin: 0 0 .8rem; font-family: var(--font-display); font-size: 1.25rem; line-height: 1.15; text-transform: uppercase; letter-spacing: .01em; color: var(--ink); padding-right: 2.6rem; }
+.prompt__body { display: grid; gap: .45rem; }
+.prompt__option { position: relative; display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 100%; padding: .65rem .8rem; border: 1px solid rgba(27,34,66,.25); border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-size: .92rem; text-align: left; cursor: pointer; overflow: hidden; transition: border-color .15s ease, background .15s ease; }
+@media (hover: hover) and (pointer: fine) { .prompt__option:not(:disabled):hover { border-color: var(--ink); background: rgba(27,34,66,.04); } }
+.prompt__option.is-result { cursor: default; }
+.prompt__option.is-mine { border-color: var(--ink); }
+.prompt__option-fill { position: absolute; inset: 0 auto 0 0; background: rgba(27,34,66,.1); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+.prompt__option.is-mine .prompt__option-fill { background: rgba(180,35,43,.14); }
+.prompt__option-label, .prompt__option-pct { position: relative; }
+.prompt__option-pct { font-size: .74rem; color: var(--muted); }
+.prompt__reply { display: grid; gap: .5rem; }
+.prompt__reply textarea { width: 100%; padding: .6rem .7rem; border: 1px solid rgba(27,34,66,.25); border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-size: .92rem; resize: vertical; }
+.prompt__reply textarea:focus { outline: 2px solid rgba(27,34,66,.25); outline-offset: 1px; }
+.prompt__send { justify-self: end; }
+.prompt__thanks { margin: 0; color: var(--muted); font-size: .92rem; }
+.prompt__hint { margin: .6rem 0 0; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); }
+.prompt__hint.is-error { color: var(--stamp); }
+.prompt__dismiss { position: absolute; top: .7rem; right: .7rem; padding: .3rem .5rem; border: 1px solid rgba(27,34,66,.2); border-radius: 6px; background: transparent; color: var(--muted-2); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .prompt__dismiss:hover { color: var(--ink); border-color: var(--ink); } }
+@media (prefers-reduced-motion: reduce) { .prompt.is-in .prompt__card { animation: none; } .prompt__dot { animation: none; } }
