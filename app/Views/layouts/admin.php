@@ -56,5 +56,9 @@ $current = \App\Core\Url::currentPath();
     <?= $content ?>
   </main>
   <script src="<?= asset('js/notices.js') ?>" defer></script>
+  <script>
+    // On a phone the links scroll sideways; start with the current page in view.
+    (function () { var a = document.querySelector('.adm-nav__links a.is-active'); if (a && a.scrollIntoView) { try { a.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} window.scrollTo(0, 0); } })();
+  </script>
 </body>
 </html>

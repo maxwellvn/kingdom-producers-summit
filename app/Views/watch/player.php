@@ -66,7 +66,7 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
 
         <ol class="chat__list" data-comments-list>
           <li class="chat__empty" data-comments-empty>
-            <span class="chat__empty-title">Say hello</span>
+            <span class="chat__empty-title">Share your comments</span>
             <span class="mono">Be the first to comment on this stream.</span>
           </li>
         </ol>

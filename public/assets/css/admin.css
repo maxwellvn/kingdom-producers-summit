@@ -156,8 +156,11 @@
 .adm-login .btn--block { margin-top: .4rem; }
 
 @media (max-width: 900px) {
-  .adm-nav__links { display: none; }
-  .adm-nav__logout { flex: none; margin-left: 1.25rem; }
+  /* Brand and sign-out on the first row; the links become a swipeable row beneath, never hidden. */
+  .adm-nav__inner { flex-wrap: wrap; gap: .6rem 1rem; padding-block: .7rem .55rem; }
+  .adm-nav__links { order: 3; flex: 1 0 100%; margin-left: 0; gap: 1rem; padding: .2rem 0 .1rem; -webkit-overflow-scrolling: touch; mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .adm-nav__links a.is-active { text-decoration: underline; text-underline-offset: 5px; }
+  .adm-nav__logout { flex: none; margin-left: auto; }
   .adm-stats { grid-template-columns: 1fr 1fr; }
   .adm-grid { grid-template-columns: 1fr; }
   .adm-panel--wide { grid-column: auto; }
@@ -166,8 +169,10 @@
   .adm-table { font-size: .82rem; }
   .adm-table thead { display: none; }
   .adm-table, .adm-table tbody, .adm-table tr, .adm-table td { display: block; }
-  .adm-table { min-width: 0; }
+  .adm-table, .adm-table--comments, .adm-table--loadtest { min-width: 0; }
   .adm-table th, .adm-table td { white-space: normal; }
+  /* Stacked cells lose their headers, so the load-test rows label themselves. */
+  .adm-table--loadtest td:first-child { font-weight: 600; }
   .adm-table-wrap { overflow-x: visible; }
   .adm-table tr { padding: .8rem 0; border-bottom: 1px solid var(--paper-line); }
   .adm-table td { border: 0; padding: .15rem 0; }
@@ -226,6 +231,7 @@
 @media (max-width: 720px) { .adm-columns { grid-template-columns: 1fr; } .adm-chart { height: 130px; } }
 
 .adm-table--comments { min-width: 44rem; }
+.adm-table--loadtest { min-width: 36rem; }
 .adm-table--comments td:nth-child(4) { white-space: normal; min-width: 18rem; max-width: 34rem; }
 
 /* Pages sit on paper, so buttons are drawn in ink. The navigation bar is the
@@ -307,3 +313,17 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .promptcard__reply { padding: .5rem 0; border-top: 1px solid var(--paper-line); font-size: .9rem; }
 .promptcard__reply .mono { color: var(--muted-2); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; margin-right: .5rem; }
 .resend { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+
+/* Two equal columns that give way to one on a phone. Inline grid styles cannot, so use this. */
+.adm-columns--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) { .adm-columns--2 { grid-template-columns: 1fr; } }
+/* Nothing inside a panel may be wider than the panel on a small screen. */
+@media (max-width: 720px) {
+  .adm-panel input:not([type=checkbox]):not([type=radio]), .adm-panel select, .adm-panel textarea { max-width: 100%; }
+  .adm-page__head { flex-direction: column; align-items: flex-start; }
+}
+
+/* Phone: every table stacks, whatever minimum width it asks for on a desk. Kept last so it wins. */
+@media (max-width: 900px) {
+  .adm-table, .adm-table--comments, .adm-table--loadtest { min-width: 0; }
+}

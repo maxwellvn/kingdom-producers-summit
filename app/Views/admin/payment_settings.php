@@ -25,9 +25,10 @@ $row = static function (string $label, string $value): void {
     if (trim($value) === '') {
         return;
     }
-    echo '<div style="display:flex;justify-content:space-between;gap:1rem;padding:.45rem 0;border-top:1px solid rgba(0,0,0,.12)">'
-        . '<span class="mono" style="font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#756f60">' . e($label) . '</span>'
-        . '<span style="text-align:right;font-weight:600">' . e($value) . '</span></div>';
+    // Long links and addresses wrap rather than widening the page.
+    echo '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem 1rem;padding:.45rem 0;border-top:1px solid rgba(0,0,0,.12)">'
+        . '<span class="mono" style="flex:none;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#756f60">' . e($label) . '</span>'
+        . '<span style="flex:1 1 12rem;min-width:0;text-align:right;font-weight:600;overflow-wrap:anywhere">' . e($value) . '</span></div>';
 };
 ?>
 <section class="adm-page">

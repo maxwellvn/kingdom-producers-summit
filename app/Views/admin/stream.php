@@ -64,7 +64,7 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
     <?php endif; ?>
   </div>
 
-  <div class="adm-columns" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top:1.4rem">
+  <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
     <!-- 2. Setup: the source and the heading. Rarely changes. -->
     <div class="adm-panel">
       <h2 class="adm-panel__title" style="margin-bottom:.3rem">Setup</h2>
@@ -300,7 +300,7 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         <div class="loadtest__stat"><span class="mono">Memory used</span><strong data-lt="mem">—</strong></div>
       </div>
       <div class="adm-table-wrap">
-        <table class="adm-table" style="min-width:36rem">
+        <table class="adm-table adm-table--loadtest">
           <thead><tr><th>Request</th><th>Count</th><th>Errors</th><th>Typical ms</th><th>Slow ms (p95)</th><th>Worst ms</th><th>MB</th></tr></thead>
           <tbody data-lt-rows></tbody>
         </table>
