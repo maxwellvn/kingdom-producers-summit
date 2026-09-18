@@ -211,7 +211,22 @@
 
     var sourceUrl = stage.getAttribute('data-source-url');
     var beatUrl = stage.getAttribute('data-beat-url');
-    var video = stage.querySelector('[data-watch-video]');
+    // The video element exists only while something plays. Android browsers can paint a
+    // hidden <video controls> as a black rectangle, so it is added and removed rather than hidden.
+    var video = null;
+    function ensureVideo() {
+      if (video) return video;
+      video = document.createElement('video');
+      video.className = 'watch__video';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('controls', '');
+      stage.insertBefore(video, frame);
+      return video;
+    }
+    function dropVideo() {
+      if (hls) { hls.destroy(); hls = null; }
+      if (video) { try { video.pause(); } catch (e) {} video.removeAttribute('src'); try { video.load(); } catch (e) {} video.remove(); video = null; }
+    }
     var frame = stage.querySelector('[data-watch-frame]');
     var placeholder = stage.querySelector('[data-watch-placeholder]');
     var statusLabel = document.querySelector('[data-watch-status]');
@@ -241,7 +256,7 @@
     }
     function say(message, note, state) {
       placeholder.hidden = false;
-      video.hidden = true;
+      dropVideo();
       frame.hidden = true;
       if (hold.label) hold.label.textContent = message;
       if (hold.headline) hold.headline.textContent = note ? message : hold.headline.textContent;
@@ -250,7 +265,7 @@
     }
     function showHolding(h) {
       placeholder.hidden = false;
-      video.hidden = true;
+      dropVideo();
       frame.hidden = true;
       setState(h.state || 'soon');
       if (hold.label) hold.label.textContent = h.label || '';
@@ -275,8 +290,7 @@
     tickCountdown();
 
     function stop(message, note) {
-      if (hls) { hls.destroy(); hls = null; }
-      video.removeAttribute('src');
+      dropVideo();
       loaded = false;
       say(message, note);
     }
@@ -286,6 +300,7 @@
       loaded = true;
 
       if (data.kind === 'iframe') {
+        dropVideo();
         frame.innerHTML = '';
         var iframe = document.createElement('iframe');
         iframe.src = data.source;
@@ -299,7 +314,7 @@
       }
 
       placeholder.hidden = true;
-      video.hidden = false;
+      var video = ensureVideo();
 
       if (data.kind === 'hls') {
         // Safari plays HLS natively; everything else needs the library.
@@ -334,8 +349,7 @@
           var data = res.body;
           if (!data.ok) return;
           if (!data.live) {
-            if (hls) { hls.destroy(); hls = null; }
-            video.removeAttribute('src');
+            dropVideo();
             loaded = false;
             setLive(false);
             showHolding(data.holding || { state: 'soon', label: 'Starting soon', headline: 'We are about to begin.', message: '' });

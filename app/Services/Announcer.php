@@ -66,7 +66,7 @@ final class Announcer
     {
         $sql = "SELECT reference, first_name, last_name, email, kingschat_username, participation
                 FROM registrations
-                WHERE status = 'confirmed'";
+                WHERE status = 'confirmed' AND email NOT LIKE '%@loadtest.invalid'";
         $params = [];
 
         if ($audience !== 'all') {

@@ -206,7 +206,7 @@ final class Registration
                     SUM(participation = 'initiative') AS initiative,
                     SUM(DATE(created_at) = CURDATE()) AS today,
                     COUNT(DISTINCT country) AS countries
-                FROM registrations WHERE status <> 'cancelled'";
+                FROM registrations WHERE status <> 'cancelled' AND email NOT LIKE '%@loadtest.invalid'";
 
         $row = Database::connection()->query($sql)->fetch() ?: [];
         return array_map('intval', $row + ['total' => 0, 'onsite' => 0, 'online' => 0, 'initiative' => 0, 'today' => 0, 'countries' => 0]);
@@ -269,7 +269,7 @@ final class Registration
     public static function paginate(int $page, int $perPage = 25, ?string $participation = null, string $search = '', string $support = ''): array
     {
         $pdo = Database::connection();
-        $where = ["r.status <> 'cancelled'"];
+        $where = ["r.status <> 'cancelled'", "r.email NOT LIKE '%@loadtest.invalid'"];
         $params = [];
 
         // 'contributed': gave under the new model. 'legacy': paid or claimed under the old pricing.
@@ -327,7 +327,7 @@ final class Registration
     public static function all(): \Generator
     {
         $stmt = Database::connection()->query(
-            'SELECT r.*, a.checked_in_at, a.checked_in_by FROM registrations r LEFT JOIN attendances a ON a.registration_id = r.id ORDER BY r.created_at ASC'
+            "SELECT r.*, a.checked_in_at, a.checked_in_by FROM registrations r LEFT JOIN attendances a ON a.registration_id = r.id WHERE r.email NOT LIKE '%@loadtest.invalid' ORDER BY r.created_at ASC"
         );
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             yield $row;

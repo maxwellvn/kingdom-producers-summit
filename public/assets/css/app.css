@@ -588,7 +588,7 @@ body.menu-open { overflow: hidden; }
 .footer__bottom { position: relative; z-index: 3; display: flex; justify-content: space-between; gap: 1rem; padding-block: 1.4rem; border-top: 1px solid rgba(243,238,226,.14); color: rgba(243,238,226,.68); flex-wrap: wrap; }
 .footer__made { color: var(--paper); border-bottom: 1px solid rgba(230,90,95,.72); }
 .footer__made:hover { color: #e76368; }
-.footer__flag-stage { position: absolute; z-index: 1; inset: auto 0 0; height: clamp(9rem, 17vw, 15rem); overflow: hidden; background: var(--ink); pointer-events: none; }
+.footer__flag-stage { position: absolute; z-index: 1; inset: auto 0 0; height: clamp(9rem, 17vw, 15rem); overflow: hidden; background: var(--ink); pointer-events: none; background-image: url('../img/union-jack-still.jpg'); background-size: cover; background-position: center; }
 .footer__flag-stage::before { content: ""; position: absolute; z-index: 2; inset: 0; background: linear-gradient(180deg, var(--ink) 0%, rgba(27,34,66,.74) 20%, rgba(14,20,48,.42) 58%, rgba(14,20,48,.62) 100%); }
 .footer__flag-video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .footer__flag-wordmark { position: absolute; z-index: 3; inset: auto var(--gutter) clamp(.8rem, 1.6vw, 1.5rem); overflow: hidden; white-space: nowrap; font-family: var(--font-display); font-size: clamp(3.15rem, 10.6vw, 10rem); font-weight: 700; line-height: .78; letter-spacing: -.045em; text-align: center; text-transform: uppercase; color: var(--paper); -webkit-mask: url("../img/footer-wordmark-halftone-alpha-v1.png") center / 100% 100% no-repeat; mask: url("../img/footer-wordmark-halftone-alpha-v1.png") center / 100% 100% no-repeat; -webkit-text-stroke: 1px rgba(243,238,226,.36); filter: drop-shadow(0 3px 0 rgba(27,34,66,.95)) drop-shadow(0 12px 24px rgba(7,11,27,.68)); pointer-events: none; }
@@ -1196,3 +1196,17 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .prompt__dismiss { position: absolute; top: .7rem; right: .7rem; padding: .3rem .5rem; border: 1px solid rgba(27,34,66,.2); border-radius: 6px; background: transparent; color: var(--muted-2); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .prompt__dismiss:hover { color: var(--ink); border-color: var(--ink); } }
 @media (prefers-reduced-motion: reduce) { .prompt.is-in .prompt__card { animation: none; } .prompt__dot { animation: none; } }
+
+/* While the holding screen shows, the frame grows to fit its lines instead of squeezing them into 16:9.
+   The video takes the frame back to 16:9 the moment it plays. */
+.watch__stage:has(> .holding:not([hidden])) { aspect-ratio: auto; min-height: 16rem; }
+.watch__stage:has(> .holding:not([hidden])) > .holding { position: relative; inset: auto; min-height: 16rem; }
+@media (min-width: 701px) { .watch__stage:has(> .holding:not([hidden])) { aspect-ratio: 16 / 9; } .watch__stage:has(> .holding:not([hidden])) > .holding { position: absolute; inset: 0; } }
+@media (max-width: 700px) {
+  .holding { gap: .5rem; padding: 1.6rem 1.25rem 1.7rem; }
+  .holding__kicker { margin-bottom: .1rem; }
+  .holding__headline { font-size: clamp(1.6rem, 8vw, 2.1rem); }
+  .holding__message { font-size: .95rem; }
+  .holding__countdown { margin-top: .6rem; font-size: 1.8rem; }
+  .holding__now { margin-top: .6rem; padding-top: .6rem; }
+}

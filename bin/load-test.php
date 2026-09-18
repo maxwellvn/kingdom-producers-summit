@@ -9,6 +9,11 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
 
+// Whatever happens, no test viewer outlives the run.
+register_shutdown_function(static function (): void {
+    try { App\Services\LoadTester::cleanup(); } catch (\Throwable $e) { error_log('Load test cleanup at exit failed: ' . $e->getMessage()); }
+});
+
 try {
     App\Services\LoadTester::run((int) ($argv[1] ?? 25), (int) ($argv[2] ?? 60));
 } catch (\Throwable $e) {

@@ -56,7 +56,7 @@
   <div class="footer__flag-wordmark" aria-hidden="true">Kingdom Producers</div>
 
   <div class="footer__flag-stage" aria-hidden="true">
-    <video class="footer__flag-video" autoplay muted loop playsinline preload="metadata">
+    <video class="footer__flag-video" autoplay muted loop playsinline preload="metadata" poster="<?= e(asset('img/union-jack-still.jpg')) ?>">
       <source src="<?= e(asset('media/union-jack-wind-loop-higgsfield-v1.mp4')) ?>" type="video/mp4">
     </video>
   </div>

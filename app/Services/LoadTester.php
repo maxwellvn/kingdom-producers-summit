@@ -67,6 +67,7 @@ final class LoadTester
     {
         $viewers = max(1, min(self::MAX_VIEWERS, $viewers));
         $seconds = max(10, min(self::MAX_SECONDS, $seconds));
+        self::cleanup(); // leftovers from any earlier run that died
         self::write(['phase' => 'starting', 'viewers' => $viewers, 'seconds' => $seconds, 'signed_in' => 0,
             'started_at' => time(), 'updated_at' => time(), 'log' => []]);
 

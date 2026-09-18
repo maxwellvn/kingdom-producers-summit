@@ -51,7 +51,7 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
           <p class="mono holding__starts" data-holding-starts-text <?= $holding['starts_text'] ? '' : 'hidden' ?>><?= e($holding['starts_text']) ?></p>
           <p class="mono holding__now" data-holding-now <?= $holding['now'] ? '' : 'hidden' ?>><?= e($holding['now']) ?></p>
         </div>
-        <video class="watch__video" data-watch-video playsinline controls hidden></video>
+        <?php // The <video> is created by the player only while something plays; some phones paint a hidden one as a black box. ?>
         <div class="watch__frame" data-watch-frame hidden></div>
       </div>
 

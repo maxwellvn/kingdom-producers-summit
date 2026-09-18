@@ -347,6 +347,10 @@ final class AdminController extends Controller
     /** The stream: switch it on, set the link, and tell people. */
     public function stream(Request $request): Response
     {
+        if (!LoadTester::running()) {
+            LoadTester::cleanup(); // a run that died leaves nothing behind once anyone opens this page
+        }
+
         return $this->view('admin/stream', [
             'title'     => 'Stream',
             'live'      => StreamService::isLive(),
