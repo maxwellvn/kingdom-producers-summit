@@ -142,9 +142,6 @@ final class Announcer
     /** Send someone their watch link again. */
     public static function sendLiveLink(array $person, bool $byEmail = true, bool $byKingsChat = true): array
     {
-        if (!in_array((string) $person['participation'], ['onsite', 'online'], true)) {
-            return [false, false];
-        }
 
         return self::deliver($person, self::LIVE_LINK['subject'], self::LIVE_LINK['body'], $byEmail, $byKingsChat);
     }
@@ -194,7 +191,7 @@ final class Announcer
             '{last_name}'   => (string) $person['last_name'],
             '{reference}'   => (string) $person['reference'],
             // Online and onsite both get a signed watch link: an onsite person may follow from elsewhere.
-            '{watch_url}'   => in_array($path, ['online', 'onsite'], true) ? site_url() . '/watch?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
+            '{watch_url}'   => site_url() . '/watch?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])),
             '{directions_url}' => 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) ($summit['venue']['query'] ?? '')),
             '{summit_date}' => (string) ($summit['date_text'] ?? ''),
             '{summit_city}' => (string) ($summit['city'] ?? ''),

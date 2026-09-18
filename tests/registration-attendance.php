@@ -102,8 +102,8 @@ try {
     // Initiative members did not register for the summit.
     $pdo->prepare('UPDATE registrations SET participation = ? WHERE reference = ?')
         ->execute(['initiative', $watcher['reference']]);
-    verify(!App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
-        'an initiative place may not watch');
+    verify(App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),
+        'an initiative place may watch too');
     $pdo->prepare('UPDATE registrations SET participation = ?, payment_status = ? WHERE reference = ?')
         ->execute(['online', 'not_required', $watcher['reference']]);
     verify(App\Services\StreamService::mayWatch(Registration::findByReference($watcher['reference'])),

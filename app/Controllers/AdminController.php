@@ -236,12 +236,12 @@ final class AdminController extends Controller
         $name = trim($registration['first_name'] . ' ' . $registration['last_name']);
         Session::flash('admin_flash', ($emailed || $messaged)
             ? ($what === 'pass' ? 'Pass sent again to ' : 'Live link sent to ') . $name . ' by ' . implode(' and ', array_filter([$emailed ? 'email' : '', $messaged ? 'KingsChat' : ''])) . '.'
-            : 'Nothing could be sent to ' . $name . '. ' . ($what === 'pass' ? 'Passes go to onsite registrations only.' : 'Live links go to onsite and online registrations only.'));
+            : 'Nothing could be sent to ' . $name . '. ' . ($what === 'pass' ? 'Passes go to onsite registrations only.' : 'Check the email address and KingsChat username.'));
 
         return $this->redirect('/admin/registrations?' . http_build_query(array_filter(['type' => $request->str('type'), 'q' => $request->str('q'), 'page' => $request->str('page')])));
     }
 
-    /** Send every confirmed person their pass (onsite) or their live link (onsite and online) again. */
+    /** Send every confirmed onsite person their pass again, or every confirmed person their live link. */
     public function resendAll(Request $request): Response
     {
         $what = $request->str('what');
@@ -251,10 +251,6 @@ final class AdminController extends Controller
         $audience = $what === 'pass' ? 'onsite' : 'all';
         $sent = $skipped = 0;
         foreach (Announcer::recipients($audience) as $person) {
-            if ($what === 'live' && !in_array((string) $person['participation'], ['onsite', 'online'], true)) {
-                $skipped++;
-                continue;
-            }
             [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person) : Announcer::sendLiveLink($person);
             ($emailed || $messaged) ? $sent++ : $skipped++;
         }

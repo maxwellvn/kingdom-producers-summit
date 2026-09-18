@@ -306,7 +306,7 @@ final class Registration
             "SELECT r.id, r.reference, r.participation, r.title, r.first_name, r.last_name, r.email, r.phone,
                     r.kingschat_username, r.country, r.city, r.zone, r.group_name, r.church_name,
                     r.field, r.field_other, r.producer_stage, r.payment_status, r.payment_method,
-                    r.issued_by, r.created_at, r.payment_amount,
+                    r.issued_by, r.created_at, r.payment_amount, r.status,
                     a.checked_in_at
              FROM registrations r
              LEFT JOIN attendances a ON a.registration_id = r.id {$whereSql}

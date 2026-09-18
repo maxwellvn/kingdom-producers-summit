@@ -15,5 +15,5 @@ return [
     'proxy'   => true,
 
     // Which registrations may watch.
-    'allowed' => ['onsite', 'online'],
+    'allowed' => ['onsite', 'online', 'initiative'],
 ];

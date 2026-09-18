@@ -14,7 +14,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
         <?= csrf_field() ?><input type="hidden" name="what" value="pass">
         <button type="submit" class="adm-btn">Resend all QR passes</button>
       </form>
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Send every confirmed onsite and online person their live link, by email and KingsChat?')">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Send every confirmed person their live link, by email and KingsChat?')">
         <?= csrf_field() ?><input type="hidden" name="what" value="live">
         <button type="submit" class="adm-btn">Send all live links</button>
       </form>
@@ -87,7 +87,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                   <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
                 </form>
               <?php endif; ?>
-              <?php if ($r['status'] === 'confirmed' && in_array($r['participation'], ['onsite', 'online'], true)): ?>
+              <?php if ($r['status'] === 'confirmed'): ?>
               <form method="post" action="<?= url('/admin/registrations/resend') ?>" class="resend" style="margin-top:.4rem">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
