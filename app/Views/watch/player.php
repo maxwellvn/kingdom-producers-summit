@@ -12,7 +12,7 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
       <div class="watch__heading">
         <h1 class="watch__title"><?= e(\App\Services\StreamService::title()) ?></h1>
         <p class="mono watch__sub">
-          <span class="watch__pill <?= $live ? 'is-live' : '' ?>" data-watch-pill><span class="watch__pill-dot" aria-hidden="true"></span><span data-watch-status><?= $live ? 'Live' : e($holding['label']) ?></span></span>
+          <span class="watch__pill is-live" data-watch-pill <?= $live ? '' : 'hidden' ?>><span class="watch__pill-dot" aria-hidden="true"></span><span data-watch-status>Live</span></span>
           <?php if ($isOrganiser): ?><span class="watch__count" data-watch-count hidden></span><?php endif; ?>
           <span class="watch__now" data-watch-now <?= $live && $holding['now'] ? '' : 'hidden' ?>><?= e($holding['now']) ?></span>
         </p>

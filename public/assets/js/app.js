@@ -230,8 +230,9 @@
     var startsAt = parseInt(placeholder.getAttribute('data-holding-starts') || '0', 10) || 0;
     var nowLine = document.querySelector('[data-watch-now]');
     var pill = document.querySelector('[data-watch-pill]');
+    // The header pill only ever says Live; the holding screen carries its own state.
     function setLive(on) {
-      if (pill) pill.classList.toggle('is-live', !!on);
+      if (pill) { pill.classList.toggle('is-live', !!on); pill.hidden = !on; }
     }
 
     function setState(state) {
@@ -258,7 +259,6 @@
       startsAt = h.starts_at ? parseInt(h.starts_at, 10) : 0;
       if (hold.startsText) { hold.startsText.textContent = h.starts_text || ''; hold.startsText.hidden = !h.starts_text; }
       if (hold.now) { hold.now.textContent = h.now || ''; hold.now.hidden = !h.now; }
-      if (statusLabel) statusLabel.textContent = h.label || '';
       tickCountdown();
     }
     function tickCountdown() {
