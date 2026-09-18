@@ -253,7 +253,8 @@ final class AdminController extends Controller
             : (in_array($request->str('audience'), ['online', 'onsite', 'all', 'initiative'], true) ? $request->str('audience') : 'online');
         $sent = $skipped = 0;
         foreach (Announcer::recipients($audience) as $person) {
-            [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person) : Announcer::sendLiveLink($person);
+            // Bulk sends go by email only; KingsChat is for one person at a time from the row.
+            [$emailed, $messaged] = $what === 'pass' ? Announcer::sendPass($person, true, false) : Announcer::sendLiveLink($person, true, false);
             ($emailed || $messaged) ? $sent++ : $skipped++;
         }
         StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " re-sent to {$sent} people by " . Session::get('admin_email', 'admin'));
