@@ -119,7 +119,7 @@ final class Announcer
         $pdo = Database::connection();
         $id = (int) $announcement['id'];
         // A runner that died mid-send leaves rows in 'sending'; hand them back after ten minutes.
-        $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending' WHERE announcement_id = ? AND status = 'sending' AND claimed_at < (NOW() - INTERVAL 10 MINUTE)")->execute([$id]);
+        $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending' WHERE announcement_id = ? AND status = 'sending' AND claimed_at < ?")->execute([$id, date('Y-m-d H:i:s', time() - 600)]);
 
         $deadline = time() + $seconds;
         $byEmail = (bool) $announcement['by_email'];
@@ -135,8 +135,8 @@ final class Announcer
                 return 'done';
             }
             // Claim it so a second runner cannot send the same email.
-            $claim = $pdo->prepare("UPDATE announcement_deliveries SET status = 'sending', claimed_at = NOW(), attempts = attempts + 1 WHERE id = ? AND status = 'pending'");
-            $claim->execute([(int) $person['id']]);
+            $claim = $pdo->prepare("UPDATE announcement_deliveries SET status = 'sending', claimed_at = ?, attempts = attempts + 1 WHERE id = ? AND status = 'pending'");
+            $claim->execute([date('Y-m-d H:i:s'), (int) $person['id']]);
             if ($claim->rowCount() === 0) {
                 continue;
             }
@@ -152,7 +152,7 @@ final class Announcer
                         error_log('Announcement KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
                     }
                 }
-                $pdo->prepare("UPDATE announcement_deliveries SET status = 'sent', sent_at = NOW(), last_error = NULL WHERE id = ?")->execute([(int) $person['id']]);
+                $pdo->prepare("UPDATE announcement_deliveries SET status = 'sent', sent_at = ?, last_error = NULL WHERE id = ?")->execute([date('Y-m-d H:i:s'), (int) $person['id']]);
             } catch (\Throwable $e) {
                 $error = mb_substr($e->getMessage(), 0, 255);
                 if (BulkSender::throttled($e)) {
@@ -160,7 +160,7 @@ final class Announcer
                     // the host asked (five minutes when it did not say), then carry on from here.
                     $wait = self::waitFromReply($error);
                     $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending', attempts = attempts - 1, last_error = ? WHERE id = ?")->execute([$error, (int) $person['id']]);
-                    $pdo->prepare("UPDATE announcements SET resume_at = (NOW() + INTERVAL ? SECOND) WHERE id = ?")->execute([$wait, $id]);
+                    $pdo->prepare("UPDATE announcements SET resume_at = ? WHERE id = ?")->execute([date('Y-m-d H:i:s', time() + $wait), $id]);
                     error_log('Announcement #' . $id . ' throttled by the mail host, resuming in ' . $wait . 's: ' . $error);
                     return 'throttled';
                 }

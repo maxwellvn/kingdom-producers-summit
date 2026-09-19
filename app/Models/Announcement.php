@@ -45,7 +45,9 @@ final class Announcement
             return;
         }
         try {
-            $due = (int) Database::connection()->query("SELECT COUNT(*) FROM announcements WHERE (sent_at IS NULL AND send_at <= NOW()) OR result = 'sending'")->fetchColumn();
+            $stmt = Database::connection()->prepare("SELECT COUNT(*) FROM announcements WHERE (sent_at IS NULL AND send_at <= ?) OR result = 'sending'");
+            $stmt->execute([date('Y-m-d H:i:s')]);
+            $due = (int) $stmt->fetchColumn();
         } catch (\Throwable $e) {
             return; // table not there yet
         }
@@ -71,8 +73,10 @@ final class Announcement
     public static function claimDue(): ?array
     {
         $pdo = Database::connection();
-        $pdo->exec("UPDATE announcements SET sent_at = NOW(), result = 'sending'
-                    WHERE sent_at IS NULL AND send_at <= NOW() ORDER BY send_at LIMIT 1");
+        // send_at is app time (Europe/London), so compare with the app clock, not MySQL's UTC NOW().
+        $claim = $pdo->prepare("UPDATE announcements SET sent_at = ?, result = 'sending'
+                    WHERE sent_at IS NULL AND send_at <= ? ORDER BY send_at LIMIT 1");
+        $claim->execute([date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
         $stmt = $pdo->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at LIMIT 1");
 
         return $stmt->fetch() ?: null;
@@ -81,7 +85,10 @@ final class Announcement
     /** Claimed but not finished: the queue still has people waiting. */
     public static function inFlight(): array
     {
-        return Database::connection()->query("SELECT * FROM announcements WHERE result = 'sending' AND (resume_at IS NULL OR resume_at <= NOW()) ORDER BY sent_at")->fetchAll() ?: [];
+        $stmt = Database::connection()->prepare("SELECT * FROM announcements WHERE result = 'sending' AND (resume_at IS NULL OR resume_at <= ?) ORDER BY sent_at");
+        $stmt->execute([date('Y-m-d H:i:s')]);
+
+        return $stmt->fetchAll() ?: [];
     }
 
     public static function finish(int $id, string $result): void
