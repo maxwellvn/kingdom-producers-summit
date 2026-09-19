@@ -1,4 +1,4 @@
-<?php /** @var array<string,string> $items */
+<?php /** @var array<string,string> $items @var string[] $titles */
 $errors = \App\Core\Session::get('_errors', []);
 ?>
 <section class="reg">
@@ -27,23 +27,33 @@ $errors = \App\Core\Session::get('_errors', []);
           <?php endforeach; ?>
         </ol>
 
-        <div class="field <?= error_for('name') ? 'has-error' : '' ?>">
-          <label for="name">Your name</label>
-          <input id="name" name="name" type="text" autocomplete="name" maxlength="160" required value="<?= e(old('name')) ?>">
-          <?php if ($err = error_for('name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-        </div>
-        <div class="field">
-          <label for="what">What I will produce <span class="field__opt">optional</span></label>
-          <input id="what" name="what" type="text" maxlength="255" placeholder="A product, a service, a book…" value="<?= e(old('what')) ?>">
+        <div class="form__row form__row--title">
+          <div class="field field--sm <?= error_for('title') ? 'has-error' : '' ?>">
+            <label for="title">Title <span class="field__opt">optional</span></label>
+            <select id="title" name="title">
+              <option value="">—</option>
+              <?php foreach ($titles as $t): ?><option value="<?= $t ?>" <?= old('title') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
+            </select>
+          </div>
+          <div class="field <?= error_for('first_name') ? 'has-error' : '' ?>">
+            <label for="first_name">First name</label>
+            <input id="first_name" name="first_name" type="text" autocomplete="given-name" maxlength="80" required value="<?= e(old('first_name')) ?>">
+            <?php if ($err = error_for('first_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
+          <div class="field <?= error_for('last_name') ? 'has-error' : '' ?>">
+            <label for="last_name">Surname</label>
+            <input id="last_name" name="last_name" type="text" autocomplete="family-name" maxlength="80" required value="<?= e(old('last_name')) ?>">
+            <?php if ($err = error_for('last_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+          </div>
         </div>
         <div class="form__row">
           <div class="field <?= error_for('email') ? 'has-error' : '' ?>">
-            <label for="email">Email <span class="field__opt">optional</span></label>
-            <input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" value="<?= e(old('email')) ?>">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" required value="<?= e(old('email')) ?>">
             <?php if ($err = error_for('email')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field">
-            <label for="kingschat">KingsChat <span class="field__opt">optional</span></label>
+            <label for="kingschat">KingsChat username <span class="field__opt">optional</span></label>
             <input id="kingschat" name="kingschat" type="text" autocapitalize="off" autocorrect="off" maxlength="80" placeholder="@username" value="<?= e(old('kingschat')) ?>">
           </div>
         </div>

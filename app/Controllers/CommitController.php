@@ -20,6 +20,7 @@ final class CommitController extends Controller
             'bodyClass'   => 'page-commit',
             'description' => 'Make your four producer commitments.',
             'items'       => Commitment::ITEMS,
+            'titles'      => Commitment::TITLES,
         ]);
     }
 
@@ -28,14 +29,22 @@ final class CommitController extends Controller
         if ($request->str('website') !== '') { // honeypot
             return $this->redirect('/commit/thanks');
         }
-        $name = mb_substr($request->str('name'), 0, 160);
+        $title = $request->str('title');
+        $first = mb_substr($request->str('first_name'), 0, 80);
+        $last = mb_substr($request->str('last_name'), 0, 80);
         $email = mb_strtolower(mb_substr($request->str('email'), 0, 190));
         $errors = [];
-        if (mb_strlen($name) < 2) {
-            $errors['name'] = 'Tell us your name.';
+        if ($title !== '' && !in_array($title, Commitment::TITLES, true)) {
+            $errors['title'] = 'Choose a title from the list.';
         }
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'That email address does not look right.';
+        if (mb_strlen($first) < 2) {
+            $errors['first_name'] = 'Tell us your first name.';
+        }
+        if (mb_strlen($last) < 2) {
+            $errors['last_name'] = 'Tell us your surname.';
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Enter a valid email address.';
         }
         $ticked = array_filter(array_keys(Commitment::ITEMS), static fn ($k) => $request->str($k) === '1');
         if ($ticked === []) {
@@ -46,16 +55,17 @@ final class CommitController extends Controller
         }
 
         Commitment::create([
-            'name'      => $name,
-            'email'     => $email !== '' ? $email : null,
+            'title'     => $title !== '' ? $title : null,
+            'first_name'=> $first,
+            'last_name' => $last,
+            'email'     => $email,
             'kingschat' => ($k = ltrim(mb_substr($request->str('kingschat'), 0, 80), '@')) !== '' ? $k : null,
             'produce'   => (int) in_array('produce', $ticked, true),
             'records'   => (int) in_array('records', $ticked, true),
             'buy'       => (int) in_array('buy', $ticked, true),
             'teach'     => (int) in_array('teach', $ticked, true),
-            'what'      => ($w = mb_substr($request->str('what'), 0, 255)) !== '' ? $w : null,
         ]);
-        Session::flash('commit_name', $name);
+        Session::flash('commit_name', $first);
 
         return $this->redirect('/commit/thanks');
     }

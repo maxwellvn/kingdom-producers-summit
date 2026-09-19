@@ -31,14 +31,13 @@
     <?php else: ?>
     <div class="adm-table-wrap">
       <table class="adm-table">
-        <thead><tr><th>Name</th><th>Contact</th><th>Commitments</th><th>Will produce</th><th>When</th></tr></thead>
+        <thead><tr><th>Name</th><th>Contact</th><th>Commitments</th><th>When</th></tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr>
-            <td data-label="Name"><?= e($r['name']) ?></td>
+            <td data-label="Name"><?= e(trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name'])) ?></td>
             <td data-label="Contact"><?= e($r['email'] ?? '') ?><?php if ($r['kingschat']): ?><br><span class="adm-muted">@<?= e($r['kingschat']) ?></span><?php endif; ?></td>
             <td data-label="Commitments" class="mono"><?= implode(' · ', array_map(static fn ($k) => str_pad((string) (array_search($k, array_keys($items), true) + 1), 2, '0', STR_PAD_LEFT), array_filter(array_keys($items), static fn ($k) => (int) $r[$k] === 1))) ?></td>
-            <td data-label="Will produce"><?= e($r['what'] ?? '') ?></td>
             <td data-label="When" class="mono"><?= date('j M, H:i', strtotime((string) $r['created_at'])) ?></td>
           </tr>
         <?php endforeach; ?>

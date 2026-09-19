@@ -16,12 +16,14 @@ final class Commitment
         'teach'   => 'I will teach one person what I know.',
     ];
 
+    public const TITLES = ['Mr', 'Mrs', 'Ms', 'Miss', 'Brother', 'Sister', 'Dr', 'Pastor', 'Deacon', 'Deaconess', 'Rev'];
+
     public static function create(array $data): int
     {
         $stmt = Database::connection()->prepare(
-            'INSERT INTO commitments (name, email, kingschat, produce, records, buy, teach, what) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO commitments (title, first_name, last_name, email, kingschat, produce, records, buy, teach) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$data['name'], $data['email'], $data['kingschat'], $data['produce'], $data['records'], $data['buy'], $data['teach'], $data['what']]);
+        $stmt->execute([$data['title'], $data['first_name'], $data['last_name'], $data['email'], $data['kingschat'], $data['produce'], $data['records'], $data['buy'], $data['teach']]);
 
         return (int) Database::connection()->lastInsertId();
     }
