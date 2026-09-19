@@ -223,6 +223,22 @@
       stage.insertBefore(video, frame);
       return video;
     }
+    // Reload: throws the player away and asks the server for the stream again. For a viewer whose video froze.
+    var reloadBtn = document.createElement('button');
+    reloadBtn.type = 'button';
+    reloadBtn.className = 'watch__reload mono';
+    reloadBtn.textContent = 'Reload stream';
+    reloadBtn.hidden = true;
+    reloadBtn.addEventListener('click', function () { reloadStream(); });
+    stage.appendChild(reloadBtn);
+    function reloadStream() {
+      dropVideo();
+      loaded = false;
+      if (hold.label) hold.label.textContent = 'Reconnecting…';
+      placeholder.hidden = false;
+      check();
+    }
+
     // Quality picker: only when the stream offers more than one rendition. Auto lets hls.js adapt.
     var quality = null;
     function qualityMenu(levels) {
@@ -239,6 +255,7 @@
       stage.appendChild(quality);
     }
     function dropVideo() {
+      reloadBtn.hidden = true;
       if (quality) { quality.remove(); quality = null; }
       if (hls) { hls.destroy(); hls = null; }
       if (video) { try { video.pause(); } catch (e) {} video.removeAttribute('src'); try { video.load(); } catch (e) {} video.remove(); video = null; }
@@ -347,6 +364,13 @@
           hls.loadSource(data.source);
           hls.attachMedia(video);
           hls.on(window.Hls.Events.MANIFEST_PARSED, function (e, m) { qualityMenu(m.levels || []); });
+          // Fatal errors: retry the network, patch the decoder, or rebuild the player as a last resort.
+          hls.on(window.Hls.Events.ERROR, function (e, err) {
+            if (!err || !err.fatal || !hls) return;
+            if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) { hls.startLoad(); }
+            else if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
+            else { reloadStream(); }
+          });
         } else {
           stop('This browser cannot play the stream', 'Try Chrome, Safari or Edge.');
           return;
@@ -356,6 +380,7 @@
       }
 
       video.play().catch(function () { /* a viewer gesture will start it */ });
+      reloadBtn.hidden = false;
     }
 
     function check() {
