@@ -45,15 +45,8 @@ final class Announcer
         ],
         'thank_you' => [
             'label'   => 'Thank you (after the summit)',
-            'subject' => 'Thank you, {first_name}. And now… we produce!',
-            'body'    => "THE LOVEWORLD CONSULATE UK SAYS THANK YOU!\n\n"
-                . "What a day. What a moment. What a beginning!\n\n"
-                . "To every Kingdom Producer who filled the room at Angel Studios, and to everyone who joined us live from across the world: you made the inaugural LoveWorld Kingdom Producers Summit, London 2026, truly special.\n\n"
-                . "You came. You listened. You learned. You connected. You made the commitment.\n\n"
-                . "And now… WE PRODUCE!\n\n"
-                . "The lights may have gone down on today's stage, but the movement has only just begun. The ideas, insights and commitments made today now move from the room into action.\n\n"
-                . "To our Highly Esteemed Speakers, participants, partners, volunteers and everyone who connected online: THANK YOU for being part of the beginning of something extraordinary.\n\n"
-                . "London was only the beginning. Manchester, Ireland and Birmingham, get ready!",
+            'subject' => 'THE LOVEWORLD CONSULATE UK SAYS THANK YOU!',
+            'body'    => "*THE LOVEWORLD CONSULATE UK SAYS THANK YOU!*\n\n💥🔥 𝐖𝐇𝐀𝐓 𝐀 𝐃𝐀𝐘. 𝐖𝐇𝐀𝐓 𝐀 𝐌𝐎𝐌𝐄𝐍𝐓. 𝐖𝐇𝐀𝐓 𝐀 𝐁𝐄𝐆𝐈𝐍𝐍𝐈𝐍𝐆!\n\nTo every Kingdom Producer who filled the room at Angel Studios, and to everyone who joined us LIVE from across the world — you made the inaugural LoveWorld Kingdom Producers Summit — London 2026 truly special. 🌍🚀\n\nYou came. You listened. You learned. You connected. You made the commitment.\n\n𝗔𝗻𝗱 𝗻𝗼𝘄… 𝗪𝗘 𝗣𝗥𝗢𝗗𝗨𝗖𝗘! 💥\n\nThe lights may have gone down on today’s stage, but the movement has only just begun. The ideas, insights and commitments made today now move from the room into action.\n\n𝗧𝗼 𝗼𝘂𝗿 𝗛𝗶𝗴𝗵𝗹𝘆 𝗘𝘀𝘁𝗲𝗲𝗺𝗲𝗱 𝗦𝗽𝗲𝗮𝗸𝗲𝗿𝘀, 𝗽𝗮𝗿𝘁𝗶𝗰𝗶𝗽𝗮𝗻𝘁, 𝗽𝗮𝗿𝘁𝗻𝗲𝗿, 𝘃𝗼𝗹𝘂𝗻𝘁𝗲𝗲𝗿 𝗮𝗻𝗱 𝗲𝘃𝗲𝗿𝘆𝗼𝗻𝗲 𝘄𝗵𝗼 𝗰𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 𝗼𝗻𝗹𝗶𝗻𝗲 — 𝗧𝗛𝗔𝗡𝗞 𝗬𝗢𝗨 𝗳𝗼𝗿 𝗯𝗲𝗶𝗻𝗴 𝗽𝗮𝗿𝘁 𝗼𝗳 𝘁𝗵𝗲 𝗯𝗲𝗴𝗶𝗻𝗻𝗶𝗻𝗴 𝗼𝗳 𝘀𝗼𝗺𝗲𝘁𝗵𝗶𝗻𝗴 𝗲𝘅𝘁𝗿𝗮𝗼𝗿𝗱𝗶𝗻𝗮𝗿𝘆. 💙✨\n\n🔥 London was only the beginning… Manchester, Ireland and Birmingham — GET READY! 👀🚀",
         ],
         'today' => [
             'label'   => 'It is today',
@@ -103,25 +96,92 @@ final class Announcer
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * @return array{sent:int, emailed:int, messaged:int, failed:int}
-     */
-    public static function send(string $audience, string $subject, string $body, bool $byEmail, bool $byKingsChat): array
+    private const MAX_ATTEMPTS = 5;
+    private const GAP_MICROSECONDS = 3000000; // three seconds between emails keeps the mail host calm
+
+    /** Put one row per recipient in the queue. Safe to call again; existing rows are kept. */
+    public static function enqueue(array $announcement): void
     {
-        $recipients = self::recipients($audience);
-        $result = ['sent' => 0, 'emailed' => 0, 'messaged' => 0, 'failed' => 0];
+        $stmt = Database::connection()->prepare(
+            'INSERT IGNORE INTO announcement_deliveries (announcement_id, reference, email) VALUES (?, ?, ?)'
+        );
+        foreach (self::recipients((string) $announcement['audience']) as $person) {
+            $stmt->execute([(int) $announcement['id'], $person['reference'], $person['email']]);
+        }
+    }
 
-        $work = static function () use ($recipients, $subject, $body, $byEmail, $byKingsChat, &$result): void {
-            foreach ($recipients as $person) {
-                [$emailed, $messaged] = self::deliver($person, $subject, $body, $byEmail, $byKingsChat);
-                $result['emailed'] += (int) $emailed;
-                $result['messaged'] += (int) $messaged;
-                ($emailed || $messaged) ? $result['sent']++ : $result['failed']++;
+    /**
+     * Work through the queue for one announcement until it is empty, the time is up, or the
+     * mail host throttles. Returns 'done', 'more' (call again next minute) or 'throttled'.
+     */
+    public static function drain(array $announcement, int $seconds = 50): string
+    {
+        $pdo = Database::connection();
+        $id = (int) $announcement['id'];
+        // A runner that died mid-send leaves rows in 'sending'; hand them back after ten minutes.
+        $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending' WHERE announcement_id = ? AND status = 'sending' AND claimed_at < (NOW() - INTERVAL 10 MINUTE)")->execute([$id]);
+
+        $deadline = time() + $seconds;
+        $byEmail = (bool) $announcement['by_email'];
+        $byKingsChat = (bool) $announcement['by_kingschat'];
+
+        while (time() < $deadline) {
+            $row = $pdo->prepare("SELECT d.*, r.first_name, r.last_name, r.kingschat_username, r.participation
+                                  FROM announcement_deliveries d JOIN registrations r ON r.reference = d.reference
+                                  WHERE d.announcement_id = ? AND d.status = 'pending' ORDER BY d.id LIMIT 1");
+            $row->execute([$id]);
+            $person = $row->fetch();
+            if (!$person) {
+                return 'done';
             }
-        };
-        $work();
+            // Claim it so a second runner cannot send the same email.
+            $claim = $pdo->prepare("UPDATE announcement_deliveries SET status = 'sending', claimed_at = NOW(), attempts = attempts + 1 WHERE id = ? AND status = 'pending'");
+            $claim->execute([(int) $person['id']]);
+            if ($claim->rowCount() === 0) {
+                continue;
+            }
 
-        return $result;
+            try {
+                if ($byEmail) {
+                    self::deliverOrThrow($person, (string) $announcement['subject'], (string) $announcement['body']);
+                }
+                if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {
+                    try {
+                        (new KingsChatClient())->send((string) $person['kingschat_username'], self::fill((string) $announcement['body'], $person));
+                    } catch (\Throwable $e) {
+                        error_log('Announcement KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
+                    }
+                }
+                $pdo->prepare("UPDATE announcement_deliveries SET status = 'sent', sent_at = NOW(), last_error = NULL WHERE id = ?")->execute([(int) $person['id']]);
+            } catch (\Throwable $e) {
+                $error = mb_substr($e->getMessage(), 0, 255);
+                if (BulkSender::throttled($e)) {
+                    // Not this person's fault: back to pending, and stop for now. The next minute tries again.
+                    $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending', attempts = attempts - 1, last_error = ? WHERE id = ?")->execute([$error, (int) $person['id']]);
+                    error_log('Announcement #' . $id . ' throttled by the mail host: ' . $error);
+                    return 'throttled';
+                }
+                $final = (int) $person['attempts'] >= self::MAX_ATTEMPTS;
+                $pdo->prepare("UPDATE announcement_deliveries SET status = ?, last_error = ? WHERE id = ?")->execute([$final ? 'failed' : 'pending', $error, (int) $person['id']]);
+                error_log('Announcement email failed for ' . $person['reference'] . ' (attempt ' . $person['attempts'] . '): ' . $error);
+            }
+            usleep(self::GAP_MICROSECONDS);
+        }
+
+        return 'more';
+    }
+
+    /** @return array{sent:int,pending:int,failed:int,total:int} */
+    public static function progress(int $announcementId): array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT SUM(status = 'sent') AS sent, SUM(status IN ('pending','sending')) AS pending, SUM(status = 'failed') AS failed, COUNT(*) AS total
+             FROM announcement_deliveries WHERE announcement_id = ?"
+        );
+        $stmt->execute([$announcementId]);
+        $r = $stmt->fetch() ?: [];
+
+        return ['sent' => (int) ($r['sent'] ?? 0), 'pending' => (int) ($r['pending'] ?? 0), 'failed' => (int) ($r['failed'] ?? 0), 'total' => (int) ($r['total'] ?? 0)];
     }
 
     /**
@@ -135,48 +195,6 @@ final class Announcer
         (new Mailer())->send((string) $person['email'], self::fill($subject, $person), self::html($text, $person), $text, ['Reply-To' => contact_email()]);
     }
 
-    public static function deliver(array $person, string $subject, string $body, bool $byEmail, bool $byKingsChat): array
-    {
-        $text = self::fill($body, $person);
-        $emailed = $messaged = false;
-
-        if ($byEmail) {
-            // Same manners as the bulk pass sender: three seconds between emails, and when the mail
-            // host throttles (a 4xx reply) wait five minutes and retry this person, up to an hour.
-            for ($waits = 0; ; ) {
-                try {
-                    (new Mailer())->send(
-                        (string) $person['email'],
-                        self::fill($subject, $person),
-                        self::html($text, $person),
-                        $text,
-                        ['Reply-To' => contact_email()]
-                    );
-                    $emailed = true;
-                } catch (\Throwable $e) {
-                    if (BulkSender::throttled($e) && $waits < 12) {
-                        $waits++;
-                        error_log('Announcement email throttled at ' . $person['reference'] . ' (wait ' . $waits . '): ' . $e->getMessage());
-                        sleep(300);
-                        continue;
-                    }
-                    error_log('Announcement email failed for ' . $person['reference'] . ': ' . $e->getMessage());
-                }
-                break;
-            }
-            usleep(3000000);
-        }
-
-        if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {
-            try {
-                [$messaged] = (new KingsChatClient())->send((string) $person['kingschat_username'], $text);
-            } catch (\Throwable $e) {
-                error_log('Announcement KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
-            }
-        }
-
-        return [$emailed, (bool) $messaged];
-    }
 
     /**
      * Where we are relative to the start, in words a person would use:
@@ -227,7 +245,24 @@ final class Announcer
     public static function sendLiveLink(array $person, bool $byEmail = true, bool $byKingsChat = true): array
     {
 
-        return self::deliver($person, self::LIVE_LINK['subject'], self::LIVE_LINK['body'], $byEmail, $byKingsChat);
+        $emailed = $messaged = false;
+        if ($byEmail) {
+            try {
+                self::deliverOrThrow($person, self::LIVE_LINK['subject'], self::LIVE_LINK['body']);
+                $emailed = true;
+            } catch (\Throwable $e) {
+                error_log('Live link email failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            }
+        }
+        if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {
+            try {
+                [$messaged] = (new KingsChatClient())->send((string) $person['kingschat_username'], self::fill(self::LIVE_LINK['body'], $person));
+            } catch (\Throwable $e) {
+                error_log('Live link KingsChat failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            }
+        }
+
+        return [$emailed, (bool) $messaged];
     }
 
     /** Send an onsite person their pass again: the confirmation email with the QR, and the KingsChat confirmation. */
@@ -298,11 +333,9 @@ final class Announcer
     public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
 
     /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
-    public static function summary(array $r): string
+    public static function summary(array $p): string
     {
-        return sprintf('Sent to %d of %d: %d emailed, %d messaged on KingsChat%s.',
-            $r['sent'], $r['sent'] + $r['failed'], $r['emailed'], $r['messaged'],
-            $r['failed'] ? ', ' . $r['failed'] . ' could not be reached' : '');
+        return sprintf('Sent to %d of %d%s.', $p['sent'], $p['total'], $p['failed'] ? ', ' . $p['failed'] . ' could not be reached' : '');
     }
 
     private static function html(string $text, array $person): string

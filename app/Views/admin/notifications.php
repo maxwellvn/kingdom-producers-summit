@@ -99,7 +99,9 @@ $suggest = [
               <td class="mono"><?= e(date('D j M, H:i', strtotime($a['send_at']))) ?></td>
               <td><?= e($audiences[$a['audience']] ?? $a['audience']) ?></td>
               <td><?= e($a['subject']) ?><br><span class="adm-muted" style="font-size:.8rem"><?= $a['by_email'] ? 'Email' : '' ?><?= $a['by_email'] && $a['by_kingschat'] ? ' + ' : '' ?><?= $a['by_kingschat'] ? 'KingsChat' : '' ?> · <?= e($a['created_by']) ?></span></td>
-              <td><?php if ($a['sent_at'] === null): ?><span class="adm-pill adm-pill--claimed">Scheduled</span><?php else: ?><span class="adm-pill adm-pill--paid">Sent</span><br><span class="adm-muted" style="font-size:.8rem"><?= e((string) $a['result']) ?></span><?php endif; ?></td>
+              <td><?php if ($a['sent_at'] === null): ?><span class="adm-pill adm-pill--claimed">Scheduled</span>
+                  <?php elseif ($a['result'] === 'sending'): $p = \App\Services\Announcer::progress((int) $a['id']); ?><span class="adm-pill adm-pill--claimed">Sending</span><br><span class="adm-muted mono" style="font-size:.8rem"><?= $p['sent'] ?> of <?= $p['total'] ?> sent<?= $p['failed'] ? ', ' . $p['failed'] . ' failed' : '' ?> · continues every minute, waits out mail limits</span>
+                  <?php else: ?><span class="adm-pill adm-pill--paid">Sent</span><br><span class="adm-muted" style="font-size:.8rem"><?= e((string) $a['result']) ?></span><?php endif; ?></td>
               <td><?php if ($a['sent_at'] === null): ?>
                 <form method="post" action="<?= url('/admin/notifications/cancel') ?>"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Cancel</button></form>
               <?php endif; ?></td>

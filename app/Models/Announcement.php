@@ -45,7 +45,7 @@ final class Announcement
             return;
         }
         try {
-            $due = (int) Database::connection()->query('SELECT COUNT(*) FROM announcements WHERE sent_at IS NULL AND send_at <= NOW()')->fetchColumn();
+            $due = (int) Database::connection()->query("SELECT COUNT(*) FROM announcements WHERE (sent_at IS NULL AND send_at <= NOW()) OR result = 'sending'")->fetchColumn();
         } catch (\Throwable $e) {
             return; // table not there yet
         }
@@ -76,6 +76,12 @@ final class Announcement
         $stmt = $pdo->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at LIMIT 1");
 
         return $stmt->fetch() ?: null;
+    }
+
+    /** Claimed but not finished: the queue still has people waiting. */
+    public static function inFlight(): array
+    {
+        return Database::connection()->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at")->fetchAll() ?: [];
     }
 
     public static function finish(int $id, string $result): void
