@@ -1,0 +1,22 @@
+# Deployed on the standby server as its own Coolify resource. Domain goes on the relay service.
+services:
+  relay:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    environment:
+      ORIGIN: "${ORIGIN:?Folder holding the .m3u8, no trailing slash, e.g. https://cdn.example.com/live}"
+      SECRET: "${SECRET:?Same value as STREAM_RELAY_SECRET on the summit app}"
+      NGINX_ENVSUBST_FILTER: "^(ORIGIN|SECRET)$"
+    volumes:
+      - ./default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - hls_cache:/var/cache/nginx
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  hls_cache:

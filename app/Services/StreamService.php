@@ -81,6 +81,24 @@ final class StreamService
         return $saved !== '' ? $saved : (string) config('stream.note');
     }
 
+    /**
+     * Signed URL on the HLS relay (the standby server's nginx), valid for six hours.
+     * Set STREAM_RELAY_URL and STREAM_RELAY_SECRET; the relay holds the real origin.
+     */
+    public static function relayUrl(): ?string
+    {
+        $relay = rtrim((string) env('STREAM_RELAY_URL', ''), '/');
+        $secret = (string) env('STREAM_RELAY_SECRET', '');
+        if ($relay === '' || $secret === '') {
+            return null;
+        }
+        $expires = time() + 6 * 3600;
+        $token = rtrim(strtr(base64_encode(md5($secret . $expires, true)), '+/', '-_'), '=');
+        $file = basename((string) parse_url(self::url(), PHP_URL_PATH));
+
+        return $relay . '/hls/' . $expires . '/' . $token . '/' . rawurlencode($file);
+    }
+
     public static function proxyEnabled(): bool
     {
         return Setting::get('stream_proxy', config('stream.proxy') ? '1' : '0') === '1';

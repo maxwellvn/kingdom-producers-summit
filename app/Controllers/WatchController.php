@@ -205,7 +205,7 @@ final class WatchController extends Controller
 
         $kind = StreamService::kind();
         $source = $kind === 'hls' && StreamService::proxyEnabled()
-            ? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH))))
+            ? (StreamService::relayUrl() ?? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH)))))
             : ($kind === 'iframe' ? StreamService::embedUrl() : StreamService::url());
 
         return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now']] + $this->watchingFor($viewer));
