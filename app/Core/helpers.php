@@ -38,13 +38,17 @@ function asset(string $path): string
 }
 
 /**
- * Large media (video) lives outside git. MEDIA_URL points at where it is hosted;
- * unset, it falls back to public/assets/media for local work.
+ * Large media (video) lives outside git. A local copy under public/assets/media wins
+ * (development); otherwise MEDIA_URL, or failing that the pinned copy on jsDelivr.
  */
 function media(string $file): string
 {
-    $base = rtrim((string) env('MEDIA_URL', ''), '/');
-    return $base !== '' ? $base . '/' . ltrim($file, '/') : asset('media/' . $file);
+    $file = ltrim($file, '/');
+    if (is_file(BASE_PATH . '/public/assets/media/' . $file)) {
+        return asset('media/' . $file);
+    }
+    $base = rtrim((string) env('MEDIA_URL', 'https://cdn.jsdelivr.net/gh/maxwellvn/kingdom-producers-summit@35c9dd5/public/assets/media'), '/');
+    return $base . '/' . $file;
 }
 
 /** An amount expressed in the event's Espees currency. Defaults to the onsite price. */
