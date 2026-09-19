@@ -104,10 +104,20 @@ final class Analytics
              WHERE device <> "bot" AND last_seen_at > (NOW() - INTERVAL ' . self::PRESENCE_WINDOW . ' SECOND)'
         )->fetch() ?: [];
 
+        // Everyone who opened the watch page since midnight, counted once per device. Survives
+        // sign-outs and the presence prune, so it is the number to report after the stream.
+        $today = Database::connection()->query(
+            'SELECT COUNT(DISTINCT visitor_hash) AS devices, COUNT(DISTINCT session_hash) AS sessions
+             FROM page_views
+             WHERE device <> "bot" AND path LIKE "%/watch" AND viewed_at >= CURDATE()'
+        )->fetch() ?: [];
+
         return [
             'site'     => (int) ($row['site'] ?? 0),
             'watch'    => (int) ($row['watch'] ?? 0),
             'visitors' => (int) ($row['visitors'] ?? 0),
+            'watched_today' => (int) ($today['devices'] ?? 0),
+            'watch_sessions_today' => (int) ($today['sessions'] ?? 0),
         ];
     }
 

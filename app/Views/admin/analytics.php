@@ -36,6 +36,11 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
       <p class="adm-stat__value" data-live="watch">—</p>
     </article>
     <article class="adm-stat">
+      <p class="adm-stat__label mono">Watched today</p>
+      <p class="adm-stat__value" data-live="watched_today">—</p>
+      <p class="adm-stat__sub mono"><span data-live="watch_sessions_today">—</span> sessions · unique devices since midnight</p>
+    </article>
+    <article class="adm-stat">
       <p class="adm-stat__label mono">Visitors</p>
       <p class="adm-stat__value"><?= number_format($summary['visitors']) ?></p>
       <p class="adm-stat__sub mono"><?= e($change($summary['visitors'], $summary['visitors_before'])) ?> on the period before</p>
@@ -137,7 +142,7 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
   var url = panel.getAttribute('data-live-url');
 
   function paint(data) {
-    ['site', 'watch', 'visitors'].forEach(function (key) {
+    ['site', 'watch', 'visitors', 'watched_today', 'watch_sessions_today'].forEach(function (key) {
       var el = panel.querySelector('[data-live="' + key + '"]');
       if (el) el.textContent = String(data.live[key]);
     });
