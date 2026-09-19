@@ -4,7 +4,7 @@ proxy_cache_path /var/cache/nginx/hls levels=1:2 keys_zone=hls:20m max_size=2g i
 
 server {
     listen 80;
-    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver 1.1.1.1 8.8.8.8 valid=300s ipv6=off;  # no IPv6 route in the container
 
     location = /healthz { return 200 "ok\n"; }
 
@@ -22,13 +22,14 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $proxy_host;
         proxy_set_header Connection "";
+        proxy_set_header Range "";        # always fetch whole files so every response is a cacheable 200
         proxy_hide_header Set-Cookie;
 
         proxy_cache hls;
         proxy_cache_key $file;
         # ponytail: one TTL for playlists and segments. With the lock plus stale-while-updating,
         # the origin sees at most one fetch per file per second whatever the viewer count.
-        proxy_cache_valid 200 1s;
+        proxy_cache_valid 200 206 1s;
         proxy_cache_lock on;
         proxy_cache_use_stale updating error timeout;
         proxy_ignore_headers Cache-Control Expires Set-Cookie;

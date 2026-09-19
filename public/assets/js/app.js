@@ -364,8 +364,7 @@
           // edge and keep buffering ahead, or any hiccup empties the buffer. Not a low-latency stream.
           hls = new window.Hls({
             lowLatencyMode: false,
-            liveSyncDurationCount: 1,
-            liveMaxLatencyDurationCount: 3,
+            liveSyncDurationCount: 2,
             maxBufferLength: 6,
             maxMaxBufferLength: 8,
             fragLoadingMaxRetry: 8,
