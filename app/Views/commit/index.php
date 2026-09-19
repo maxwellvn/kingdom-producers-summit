@@ -4,8 +4,9 @@ $errors = \App\Core\Session::get('_errors', []);
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
-      <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> The Commitment</p>
-      <h1 class="pay__title">Four things I will do.</h1>
+      <h1 class="pay__title">The Commitment</h1>
+      <p class="commit__speaker"><span class="mono">Keynote speaker</span><strong>Pastor Rita Ijomah</strong><span>Head of Service, Loveworld Kingdom</span></p>
+      <h2 class="pay__title commit__title2">Four things I will do.</h2>
       <p class="pay__lede">A producer is someone who makes, not only someone who consumes. At the close of this session you are asked to decide four things you will do with what you have heard, and to put your name to them.</p>
       <p class="commit__intro">Tick each commitment you are making and put your name to it. We will pray over every submission.</p>
 
