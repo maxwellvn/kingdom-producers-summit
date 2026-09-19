@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Models\LoginAttempt;
 use App\Models\Registration;
 use App\Services\RegistrationService;
 use App\Services\AttendanceService;
@@ -111,6 +112,41 @@ final class RegistrationController extends Controller
             'supportUrl'   => is_paid_path((string) $registration['participation']) && $registration['payment_status'] === 'not_required'
                 ? url('/register/method?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])))
                 : null,
+        ]);
+    }
+
+    /** The desk shortcut: type the email or handle, get the QR on screen. */
+    public function passForm(Request $request): Response
+    {
+        return $this->passView([]);
+    }
+
+    public function passLookup(Request $request): Response
+    {
+        $throttleKey = 'pass|' . $request->ip();
+        if (LoginAttempt::lockedForSeconds($throttleKey, 20, 600) > 0) {
+            return $this->passView(['auth' => 'Too many attempts. Ask at the desk.']);
+        }
+        $registration = Registration::findByIdentifier($request->str('identifier'));
+        if ($registration === null || $registration['status'] === 'cancelled') {
+            LoginAttempt::record($throttleKey);
+            usleep(random_int(200_000, 400_000));
+
+            return $this->passView(['auth' => 'That does not match a registration. Check the spelling, or register at the desk.']);
+        }
+        LoginAttempt::clear($throttleKey);
+        Session::put('last_registration', $registration['reference']);
+
+        return $this->redirect('/register/confirmed');
+    }
+
+    private function passView(array $errors): Response
+    {
+        return $this->view('pass/index', [
+            'title'     => 'Find my pass — ' . config('app.name'),
+            'bodyClass' => 'page-pass',
+            'noIndex'   => true,
+            'errors'    => $errors,
         ]);
     }
 
