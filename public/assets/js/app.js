@@ -223,7 +223,23 @@
       stage.insertBefore(video, frame);
       return video;
     }
+    // Quality picker: only when the stream offers more than one rendition. Auto lets hls.js adapt.
+    var quality = null;
+    function qualityMenu(levels) {
+      if (quality) { quality.remove(); quality = null; }
+      if (!hls || levels.length < 2) return;
+      quality = document.createElement('select');
+      quality.className = 'watch__quality mono';
+      quality.setAttribute('aria-label', 'Video quality');
+      quality.innerHTML = '<option value="-1">Auto quality</option>' + levels.map(function (l, i) {
+        var name = l.height ? l.height + 'p' : Math.round((l.bitrate || 0) / 1000) + ' kbps';
+        return '<option value="' + i + '">' + name + (i === 0 ? ' · lowest data' : '') + '</option>';
+      }).join('');
+      quality.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(quality.value, 10); });
+      stage.appendChild(quality);
+    }
     function dropVideo() {
+      if (quality) { quality.remove(); quality = null; }
       if (hls) { hls.destroy(); hls = null; }
       if (video) { try { video.pause(); } catch (e) {} video.removeAttribute('src'); try { video.load(); } catch (e) {} video.remove(); video = null; }
     }
@@ -330,6 +346,7 @@
           hls = new window.Hls({ lowLatencyMode: true });
           hls.loadSource(data.source);
           hls.attachMedia(video);
+          hls.on(window.Hls.Events.MANIFEST_PARSED, function (e, m) { qualityMenu(m.levels || []); });
         } else {
           stop('This browser cannot play the stream', 'Try Chrome, Safari or Edge.');
           return;
