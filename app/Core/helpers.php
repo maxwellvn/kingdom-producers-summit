@@ -47,7 +47,10 @@ function media(string $file): string
     if (is_file(BASE_PATH . '/public/assets/media/' . $file)) {
         return asset('media/' . $file);
     }
-    $base = rtrim((string) env('MEDIA_URL', 'https://cdn.jsdelivr.net/gh/maxwellvn/kingdom-producers-summit@35c9dd5/public/assets/media'), '/');
+    $base = rtrim((string) env('MEDIA_URL', ''), '/');
+    if ($base === '') {
+        $base = 'https://cdn.jsdelivr.net/gh/maxwellvn/kingdom-producers-summit@35c9dd5/public/assets/media';
+    }
     return $base . '/' . $file;
 }
 
