@@ -83,3 +83,17 @@ Registrations made in the last hour before the outage exist only on the primary.
 ## 7. Returning to the primary
 
 Reverse the direction: set `BACKUP_SSH_HOST` and the key on the standby pointing at the primary, run the task once, then move DNS back and delete that task again. The standby keeps `BACKUP_SSH_HOST` unset during normal operation.
+
+## 8. HLS relay
+
+The standby also runs `docker/hls-relay`: nginx that fetches each playlist and segment once from the real stream origin, caches it, and serves every viewer. The origin address never reaches a browser. It is the Coolify resource "hls relay" on the standby, domain `stream.loveworldconsulate.org`.
+
+To go live with an HLS stream:
+
+1. On the relay resource set `ORIGIN` to the folder that holds the `.m3u8`, without a trailing slash (for `https://cdn.example.com/live/index.m3u8` that is `https://cdn.example.com/live`), then redeploy the relay.
+2. In the summit Admin > Stream, paste the full origin `.m3u8` URL and keep "serve through the site" on. The app only uses the file name from it.
+3. The summit app needs `STREAM_RELAY_URL` and `STREAM_RELAY_SECRET`; `SECRET` on the relay must be the same value.
+
+Viewers receive `https://stream.loveworldconsulate.org/hls/<expires>/<token>/<file>`. The token is an MD5 of the secret and the expiry, checked by nginx's `secure_link`; it stops working after six hours and never reveals the origin. Origin playlists must reference their variants and segments by relative path.
+
+If the primary fails, the relay keeps running; nothing in it depends on the primary.
