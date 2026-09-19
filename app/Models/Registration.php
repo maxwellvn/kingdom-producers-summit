@@ -324,11 +324,18 @@ final class Registration
     }
 
     /** Stream every row for CSV export. */
-    public static function all(): \Generator
+    public static function all(string $participation = ''): \Generator
     {
-        $stmt = Database::connection()->query(
-            "SELECT r.*, a.checked_in_at, a.checked_in_by FROM registrations r LEFT JOIN attendances a ON a.registration_id = r.id WHERE r.email NOT LIKE '%@loadtest.invalid' ORDER BY r.created_at ASC"
+        $where = "r.email NOT LIKE '%@loadtest.invalid'";
+        $params = [];
+        if (in_array($participation, self::PARTICIPATION, true)) {
+            $where .= ' AND r.participation = ?';
+            $params[] = $participation;
+        }
+        $stmt = Database::connection()->prepare(
+            "SELECT r.*, a.checked_in_at, a.checked_in_by FROM registrations r LEFT JOIN attendances a ON a.registration_id = r.id WHERE {$where} ORDER BY r.created_at ASC"
         );
+        $stmt->execute($params);
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             yield $row;
         }

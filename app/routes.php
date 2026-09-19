@@ -97,6 +97,7 @@ $router->post('/admin/stream/log/clear', [AdminController::class, 'clearStreamLo
 $router->post('/admin/prompts', [AdminController::class, 'createPrompt'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/prompts/close', [AdminController::class, 'closePrompt'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/prompts/results', [AdminController::class, 'promptResults'], [RequireAdmin::class]);
+$router->post('/admin/event-day', [AdminController::class, 'eventDay'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);

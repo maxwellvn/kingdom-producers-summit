@@ -14,6 +14,7 @@ $errors = \App\Core\Session::get('_errors', []);
 $oldMode = \App\Core\Session::get('_old', [])['participation'] ?? null;
 $selectedMode = $oldMode ?: $mode;
 $isInitiative = $selectedMode === 'initiative';
+$express = \App\Services\RegistrationService::express(); // event day: name, contact and consent only
 
 $ageLabels = [
   'under18' => 'Under 18', '18-24' => '18–24', '25-34' => '25–34', '35-44' => '35–44',
@@ -42,13 +43,15 @@ $stageLabels = [
         <div class="reg__card-inner">
           <p class="reg__kicker mono"><?= e($summit['edition']) ?></p>
           <h1 class="reg__title">Register</h1>
-          <p class="reg__lede"><?= $isInitiative ? 'Join the 30, 60 and 90 day production journey.' : 'Choose how you will attend, then tell us about your field and interests.' ?></p>
+          <p class="reg__lede"><?= $isInitiative ? 'Join the 30, 60 and 90 day production journey.' : ($express ? 'Choose how you will attend and tell us who you are. It takes a minute.' : 'Choose how you will attend, then tell us about your field and interests.') ?></p>
 
           <ol class="reg__steps mono" id="regSteps">
             <?php
             $steps = $isInitiative
               ? ['path' => 'The initiative', 'you' => 'About you', 'consent' => 'Confirm']
-              : ['path' => 'Attendance', 'you' => 'About you', 'produce' => 'Where you are now', 'details' => 'Details', 'consent' => 'Confirm'];
+              : ($express
+                ? ['path' => 'Attendance', 'you' => 'About you', 'consent' => 'Confirm']
+                : ['path' => 'Attendance', 'you' => 'About you', 'produce' => 'Where you are now', 'details' => 'Details', 'consent' => 'Confirm']);
             $stepNo = 0;
             foreach ($steps as $key => $label): $stepNo++; ?>
               <li data-step="<?= $key ?>" class="<?= $stepNo === 1 ? 'is-current' : '' ?>"><span><?= str_pad((string) $stepNo, 2, '0', STR_PAD_LEFT) ?></span> <?= e($label) ?></li>
@@ -181,6 +184,7 @@ $stageLabels = [
           </div>
         </div>
 
+        <?php if (!$express): ?>
         <div class="form__row">
           <div class="field <?= error_for('country') ? 'has-error' : '' ?>">
             <label for="country">Country</label>
@@ -246,9 +250,10 @@ $stageLabels = [
             <input id="role_title" name="role_title" type="text" autocomplete="organization-title" placeholder="e.g. Founder, Student, Engineer" value="<?= old('role_title') ?>">
           </div>
         </div>
+        <?php endif; ?>
       </fieldset>
 
-      <?php if (!$isInitiative): ?>
+      <?php if (!$isInitiative && !$express): ?>
       <!-- 03 Current producer stage -->
       <fieldset class="form__section" data-section="produce">
         <legend class="form__legend"><span class="mono">03</span> Where you are now</legend>
@@ -374,7 +379,7 @@ $stageLabels = [
 
       <!-- 05 Consent -->
       <fieldset class="form__section" data-section="consent">
-        <legend class="form__legend"><span class="mono"><?= $isInitiative ? '03' : '05' ?></span> Confirm</legend>
+        <legend class="form__legend"><span class="mono"><?= ($isInitiative || $express) ? '03' : '05' ?></span> Confirm</legend>
 
         <div class="field field--check <?= error_for('consent_terms') ? 'has-error' : '' ?>">
           <label class="check">

@@ -41,6 +41,16 @@ final class WatchController extends Controller
             return $this->player($organiser);
         }
 
+        // The open link: anyone who follows it gets in with just an email address.
+        $open = $request->str('open');
+        if ($open !== '') {
+            if (StreamService::openLinkValid($open)) {
+                Session::put('watch_open', true);
+            }
+
+            return $this->redirect('/watch');
+        }
+
         // A signed link from an organiser's message signs the person straight in.
         $passRef = AttendanceService::referenceFromToken($request->str('pass'));
         if ($passRef !== null) {
@@ -126,6 +136,12 @@ final class WatchController extends Controller
         }
 
         $viewer = StreamService::findViewer($identifier);
+        if ($viewer === null && Session::get('watch_open') === true && StreamService::openLinkOn()) {
+            $viewer = StreamService::admitGuest($identifier, $request->str('name'));
+            if ($viewer === null) {
+                return $this->gate($request, ['auth' => 'Enter a valid email address.']);
+            }
+        }
         if ($viewer === null) {
             StreamEvent::log('refused', 'Gate refused "' . mb_substr($identifier, 0, 60) . '"');
             LoginAttempt::record($throttleKey);
@@ -557,6 +573,7 @@ final class WatchController extends Controller
             'holding'   => StreamService::holding(),
             'errors'    => $errors,
             'summit'    => config('app.summit'),
+            'open'      => Session::get('watch_open') === true && StreamService::openLinkOn(),
         ]);
     }
 }

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\Request;
 use App\Core\Validator;
 use App\Models\Registration;
+use App\Models\Setting;
 
 final class RegistrationService
 {
@@ -58,6 +59,13 @@ final class RegistrationService
             $rules['producer_stage'] = 'required|' . $rules['producer_stage'];
         }
 
+        // Event-day express form: name, contact and consent only, so the desk moves quickly.
+        if (self::express()) {
+            foreach (['country', 'age_band', 'zone', 'field', 'producer_stage'] as $key) {
+                $rules[$key] = str_replace('required|', '', $rules[$key]);
+            }
+        }
+
         $labels = [
             'participation'  => 'Participation',
             'first_name'     => 'First name',
@@ -100,9 +108,9 @@ final class RegistrationService
             'email'             => $email,
             'phone'             => $this->nullable($request->str('phone')),
             'kingschat_username'=> $this->nullable(ltrim($request->str('kingschat_username'), '@')),
-            'country'           => $request->str('country'),
+            'country'           => $this->nullable($request->str('country')),
             'city'              => $this->nullable($request->str('city')),
-            'age_band'          => $request->str('age_band'),
+            'age_band'          => $this->nullable($request->str('age_band')),
             'church_group'      => $this->nullable($request->str('church_name')),
             'zone'              => $this->nullable($request->str('zone')),
             'group_name'        => $this->nullable($request->str('group_name')),
@@ -227,6 +235,27 @@ final class RegistrationService
         ]];
     }
 
+    public static function express(): bool
+    {
+        return Setting::get('express_registration', '') === '1';
+    }
+
+    /** Every column at its default, for callers that only know a few details. */
+    public static function blank(): array
+    {
+        return [
+            'title' => null, 'phone' => null, 'kingschat_username' => null, 'country' => null, 'city' => null,
+            'age_band' => null, 'church_group' => null, 'zone' => null, 'group_name' => null, 'church_name' => null,
+            'organisation' => null, 'role_title' => null, 'field' => null, 'field_other' => null,
+            'producer_stage' => null, 'producer_stage_detail' => null, 'what_to_produce' => null,
+            'interests' => null, 'interest_other' => null, 'hear_about' => null, 'onsite_days' => null,
+            'dietary' => null, 'accessibility' => null, 'needs_letter' => 0, 'emergency_contact' => null,
+            'wants_updates' => 1, 'wants_portal' => 0, 'contribute_as' => null, 'portal_interest' => null,
+            'consent_terms' => 1, 'consent_marketing' => 0, 'issued_by' => null,
+            'status' => 'confirmed', 'payment_status' => 'not_required', 'payment_amount' => null, 'payment_session_id' => null,
+        ];
+    }
+
     public function register(array $clean): array
     {
         Registration::create($clean);
@@ -252,7 +281,7 @@ final class RegistrationService
     }
 
     /** e.g. KPS26-7QK4M3 — unambiguous alphabet, no 0/O/1/I. */
-    private function generateReference(): string
+    public function generateReference(): string
     {
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         do {

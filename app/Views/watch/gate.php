@@ -1,6 +1,7 @@
 <?php
 /** @var bool $live @var string $note @var array $errors @var array $summit @var array $holding */
 $errors = $errors ?: \App\Core\Session::get('_errors', []);
+$open = !empty($open);
 ?>
 <section class="reg">
   <div class="container pay">
@@ -19,18 +20,34 @@ $errors = $errors ?: \App\Core\Session::get('_errors', []);
       <?php endif; ?>
 
       <p class="pay__lede">
-        Your place is personal to you and can only be open in one place at a time.
-        Enter the email address or KingsChat username you registered with.
+        <?php if ($open): ?>
+          Enter your name and email address and you are in.
+        <?php else: ?>
+          Your place is personal to you and can only be open in one place at a time.
+          Enter the email address or KingsChat username you registered with.
+        <?php endif; ?>
       </p>
 
       <form class="pay__form" method="post" action="<?= url('/watch') ?>">
         <?= csrf_field() ?>
+        <?php if ($open): ?>
+        <div class="field">
+          <label for="name">Your name</label>
+          <input id="name" name="name" type="text" autocomplete="name" maxlength="160">
+        </div>
+        <div class="field">
+          <label for="identifier">Email address</label>
+          <input id="identifier" name="identifier" type="email" inputmode="email"
+                 autocapitalize="off" autocorrect="off" autocomplete="email" required>
+        </div>
+        <?php else: ?>
         <div class="field">
           <label for="identifier">Email or KingsChat username</label>
           <input id="identifier" name="identifier" type="text" inputmode="email"
                  autocapitalize="off" autocorrect="off" autocomplete="email" required>
           <p class="field__hint">Whichever you gave when you registered.</p>
         </div>
+        <?php endif; ?>
         <button type="submit" class="btn btn--stamp btn--lg">
           <span class="btn__label">Enter the stream</span>
           <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>

@@ -2,7 +2,7 @@ FROM php:8.3-apache
 
 # gd renders the QR access pass, so the image cannot ship without it.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig-dev libpng-dev curl \
+    && apt-get install -y --no-install-recommends libonig-dev libpng-dev curl default-mysql-client openssh-client \
     && docker-php-ext-install mbstring pdo_mysql gd \
     && a2enmod headers rewrite \
     && rm -rf /var/lib/apt/lists/*

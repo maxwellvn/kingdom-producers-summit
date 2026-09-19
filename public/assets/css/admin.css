@@ -346,3 +346,15 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .bulk__fill { display: block; height: 100%; background: #1e7d3c; transition: width .4s ease; }
 .bulk__line { margin: .5rem 0 0; font-size: .72rem; letter-spacing: .06em; color: var(--muted); }
 .bulk__failures { margin: .5rem 0 0; padding-left: 1rem; font-size: .7rem; color: #b4232b; }
+
+/* ---------- Event day switches ---------- */
+.eventday { margin-bottom: 1.4rem; }
+.eventday__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.eventday__item { display: flex; flex-direction: column; justify-content: space-between; gap: .8rem; padding: 1rem 1.1rem; border: 1px solid rgba(27,34,66,.16); border-radius: 8px; background: #FBF8F0; }
+.eventday__item strong { font-family: var(--font-display); font-size: 1.05rem; letter-spacing: .02em; text-transform: uppercase; }
+.eventday__item p { margin: .35rem 0 0; font-size: .82rem; color: var(--muted); }
+.eventday__state { margin-left: .5rem; font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 999px; background: rgba(27,34,66,.1); color: var(--muted-2); vertical-align: middle; }
+.eventday__state.is-on { background: #1e7d3c; color: #fff; }
+.eventday__link { display: flex; gap: .4rem; align-items: center; }
+.eventday__link input { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: .72rem; padding: .4rem .5rem; border: 1px solid rgba(27,34,66,.25); background: #fff; }
+@media (max-width: 720px) { .eventday__grid { grid-template-columns: 1fr; } }

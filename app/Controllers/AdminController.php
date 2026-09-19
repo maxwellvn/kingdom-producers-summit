@@ -158,6 +158,8 @@ final class AdminController extends Controller
             'stats'     => Registration::stats(),
             'stages'    => Registration::byStage(),
             'recent'    => Registration::paginate(1, 8)['rows'],
+            'express'   => Setting::get('express_registration', '') === '1',
+            'openToken' => Setting::get('watch_open_token', ''),
             'attendance'=> Registration::attendanceStats(),
         ], 'layouts/admin');
     }
@@ -555,6 +557,35 @@ final class AdminController extends Controller
     }
 
     /** Open or close the comment board. Closed is the default. */
+    /** Event-day switches on the overview: the express form and the open watch link. */
+    public function eventDay(Request $request): Response
+    {
+        $by = (string) Session::get('admin_email', 'admin');
+        switch ($request->str('action')) {
+            case 'express_on':
+            case 'express_off':
+                $on = $request->str('action') === 'express_on';
+                Setting::set('express_registration', $on ? '1' : '0');
+                StreamEvent::log('desk', 'Express registration ' . ($on ? 'on' : 'off') . ' by ' . $by);
+                Session::flash('admin_flash', $on
+                    ? 'Express registration is on. The form asks for name, contact and consent only.'
+                    : 'Express registration is off. The full form is back.');
+                break;
+            case 'open_link_new':
+                Setting::set('watch_open_token', bin2hex(random_bytes(16)));
+                StreamEvent::log('desk', 'Open watch link created by ' . $by);
+                Session::flash('admin_flash', 'Open watch link ready. Anyone with it gets in with an email address.');
+                break;
+            case 'open_link_off':
+                Setting::set('watch_open_token', '');
+                StreamEvent::log('desk', 'Open watch link revoked by ' . $by);
+                Session::flash('admin_flash', 'Open watch link revoked. The gate needs a registration again.');
+                break;
+        }
+
+        return $this->redirect('/admin#event-day');
+    }
+
     public function saveComments(Request $request): Response
     {
         $on = $request->input('comments_enabled') === '1';
@@ -881,8 +912,9 @@ final class AdminController extends Controller
     {
         $handle = fopen('php://temp', 'r+');
         $header = null;
+        $type = $request->str('type');
 
-        foreach (Registration::all() as $row) {
+        foreach (Registration::all($type) as $row) {
             unset($row['ip_address'], $row['user_agent']);
             if ($header === null) {
                 $header = array_keys($row);
@@ -899,7 +931,8 @@ final class AdminController extends Controller
         $csv = stream_get_contents($handle) ?: '';
         fclose($handle);
 
-        return Response::download("\xEF\xBB\xBF" . $csv, 'producers-summit-registrations-' . date('Ymd-Hi') . '.csv');
+        $suffix = in_array($type, Registration::PARTICIPATION, true) ? '-' . $type : '';
+        return Response::download("\xEF\xBB\xBF" . $csv, 'producers-summit-registrations' . $suffix . '-' . date('Ymd-Hi') . '.csv');
     }
 
     /** Neutralise spreadsheet formula injection. */

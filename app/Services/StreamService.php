@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\Database;
 use App\Models\Registration;
 use App\Models\Setting;
+use App\Models\StreamEvent;
 
 /**
  * The live stream: its settings, who may watch, and the one-viewer rule.
@@ -129,6 +130,48 @@ final class StreamService
     }
 
     /** Registrations allowed in, from config. */
+    /** The open link admits anyone with an email; an organiser turns it on and off from the dashboard. */
+    public static function openLinkOn(): bool
+    {
+        return Setting::get('watch_open_token', '') !== '';
+    }
+
+    public static function openLinkValid(string $token): bool
+    {
+        $stored = Setting::get('watch_open_token', '');
+
+        return $stored !== '' && hash_equals($stored, $token);
+    }
+
+    /**
+     * Someone arriving through the open link who is not registered is recorded
+     * as an online registrant so they have a name on the board and appear in exports.
+     */
+    public static function admitGuest(string $email, string $name): ?array
+    {
+        $email = mb_strtolower(trim($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+        $existing = Registration::findByEmail($email);
+        if ($existing !== null) {
+            return $existing['status'] === 'cancelled' ? null : $existing;
+        }
+        $parts = preg_split('/\s+/', trim($name), 2) ?: [];
+        $service = new RegistrationService();
+        $registration = $service->register(array_merge(RegistrationService::blank(), [
+            'reference'     => $service->generateReference(),
+            'participation' => 'online',
+            'first_name'    => mb_substr($parts[0] ?? '', 0, 80) ?: 'Guest',
+            'last_name'     => mb_substr($parts[1] ?? '', 0, 80) ?: '',
+            'email'         => $email,
+            'issued_by'     => 'open link',
+        ]));
+        StreamEvent::log('signin', 'Open link admitted ' . $email);
+
+        return $registration;
+    }
+
     public static function allowedPaths(): array
     {
         return (array) config('stream.allowed');

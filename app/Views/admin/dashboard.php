@@ -1,4 +1,4 @@
-<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance */
+<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance @var bool $express @var string $openToken */
 $pathLabel = ['onsite' => 'Onsite', 'online' => 'Online', 'initiative' => 'Initiative'];
 $max = max(1, ...array_column($stages, 'count'));
 ?>
@@ -10,6 +10,49 @@ $max = max(1, ...array_column($stages, 'count'));
     </div>
     <span class="mono adm-page__meta">Updated <?= date('j M Y, H:i') ?></span>
   </header>
+
+  <?php $flash = (string) \App\Core\Session::get('admin_flash', ''); ?>
+  <?php if ($flash !== ''): ?>
+    <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5);margin-bottom:1.2rem"><span><?= e($flash) ?></span></div>
+  <?php endif; ?>
+
+  <section id="event-day" class="adm-panel eventday">
+    <h2 class="adm-panel__title">Event day</h2>
+    <div class="eventday__grid">
+      <div class="eventday__item">
+        <div>
+          <strong>Express registration</strong>
+          <span class="mono eventday__state <?= $express ? 'is-on' : '' ?>"><?= $express ? 'On' : 'Off' ?></span>
+          <p>Walk-ins at the desk fill in name, contact and consent only. Everything else is skipped.</p>
+        </div>
+        <form method="post" action="<?= url('/admin/event-day') ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="<?= $express ? 'express_off' : 'express_on' ?>">
+          <button type="submit" class="adm-btn <?= $express ? '' : 'adm-btn--solid' ?>"><?= $express ? 'Turn off' : 'Turn on' ?></button>
+        </form>
+      </div>
+      <div class="eventday__item">
+        <div>
+          <strong>Open watch link</strong>
+          <span class="mono eventday__state <?= $openToken !== '' ? 'is-on' : '' ?>"><?= $openToken !== '' ? 'Active' : 'Off' ?></span>
+          <p>Anyone with the link enters the stream with just a name and email; unregistered people are added as online registrants.</p>
+          <?php if ($openToken !== ''): ?>
+            <?php $openUrl = site_url() . '/watch?open=' . $openToken; ?>
+            <p class="eventday__link"><input type="text" readonly value="<?= e($openUrl) ?>" onclick="this.select()" aria-label="Open watch link"> <button type="button" class="adm-btn" data-copy="<?= e($openUrl) ?>">Copy</button></p>
+          <?php endif; ?>
+        </div>
+        <form method="post" action="<?= url('/admin/event-day') ?>" style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <?= csrf_field() ?>
+          <?php if ($openToken !== ''): ?>
+            <button type="submit" name="action" value="open_link_new" class="adm-btn" onclick="return confirm('Make a new link? The old one stops working.')">New link</button>
+            <button type="submit" name="action" value="open_link_off" class="adm-btn">Revoke</button>
+          <?php else: ?>
+            <button type="submit" name="action" value="open_link_new" class="adm-btn adm-btn--solid">Create link</button>
+          <?php endif; ?>
+        </form>
+      </div>
+    </div>
+  </section>
 
   <div class="adm-stats">
     <div class="adm-stat adm-stat--lead">
@@ -79,3 +122,12 @@ $max = max(1, ...array_column($stages, 'count'));
     </section>
   </div>
 </section>
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = b.getAttribute('data-copy'), done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done); }
+      else { var i = b.previousElementSibling; i.select(); document.execCommand('copy'); done(); }
+    });
+  });
+</script>

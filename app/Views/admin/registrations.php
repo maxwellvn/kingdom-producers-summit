@@ -23,7 +23,15 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
         </select>
         <button type="submit" class="adm-btn">Email live links</button>
       </form>
-      <a class="adm-btn" href="<?= url('/admin/export.csv') ?>">Export CSV ↓</a>
+      <form method="get" action="<?= url('/admin/export.csv') ?>" style="display:flex;gap:.4rem;align-items:center">
+        <select name="type" aria-label="Who to export" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          <option value="" <?= $participation === '' ? 'selected' : '' ?>>Everyone</option>
+          <option value="onsite" <?= $participation === 'onsite' ? 'selected' : '' ?>>Onsite only</option>
+          <option value="online" <?= $participation === 'online' ? 'selected' : '' ?>>Online only</option>
+          <option value="initiative" <?= $participation === 'initiative' ? 'selected' : '' ?>>Initiative only</option>
+        </select>
+        <button type="submit" class="adm-btn">Export CSV ↓</button>
+      </form>
     </div>
   </header>
 
