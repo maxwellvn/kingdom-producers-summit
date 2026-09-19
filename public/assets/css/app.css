@@ -1210,3 +1210,14 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .holding__countdown { margin-top: .6rem; font-size: 1.8rem; }
   .holding__now { margin-top: .6rem; padding-top: .6rem; }
 }
+
+/* ---------- The Commitment ---------- */
+.commit__list { list-style: none; margin: 0 0 1.6rem; padding: 0; display: grid; gap: .6rem; }
+.commit__list li { border: 1px solid rgba(27,34,66,.18); background: rgba(255,255,255,.55); }
+.commit__item { padding: .9rem 1rem; font-size: 1.05rem !important; }
+.commit__item:has(input:checked) { background: rgba(27,34,66,.05); }
+.commit__item > span { display: grid; grid-template-columns: 2rem 1fr; gap: .4rem; }
+.commit__num { color: var(--muted-2); }
+.commit__list--plain { counter-reset: c; }
+.commit__list--plain li { padding: .8rem 1rem; font-size: 1.02rem; }
+.commit__list--plain li::before { counter-increment: c; content: counter(c, decimal-leading-zero) "  "; font-family: var(--font-mono); color: var(--muted-2); }

@@ -32,6 +32,7 @@ $current = \App\Core\Url::currentPath();
           ['/admin/registrations', 'Registrations', 'exact'],
           ['/admin/issue', 'Issue a place', 'exact'],
           ['/admin/scanner', 'Access scanner', 'exact'],
+          ['/admin/commitments', 'Commitments', 'prefix'],
       ]],
       ['Event day', [
           ['/admin/stream', 'Stream & holding screen', 'prefix'],

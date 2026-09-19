@@ -15,6 +15,7 @@ use App\Models\Comment;
 use App\Models\StreamEvent;
 use App\Models\LoginAttempt;
 use App\Models\Prompt;
+use App\Models\Commitment;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Models\Sponsorship;
@@ -915,6 +916,46 @@ final class AdminController extends Controller
             : 'Test message not sent: ' . $reason);
 
         return $this->redirect('/admin/kingschat');
+    }
+
+    public function commitments(Request $request): Response
+    {
+        return $this->view('admin/commitments', [
+            'title'  => 'Commitments',
+            'rows'   => Commitment::all(),
+            'items'  => Commitment::ITEMS,
+            'link'   => site_url() . '/commit',
+        ], 'layouts/admin');
+    }
+
+    public function commitmentsCsv(Request $request): Response
+    {
+        $handle = fopen('php://temp', 'r+');
+        fputcsv($handle, ['name', 'email', 'kingschat', 'produce', 'records', 'buy', 'teach', 'what', 'made_at']);
+        foreach (Commitment::all() as $r) {
+            fputcsv($handle, array_map(static fn ($v) => is_string($v) ? self::csvSafe($v) : $v,
+                [$r['name'], $r['email'], $r['kingschat'], $r['produce'], $r['records'], $r['buy'], $r['teach'], $r['what'], $r['created_at']]));
+        }
+        rewind($handle);
+        $csv = stream_get_contents($handle) ?: '';
+        fclose($handle);
+
+        return Response::download("\xEF\xBB\xBF" . $csv, 'producers-summit-commitments-' . date('Ymd-Hi') . '.csv');
+    }
+
+    /** A QR pointing at the commitment page, for the screen or a printed card. */
+    public function commitmentsQr(Request $request): Response
+    {
+        $old = error_reporting(E_ALL & ~E_DEPRECATED);
+        require_once BASE_PATH . '/lib/phpqrcode.php';
+        ob_start();
+        \QRcode::png(site_url() . '/commit', false, \QR_ECLEVEL_M, 12, 2, false, 0xFFFFFF, 0x000000);
+        $png = (string) ob_get_clean();
+        error_reporting($old);
+        $pos = strpos($png, chr(0x89) . 'PNG');
+        $png = $pos === false ? '' : substr($png, $pos);
+
+        return (new Response($png))->header('Content-Type', 'image/png')->header('Content-Disposition', 'inline; filename="commitment-qr.png"');
     }
 
     public function exportCsv(Request $request): Response
