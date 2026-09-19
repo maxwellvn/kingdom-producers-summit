@@ -6,7 +6,8 @@ $errors = \App\Core\Session::get('_errors', []);
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> The Commitment</p>
       <h1 class="pay__title">Four things I will do.</h1>
-      <p class="pay__lede">Read them, tick each one you mean, put your name to it. We pray over every card after the session.</p>
+      <p class="pay__lede">A producer is someone who makes, not only someone who consumes. At the close of this session you are asked to decide four things you will do with what you have heard, and to put your name to them.</p>
+      <p class="commit__intro">Tick each commitment you are making. Nobody is marking this; it is between you and God, and the cards are gathered so we can pray over every one of them together. Take the four with you and act on them this year.</p>
 
       <?php if ($err = ($errors['items'] ?? '')): ?>
         <div class="pay__alert" role="alert"><span><?= e($err) ?></span></div>
