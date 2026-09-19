@@ -92,6 +92,7 @@ $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin:
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/check-in/search', [AdminController::class, 'checkInSearch'], [RequireAdmin::class]);
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/stream/state', [AdminController::class, 'setStreamState'], [VerifyCsrf::class, RequireAdmin::class]);

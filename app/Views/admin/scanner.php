@@ -55,10 +55,33 @@
         </div>
         <p class="mono">Use this when a camera is unavailable.</p>
       </form>
+
+      <form class="adm-scan__manual" data-name-search data-search-url="<?= url('/admin/check-in/search') ?>" onsubmit="return false">
+        <label for="scanNameSearch">Or find them by name</label>
+        <div>
+          <input id="scanNameSearch" type="search" autocomplete="off" placeholder="Surname, first name, email or reference" maxlength="80">
+        </div>
+        <ul data-search-results style="list-style:none;margin:.6rem 0 0;padding:0;display:grid;gap:.4rem"></ul>
+      </form>
     </aside>
   </div>
 </section>
 
+<dialog data-scan-modal style="width:min(92vw,28rem);padding:0;border:0;background:transparent">
+  <div data-modal-card style="padding:2rem 1.6rem;text-align:center;color:var(--paper);background:var(--stamp)">
+    <div data-modal-mark style="font-size:4rem;line-height:1">✓</div>
+    <p class="mono" data-modal-label style="margin:.6rem 0 .3rem;text-transform:uppercase;letter-spacing:.08em;opacity:.8"></p>
+    <h2 data-modal-name style="margin:0 0 1.2rem;font-size:1.8rem;line-height:1.05"></h2>
+    <button type="button" class="adm-btn adm-btn--solid" data-modal-close autofocus>OK</button>
+  </div>
+</dialog>
+<style>
+  dialog[data-scan-modal]::backdrop { background: rgba(0,0,0,.55); }
+  dialog[data-scan-modal][data-state="duplicate"] [data-modal-card] { background: #9a6b10; }
+  dialog[data-scan-modal][data-state="invalid"] [data-modal-card] { background: #602128; }
+  [data-search-results] li { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .5rem .6rem; border: 1px solid rgba(27,34,66,.2); background: #fff; }
+  [data-search-results] li small { display: block; opacity: .7; }
+</style>
 <script src="<?= asset('js/html5-qrcode.min.js') ?>" onerror="window.__qrLibFailed = true"></script>
 <script>
 (function () {
@@ -106,6 +129,56 @@
       var count = root.querySelector('[data-attendance-count]');
       count.textContent = String((parseInt(count.textContent.replace(/,/g, ''), 10) || 0) + 1);
     }
+    showModal(data);
+  }
+
+  // A big, unmissable verdict after every scan. Closes itself after a moment or on tap.
+  var modal = document.querySelector('[data-scan-modal]'), modalTimer = null;
+  function showModal(data) {
+    if (!modal || typeof modal.showModal !== 'function') return;
+    var state = data.status || 'invalid';
+    modal.dataset.state = state;
+    modal.querySelector('[data-modal-mark]').textContent = state === 'checked_in' ? '✓' : state === 'duplicate' ? '↺' : '✕';
+    modal.querySelector('[data-modal-label]').textContent = data.message || 'Unable to confirm access.';
+    modal.querySelector('[data-modal-name]').textContent = data.name || 'Pass not accepted';
+    if (!modal.open) modal.showModal();
+    window.clearTimeout(modalTimer);
+    modalTimer = window.setTimeout(function () { if (modal.open) modal.close(); }, state === 'checked_in' ? 2500 : 4000);
+  }
+  if (modal) {
+    modal.querySelector('[data-modal-close]').addEventListener('click', function () { modal.close(); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.close(); });
+  }
+
+  // Name search: type, pick, check in.
+  var search = root.querySelector('[data-name-search]');
+  if (search) {
+    var box = search.querySelector('input'), list = search.querySelector('[data-search-results]'), searchTimer = null, seq = 0;
+    function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function render(people) {
+      list.innerHTML = people.length ? people.map(function (p) {
+        return '<li><span>' + esc(p.name) + '<small class="mono">' + esc(p.reference) + ' · ' + esc(p.participation) + (p.checked_in_at ? ' · in at ' + esc(p.checked_in_at) : '') + '</small></span>'
+          + (p.checked_in_at ? '<span class="mono" style="font-size:.7rem;opacity:.7">Checked in</span>'
+             : '<button type="button" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem" data-ref="' + esc(p.reference) + '">Check in</button>') + '</li>';
+      }).join('') : (box.value.trim().length >= 2 ? '<li><span class="mono" style="opacity:.7">No one matches.</span></li>' : '');
+    }
+    box.addEventListener('input', function () {
+      window.clearTimeout(searchTimer);
+      var q = box.value.trim(); if (q.length < 2) { list.innerHTML = ''; return; }
+      searchTimer = window.setTimeout(function () {
+        var mine = ++seq;
+        fetch(search.dataset.searchUrl + '?q=' + encodeURIComponent(q), {headers: {Accept: 'application/json'}})
+          .then(function (r) { return r.json(); })
+          .then(function (d) { if (mine === seq) render(d.people || []); })
+          .catch(function () {});
+      }, 250);
+    });
+    list.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-ref]'); if (!b) return;
+      b.disabled = true;
+      submitCode(b.dataset.ref);
+      window.setTimeout(function () { box.dispatchEvent(new Event('input')); }, 1600);
+    });
   }
 
   function cameraFailure(error) {

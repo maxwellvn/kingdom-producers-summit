@@ -214,6 +214,24 @@ final class AdminController extends Controller
         return Response::json($result, $result['ok'] ? 200 : 422);
     }
 
+    /** Name lookup for the scanner desk: a few matches, enough to pick the right person. */
+    public function checkInSearch(Request $request): Response
+    {
+        $q = mb_substr(trim($request->str('q')), 0, 80);
+        if (mb_strlen($q) < 2) {
+            return Response::json(['ok' => true, 'people' => []]);
+        }
+        $people = array_map(static fn (array $r): array => [
+            'name'          => trim(($r['title'] ?? '') . ' ' . $r['first_name'] . ' ' . $r['last_name']),
+            'reference'     => $r['reference'],
+            'participation' => $r['participation'],
+            'email'         => $r['email'],
+            'checked_in_at' => $r['checked_in_at'] ? date('H:i', strtotime($r['checked_in_at'])) : null,
+        ], Registration::paginate(1, 8, null, $q)['rows'] ?? []);
+
+        return Response::json(['ok' => true, 'people' => $people]);
+    }
+
     public function registrations(Request $request): Response
     {
         $page = max(1, (int) $request->input('page', 1));
