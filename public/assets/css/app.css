@@ -1221,3 +1221,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .commit__list--plain { counter-reset: c; }
 .commit__list--plain li { padding: .8rem 1rem; font-size: 1.02rem; }
 .commit__list--plain li::before { counter-increment: c; content: counter(c, decimal-leading-zero) "  "; font-family: var(--font-mono); color: var(--muted-2); }
+.commit__form .form__row { align-items: end; }
+.commit__form .form__row--title { grid-template-columns: 130px 1fr 1fr; }
+@media (max-width: 640px) { .commit__form .form__row, .commit__form .form__row--title { grid-template-columns: 1fr; } .commit__form .field--sm { max-width: none; } }

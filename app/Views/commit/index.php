@@ -29,7 +29,7 @@ $errors = \App\Core\Session::get('_errors', []);
 
         <div class="form__row form__row--title">
           <div class="field field--sm <?= error_for('title') ? 'has-error' : '' ?>">
-            <label for="title">Title <span class="field__opt">optional</span></label>
+            <label for="title">Title</label>
             <select id="title" name="title">
               <option value="">—</option>
               <?php foreach ($titles as $t): ?><option value="<?= $t ?>" <?= old('title') === $t ? 'selected' : '' ?>><?= $t ?></option><?php endforeach; ?>
@@ -53,8 +53,8 @@ $errors = \App\Core\Session::get('_errors', []);
             <?php if ($err = error_for('email')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field">
-            <label for="kingschat">KingsChat username <span class="field__opt">optional</span></label>
-            <input id="kingschat" name="kingschat" type="text" autocapitalize="off" autocorrect="off" maxlength="80" placeholder="@username" value="<?= e(old('kingschat')) ?>">
+            <label for="kingschat">KingsChat</label>
+            <input id="kingschat" name="kingschat" type="text" autocapitalize="off" autocorrect="off" maxlength="80" placeholder="@username · optional" value="<?= e(old('kingschat')) ?>">
           </div>
         </div>
 
