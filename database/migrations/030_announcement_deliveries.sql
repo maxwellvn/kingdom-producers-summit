@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS announcement_deliveries (
     sent_at         DATETIME     NULL,
     UNIQUE KEY uq_delivery (announcement_id, reference),
     KEY idx_delivery_status (announcement_id, status)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
