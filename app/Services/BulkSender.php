@@ -40,7 +40,7 @@ final class BulkSender
         if ($state === null || ($state['phase'] ?? 'done') === 'done') {
             return false;
         }
-        // Quiet for three minutes means the runner died.
+        // Quiet for three minutes means the runner died (a throttle pause writes every minute).
         return time() - (int) ($state['updated_at'] ?? 0) < 180;
     }
 
@@ -60,6 +60,29 @@ final class BulkSender
         return true;
     }
 
+    /** Spacing between messages, and how long to sit out a throttle before giving up on one person. */
+    private const GAP_MICROSECONDS = 3_000_000;
+    private const WAIT_SECONDS = 300;
+    private const MAX_WAITS = 12; // an hour in total
+
+    private static function throttled(\Throwable $e): bool
+    {
+        return (bool) preg_match('/\b4\d\d\b|ratelimit|rate limit|too many|try again later/i', $e->getMessage());
+    }
+
+    private static function pause(array &$state, string $email): void
+    {
+        $state['phase'] = 'waiting';
+        $state['waiting_for'] = $email;
+        // Written every minute so the page can tell a pause from a dead runner.
+        for ($i = 0; $i < self::WAIT_SECONDS; $i += 60) {
+            $state['resume_at'] = time() + (self::WAIT_SECONDS - $i);
+            self::write($state);
+            sleep(60);
+        }
+        unset($state['waiting_for'], $state['resume_at']);
+    }
+
     /** The whole job. Run by bin/bulk-send.php, never from a web request. */
     public static function run(string $what, string $audience): void
     {
@@ -70,41 +93,36 @@ final class BulkSender
         self::write($state);
 
         $timing = Announcer::timing();
-        $work = function () use (&$state, $people, $what, $timing): void {
-            foreach ($people as $person) {
-                $ok = false;
+        foreach ($people as $person) {
+            $ok = false;
+            $waits = 0;
+            while (true) {
                 try {
                     if ($what === 'pass') {
                         $full = Registration::findByReference((string) $person['reference']) ?? $person;
                         (new RegistrationMail())->sendPass($full, $timing);
                     } else {
-                        [$ok] = Announcer::deliver($person, Announcer::LIVE_LINK['subject'], Announcer::LIVE_LINK['body'], true, false);
-                        if (!$ok) {
-                            throw new \RuntimeException('not accepted by the mail server');
-                        }
+                        Announcer::deliverOrThrow($person, Announcer::LIVE_LINK['subject'], Announcer::LIVE_LINK['body']);
                     }
                     $ok = true;
                 } catch (\Throwable $e) {
+                    // The mail host throttles bursts (a 4xx reply). Wait it out and try the same person again
+                    // rather than marking everyone after this point as failed.
+                    if (self::throttled($e) && $waits < self::MAX_WAITS) {
+                        $waits++;
+                        self::pause($state, $person['email']);
+                        continue;
+                    }
                     $state['failures'][] = $person['email'] . ': ' . mb_substr($e->getMessage(), 0, 80);
                     error_log('Bulk ' . $what . ' to ' . $person['email'] . ' failed: ' . $e->getMessage());
                 }
-                $state['done']++;
-                $ok ? $state['sent']++ : $state['failed']++;
-                if ($state['done'] % 5 === 0 || $state['done'] === $state['total']) {
-                    self::write($state);
-                }
+                break;
             }
-        };
-        // One connection for the batch. If the mail server refuses the connection, try person by person
-        // so each failure is recorded against a name rather than the job vanishing.
-        try {
-            Mailer::batch($work);
-        } catch (\Throwable $e) {
-            $state['error'] = 'Mail server: ' . mb_substr($e->getMessage(), 0, 120);
+            $state['phase'] = 'running';
+            $state['done']++;
+            $ok ? $state['sent']++ : $state['failed']++;
             self::write($state);
-            if ($state['done'] === 0) {
-                $work();
-            }
+            usleep(self::GAP_MICROSECONDS);
         }
 
         $state['phase'] = 'done';

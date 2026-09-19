@@ -164,7 +164,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     root.querySelector('[data-bulk-title]').textContent = (s.what === 'pass' ? 'Emailing passes' : 'Emailing live links') + (s.audience ? ' · ' + s.audience : '');
     var pct = s.total ? Math.round(100 * s.done / s.total) : 0;
     root.querySelector('[data-bulk-fill]').style.width = pct + '%';
-    root.querySelector('[data-bulk-phase]').textContent = s.phase === 'done' ? (s.error ? 'Stopped' : 'Finished') : (s.phase === 'starting' ? 'Starting…' : 'Sending…');
+    root.querySelector('[data-bulk-phase]').textContent = s.phase === 'done' ? (s.error ? 'Stopped' : 'Finished') : (s.phase === 'starting' ? 'Starting…' : (s.phase === 'waiting' ? 'Waiting for mail server (rate limit)…' : 'Sending…'));
     root.querySelector('[data-bulk-line]').textContent = (s.error ? s.error + ' · ' : '') + s.done + ' of ' + s.total + ' · ' + s.sent + ' sent' + (s.failed ? ' · ' + s.failed + ' failed' : '') + (s.finished_at ? ' · took ' + Math.max(1, s.finished_at - s.started_at) + 's' : '');
     var f = root.querySelector('[data-bulk-failures]'); f.innerHTML = ''; f.hidden = !(s.failures && s.failures.length);
     (s.failures || []).slice(0, 20).forEach(function (t) { var li = document.createElement('li'); li.textContent = t; f.appendChild(li); });

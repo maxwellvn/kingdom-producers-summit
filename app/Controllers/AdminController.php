@@ -531,7 +531,16 @@ final class AdminController extends Controller
                 Setting::set('stream_enabled', '1');
                 Setting::set('stream_state', 'soon'); // what they fall back to if the feed drops
                 StreamEvent::log('stream', "Went LIVE ({$who})");
-                Session::flash('admin_flash', 'You are live. Viewers\' screens switch to the video within fifteen seconds.');
+                $note = 'You are live. Viewers\' screens switch to the video within fifteen seconds.';
+                // Going live emails everyone the link, once per day, so a Resume after a pause does not mail again.
+                $lastMailed = (int) Setting::get('live_link_mailed_at', '0');
+                if (time() - $lastMailed > 12 * 3600 && !BulkSender::running()) {
+                    Setting::set('live_link_mailed_at', (string) time());
+                    $note .= BulkSender::start('live', 'all', $who)
+                        ? ' The live link is being emailed to everyone; progress is on the Registrations page.'
+                        : ' The live link email could not be started; use Email live links on the Registrations page.';
+                }
+                Session::flash('admin_flash', $note);
                 break;
             case 'pause':
                 Setting::set('stream_enabled', '0');

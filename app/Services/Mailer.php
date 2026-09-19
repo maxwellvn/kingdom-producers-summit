@@ -8,36 +8,6 @@ use RuntimeException;
 
 final class Mailer
 {
-    /**
-     * An open, authenticated connection kept for a batch. Static so every
-     * Mailer created during the batch shares it.
-     * @var resource|null
-     */
-    private static $shared = null;
-    private static string $sharedHost = '';
-
-    /**
-     * Send many messages over one connection. Connecting and logging in is
-     * most of the cost of a message, so a batch of fifty costs one login,
-     * not fifty. The callback does the sending; the connection closes after.
-     */
-    public static function batch(callable $work): void
-    {
-        $mailer = new self();
-        try {
-            [self::$shared, self::$sharedHost] = $mailer->connect();
-            $work($mailer);
-        } finally {
-            if (is_resource(self::$shared)) {
-                try { $mailer->command(self::$shared, 'QUIT', [221]); } catch (\Throwable $e) {}
-                fclose(self::$shared);
-            }
-            self::$shared = null;
-            self::$sharedHost = '';
-        }
-    }
-
-    /** Open and authenticate. @return array{0:resource,1:string} the socket and host */
     private function connect(): array
     {
         $cfg = config('app.mail');
@@ -79,15 +49,7 @@ final class Mailer
     public function send(string $to, string $subject, string $html, string $text, array $headers = [], array $inlineImages = []): void
     {
         $cfg = config('app.mail');
-        $batched = is_resource(self::$shared);
-        if ($batched) {
-            $socket = self::$shared;
-            $host = self::$sharedHost;
-            // A failed message must not poison the next one on the same connection.
-            try { $this->command($socket, 'RSET', [250]); } catch (\Throwable $e) {}
-        } else {
-            [$socket, $host] = $this->connect();
-        }
+        [$socket, $host] = $this->connect();
 
         try {
             $this->command($socket, 'MAIL FROM:<' . $this->address((string) $cfg['from']) . '>', [250]);
@@ -143,13 +105,9 @@ final class Mailer
             $body = preg_replace('/(?m)^\./', '..', $body) ?? $body;
             fwrite($socket, $body . ".\r\n");
             $this->expect($socket, [250]);
-            if (!$batched) {
-                $this->command($socket, 'QUIT', [221]);
-            }
+            $this->command($socket, 'QUIT', [221]);
         } finally {
-            if (!$batched) {
-                fclose($socket);
-            }
+            fclose($socket);
         }
     }
 
@@ -174,7 +132,7 @@ final class Mailer
 
         $code = (int) substr($reply, 0, 3);
         if (!in_array($code, $codes, true)) {
-            throw new RuntimeException('The mail server rejected the request.');
+            throw new RuntimeException('Mail server replied: ' . trim(mb_substr($reply, 0, 160)));
         }
     }
 

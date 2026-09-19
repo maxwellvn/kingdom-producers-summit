@@ -96,14 +96,7 @@ final class Announcer
                 ($emailed || $messaged) ? $result['sent']++ : $result['failed']++;
             }
         };
-        // One mail connection for the whole batch; if the mail server is down, fall back to per-message attempts
-        // so KingsChat-only recipients still get theirs.
-        try {
-            $byEmail ? Mailer::batch($work) : $work();
-        } catch (\Throwable $e) {
-            error_log('Announcement batch connection failed, sending one by one: ' . $e->getMessage());
-            $work();
-        }
+        $work();
 
         return $result;
     }
@@ -112,6 +105,13 @@ final class Announcer
      * One person, filled in and sent by whichever channels are asked for.
      * @return array{0:bool,1:bool} emailed, messaged
      */
+    /** Email one person; the mail server's reply surfaces as the exception. */
+    public static function deliverOrThrow(array $person, string $subject, string $body): void
+    {
+        $text = self::fill($body, $person);
+        (new Mailer())->send((string) $person['email'], self::fill($subject, $person), self::html($text, $person), $text, ['Reply-To' => contact_email()]);
+    }
+
     public static function deliver(array $person, string $subject, string $body, bool $byEmail, bool $byKingsChat): array
     {
         $text = self::fill($body, $person);
