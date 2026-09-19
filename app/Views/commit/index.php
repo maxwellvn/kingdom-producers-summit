@@ -12,7 +12,7 @@ $errors = \App\Core\Session::get('_errors', []);
         <div class="pay__alert" role="alert"><span><?= e($err) ?></span></div>
       <?php endif; ?>
 
-      <form class="pay__form commit__form" method="post" action="<?= url('/commit') ?>">
+      <form class="pay__form commit__form" method="post" action="<?= url('/commitment') ?>">
         <?= csrf_field() ?>
         <input type="text" name="website" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
 

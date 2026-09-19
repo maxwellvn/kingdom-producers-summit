@@ -27,7 +27,7 @@ final class CommitController extends Controller
     public function store(Request $request): Response
     {
         if ($request->str('website') !== '') { // honeypot
-            return $this->redirect('/commit/thanks');
+            return $this->redirect('/commitment/thanks');
         }
         $title = $request->str('title');
         $first = mb_substr($request->str('first_name'), 0, 80);
@@ -67,7 +67,7 @@ final class CommitController extends Controller
         ]);
         Session::flash('commit_name', $first);
 
-        return $this->redirect('/commit/thanks');
+        return $this->redirect('/commitment/thanks');
     }
 
     public function thanks(): Response

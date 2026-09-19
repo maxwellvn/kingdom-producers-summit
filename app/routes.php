@@ -49,9 +49,9 @@ $router->get('/register/awaiting', [PaymentController::class, 'awaiting']);
 $router->get('/register/stripe', [PaymentController::class, 'stripeStart']);
 $router->get('/register/stripe/return', [PaymentController::class, 'stripeReturn']);
 // Stripe signs this itself, so it carries no CSRF token.
-$router->get('/commit', [CommitController::class, 'show']);
-$router->post('/commit', [CommitController::class, 'store'], [VerifyCsrf::class]);
-$router->get('/commit/thanks', [CommitController::class, 'thanks']);
+$router->get('/commitment', [CommitController::class, 'show']);
+$router->post('/commitment', [CommitController::class, 'store'], [VerifyCsrf::class]);
+$router->get('/commitment/thanks', [CommitController::class, 'thanks']);
 $router->get('/admin/commitments', [AdminController::class, 'commitments'], [RequireAdmin::class]);
 $router->get('/admin/commitments.csv', [AdminController::class, 'commitmentsCsv'], [RequireAdmin::class]);
 $router->get('/admin/commitments/qr.png', [AdminController::class, 'commitmentsQr'], [RequireAdmin::class]);
