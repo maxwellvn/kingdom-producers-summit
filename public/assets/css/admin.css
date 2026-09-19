@@ -40,7 +40,7 @@
 .adm-page__title-sub { font-size: .5em; color: var(--muted); font-weight: 400; }
 .adm-page__meta { color: var(--muted-2); }
 
-.adm-stats { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 1rem; margin-bottom: 2.4rem; }
+.adm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1rem; margin-bottom: 2.4rem; }
 .adm-stat { padding: 1.4rem 1.4rem 1.2rem; background: #FBF8F0; border: 1px solid rgba(27,34,66,.14); }
 .adm-stat--lead { background: var(--ink); color: var(--paper); }
 .adm-stat--lead .adm-stat__label { color: rgba(243,238,226,.6); }
