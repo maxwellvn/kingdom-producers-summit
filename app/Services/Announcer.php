@@ -141,18 +141,30 @@ final class Announcer
         $emailed = $messaged = false;
 
         if ($byEmail) {
-            try {
-                (new Mailer())->send(
-                    (string) $person['email'],
-                    self::fill($subject, $person),
-                    self::html($text, $person),
-                    $text,
-                    ['Reply-To' => contact_email()]
-                );
-                $emailed = true;
-            } catch (\Throwable $e) {
-                error_log('Announcement email failed for ' . $person['reference'] . ': ' . $e->getMessage());
+            // Same manners as the bulk pass sender: three seconds between emails, and when the mail
+            // host throttles (a 4xx reply) wait five minutes and retry this person, up to an hour.
+            for ($waits = 0; ; ) {
+                try {
+                    (new Mailer())->send(
+                        (string) $person['email'],
+                        self::fill($subject, $person),
+                        self::html($text, $person),
+                        $text,
+                        ['Reply-To' => contact_email()]
+                    );
+                    $emailed = true;
+                } catch (\Throwable $e) {
+                    if (BulkSender::throttled($e) && $waits < 12) {
+                        $waits++;
+                        error_log('Announcement email throttled at ' . $person['reference'] . ' (wait ' . $waits . '): ' . $e->getMessage());
+                        sleep(300);
+                        continue;
+                    }
+                    error_log('Announcement email failed for ' . $person['reference'] . ': ' . $e->getMessage());
+                }
+                break;
             }
+            usleep(3000000);
         }
 
         if ($byKingsChat && trim((string) ($person['kingschat_username'] ?? '')) !== '') {

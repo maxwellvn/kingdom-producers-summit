@@ -65,7 +65,7 @@ final class BulkSender
     private const WAIT_SECONDS = 300;
     private const MAX_WAITS = 12; // an hour in total
 
-    private static function throttled(\Throwable $e): bool
+    public static function throttled(\Throwable $e): bool
     {
         return (bool) preg_match('/\b4\d\d\b|ratelimit|rate limit|too many|try again later/i', $e->getMessage());
     }
