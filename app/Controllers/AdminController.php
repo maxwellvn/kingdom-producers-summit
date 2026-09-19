@@ -204,6 +204,13 @@ final class AdminController extends Controller
             $request->ip()
         );
 
+        // The registrations page posts a plain form: flash the outcome and go back.
+        if (!$request->wantsJson() && str_starts_with($request->str('back'), '/admin/')) {
+            Session::flash('admin_flash', $result['message'] ?? ($result['ok'] ? 'Checked in.' : 'Check-in failed.'));
+
+            return $this->redirect($request->str('back'));
+        }
+
         return Response::json($result, $result['ok'] ? 200 : 422);
     }
 

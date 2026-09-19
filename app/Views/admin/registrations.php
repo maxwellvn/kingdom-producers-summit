@@ -133,7 +133,14 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 <button type="submit" class="adm-btn adm-btn--solid" style="padding:.25rem .6rem;font-size:.75rem;color:#b4232b">Delete</button>
               </form>
             </td>
-            <td><?php if ($r['checked_in_at']): ?><span class="adm-checkin mono">Checked in<br><?= e(date('j M, H:i', strtotime($r['checked_in_at']))) ?></span><?php else: ?><span class="adm-muted mono">Not arrived</span><?php endif; ?></td>
+            <td><?php if ($r['checked_in_at']): ?><span class="adm-checkin mono">Checked in<br><?= e(date('j M, H:i', strtotime($r['checked_in_at']))) ?></span><?php else: ?>
+              <form method="post" action="<?= url('/admin/check-in') ?>" style="margin:0">
+                <?= csrf_field() ?>
+                <input type="hidden" name="token" value="<?= e($r['reference']) ?>">
+                <input type="hidden" name="back" value="<?= e('/admin/registrations?' . http_build_query(array_filter(['type' => $participation, 'q' => $search, 'support' => $support, 'page' => $result['page'] ?? null]))) ?>">
+                <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem" onclick="return confirm('Check in <?= e(addslashes($r['first_name'] . ' ' . $r['last_name'])) ?> now?')">Check in</button>
+              </form>
+            <?php endif; ?></td>
             <td class="mono adm-muted"><?= e(date('j M Y', strtotime($r['created_at']))) ?></td>
           </tr>
         <?php endforeach; ?>
