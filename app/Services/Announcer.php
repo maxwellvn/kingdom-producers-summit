@@ -156,9 +156,12 @@ final class Announcer
             } catch (\Throwable $e) {
                 $error = mb_substr($e->getMessage(), 0, 255);
                 if (BulkSender::throttled($e)) {
-                    // Not this person's fault: back to pending, and stop for now. The next minute tries again.
+                    // Not this person's fault: back to pending, hold the whole announcement for as long as
+                    // the host asked (five minutes when it did not say), then carry on from here.
+                    $wait = self::waitFromReply($error);
                     $pdo->prepare("UPDATE announcement_deliveries SET status = 'pending', attempts = attempts - 1, last_error = ? WHERE id = ?")->execute([$error, (int) $person['id']]);
-                    error_log('Announcement #' . $id . ' throttled by the mail host: ' . $error);
+                    $pdo->prepare("UPDATE announcements SET resume_at = (NOW() + INTERVAL ? SECOND) WHERE id = ?")->execute([$wait, $id]);
+                    error_log('Announcement #' . $id . ' throttled by the mail host, resuming in ' . $wait . 's: ' . $error);
                     return 'throttled';
                 }
                 $final = (int) $person['attempts'] >= self::MAX_ATTEMPTS;
@@ -169,6 +172,20 @@ final class Announcer
         }
 
         return 'more';
+    }
+
+    /** Seconds to wait, read from the host's reply when it names a time; five minutes otherwise. */
+    public static function waitFromReply(string $reply): int
+    {
+        if (preg_match('/(\d+)\s*(second|sec|minute|min|hour|hr)s?\b/i', $reply, $m)) {
+            $unit = strtolower($m[2][0]);
+            $seconds = (int) $m[1] * ($unit === 'h' ? 3600 : ($unit === 'm' ? 60 : 1));
+            return max(30, min($seconds + 5, 6 * 3600));
+        }
+        if (preg_match('/retry[- ]after[:=]?\s*(\d+)/i', $reply, $m)) {
+            return max(30, min((int) $m[1] + 5, 6 * 3600));
+        }
+        return 300;
     }
 
     /** @return array{sent:int,pending:int,failed:int,total:int} */

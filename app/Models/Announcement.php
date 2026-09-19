@@ -81,7 +81,7 @@ final class Announcement
     /** Claimed but not finished: the queue still has people waiting. */
     public static function inFlight(): array
     {
-        return Database::connection()->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at")->fetchAll() ?: [];
+        return Database::connection()->query("SELECT * FROM announcements WHERE result = 'sending' AND (resume_at IS NULL OR resume_at <= NOW()) ORDER BY sent_at")->fetchAll() ?: [];
     }
 
     public static function finish(int $id, string $result): void
