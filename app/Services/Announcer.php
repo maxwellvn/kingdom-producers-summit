@@ -43,6 +43,18 @@ final class Announcer
                 . "Watch live: {watch_url}\n\n{/online_only}"
                 . "Know someone who should be there? Registration is FREE, onsite and online. Share this link anywhere: {share_url}",
         ],
+        'thank_you' => [
+            'label'   => 'Thank you (after the summit)',
+            'subject' => 'Thank you, {first_name}. And now… we produce!',
+            'body'    => "THE LOVEWORLD CONSULATE UK SAYS THANK YOU!\n\n"
+                . "What a day. What a moment. What a beginning!\n\n"
+                . "To every Kingdom Producer who filled the room at Angel Studios, and to everyone who joined us live from across the world: you made the inaugural LoveWorld Kingdom Producers Summit, London 2026, truly special.\n\n"
+                . "You came. You listened. You learned. You connected. You made the commitment.\n\n"
+                . "And now… WE PRODUCE!\n\n"
+                . "The lights may have gone down on today's stage, but the movement has only just begun. The ideas, insights and commitments made today now move from the room into action.\n\n"
+                . "To our Highly Esteemed Speakers, participants, partners, volunteers and everyone who connected online: THANK YOU for being part of the beginning of something extraordinary.\n\n"
+                . "London was only the beginning. Manchester, Ireland and Birmingham, get ready!",
+        ],
         'today' => [
             'label'   => 'It is today',
             'subject' => 'The summit is today',
@@ -58,6 +70,9 @@ final class Announcer
             'online'     => 'Online only',
             'onsite'     => 'Onsite only',
             'initiative' => 'Initiative only',
+            'checked_in' => 'Checked in at the venue',
+            'watched'    => 'Watched online',
+            'attended'   => 'Checked in or watched online',
         ];
     }
 
@@ -69,7 +84,15 @@ final class Announcer
                 WHERE status = 'confirmed' AND email NOT LIKE '%@loadtest.invalid'";
         $params = [];
 
-        if ($audience !== 'all') {
+        $checkedIn = 'id IN (SELECT registration_id FROM attendances)';
+        $watched = 'reference IN (SELECT reference FROM watch_passes)';
+        if ($audience === 'checked_in') {
+            $sql .= " AND {$checkedIn}";
+        } elseif ($audience === 'watched') {
+            $sql .= " AND {$watched}";
+        } elseif ($audience === 'attended') {
+            $sql .= " AND ({$checkedIn} OR {$watched})";
+        } elseif ($audience !== 'all') {
             $sql .= ' AND participation = :participation';
             $params['participation'] = $audience;
         }
