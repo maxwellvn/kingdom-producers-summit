@@ -288,7 +288,7 @@
     var build = null;
     var sources = null;
     var QUALITY_KEY = 'watch-quality';
-    function chosenQuality() { try { return localStorage.getItem(QUALITY_KEY) || 'hd'; } catch (e) { return 'hd'; } }
+    function chosenQuality() { try { return localStorage.getItem(QUALITY_KEY) || 'sd'; } catch (e) { return 'sd'; } }  // Standard by default; HD is the opt-in
     var hls = null;
 
     // The holding screen: state, headline, message, countdown, now/next.
