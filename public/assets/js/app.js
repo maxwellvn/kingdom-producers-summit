@@ -360,7 +360,19 @@
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = data.source;
         } else if (window.Hls && window.Hls.isSupported()) {
-          hls = new window.Hls({ lowLatencyMode: true });
+          // Dacast publishes a 6-second window (three 2 s segments). Sit one segment back from the
+          // edge and keep buffering ahead, or any hiccup empties the buffer. Not a low-latency stream.
+          hls = new window.Hls({
+            lowLatencyMode: false,
+            liveSyncDurationCount: 1,
+            liveMaxLatencyDurationCount: 3,
+            maxBufferLength: 6,
+            maxMaxBufferLength: 8,
+            fragLoadingMaxRetry: 8,
+            manifestLoadingMaxRetry: 8,
+            levelLoadingMaxRetry: 8,
+            nudgeMaxRetry: 10
+          });
           hls.loadSource(data.source);
           hls.attachMedia(video);
           hls.on(window.Hls.Events.MANIFEST_PARSED, function (e, m) { qualityMenu(m.levels || []); });
