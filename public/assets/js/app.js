@@ -239,22 +239,24 @@
       check();
     }
 
-    // HD / Standard: two separate streams from the admin. Switching rebuilds the player on the other one.
-    var qBar = null;
+    // HD / Standard: two separate streams from the admin. The bar sits under the video; the filled
+    // pill is the one playing. Switching rebuilds the player on the other stream.
+    var qBar = document.querySelector('[data-quality-bar]');
     function qualityButtons(active) {
-      if (!qBar) {
-        qBar = document.createElement('div');
-        qBar.className = 'watch__qbar';
-        qBar.innerHTML = '<button type="button" class="mono" data-q="hd">HD</button><button type="button" class="mono" data-q="sd">Standard</button>';
-        qBar.addEventListener('click', function (e) {
-          var b = e.target.closest('button[data-q]'); if (!b || b.classList.contains('is-on')) return;
-          try { localStorage.setItem(QUALITY_KEY, b.dataset.q); } catch (err) {}
-          reloadStream();
-        });
-        stage.appendChild(qBar);
-      }
-      qBar.querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.q === active); });
+      if (!qBar) return;
+      qBar.querySelectorAll('button[data-q]').forEach(function (b) {
+        var on = b.dataset.q === active;
+        b.classList.toggle('is-live', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
       qBar.hidden = false;
+    }
+    if (qBar) {
+      qBar.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-q]'); if (!b || b.classList.contains('is-live')) return;
+        try { localStorage.setItem(QUALITY_KEY, b.dataset.q); } catch (err) {}
+        reloadStream();
+      });
     }
 
     // Quality picker: only when the stream offers more than one rendition. Auto lets hls.js adapt.

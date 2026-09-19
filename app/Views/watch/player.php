@@ -59,6 +59,13 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
         <?php // The <video> is created by the player only while something plays; some phones paint a hidden one as a black box. ?>
         <div class="watch__frame" data-watch-frame hidden></div>
       </div>
+      <?php // Quality choice, shown only when a Standard link is set. Filled pill = what is playing now. ?>
+      <div class="watch__tools mono" data-quality-bar hidden>
+        <span class="watch__tools-label">Quality</span>
+        <button type="button" class="watch__pill watch__pill--pick" data-q="hd"><span class="watch__pill-dot" aria-hidden="true"></span>HD</button>
+        <button type="button" class="watch__pill watch__pill--pick" data-q="sd"><span class="watch__pill-dot" aria-hidden="true"></span>Standard</button>
+        <span class="watch__tools-hint">Buffering? Pick Standard.</span>
+      </div>
 
       <aside class="chat" data-comments
              data-comments-url="<?= e(url('/watch/comments')) ?>"
