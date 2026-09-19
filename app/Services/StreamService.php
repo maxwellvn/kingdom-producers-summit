@@ -99,6 +99,23 @@ final class StreamService
         return $relay . '/hls/' . $expires . '/' . $token . '/' . rawurlencode($file);
     }
 
+    /** Is the relay answering, and how fast. null when no relay is configured. */
+    public static function relayHealth(): ?array
+    {
+        $relay = rtrim((string) env('STREAM_RELAY_URL', ''), '/');
+        if ($relay === '') {
+            return null;
+        }
+        $ch = curl_init($relay . '/healthz');
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 3, CURLOPT_NOBODY => true]);
+        $start = microtime(true);
+        curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        return ['ok' => $status === 200, 'ms' => (int) round((microtime(true) - $start) * 1000), 'host' => (string) parse_url($relay, PHP_URL_HOST)];
+    }
+
     public static function proxyEnabled(): bool
     {
         return Setting::get('stream_proxy', config('stream.proxy') ? '1' : '0') === '1';

@@ -418,7 +418,7 @@ final class AdminController extends Controller
 
     public function loadTestStatus(Request $request): Response
     {
-        return Response::json(['ok' => true, 'running' => LoadTester::running(), 'state' => LoadTester::state(), 'server' => LoadTester::serverLoad()]);
+        return Response::json(['ok' => true, 'running' => LoadTester::running(), 'state' => LoadTester::state(), 'server' => LoadTester::serverLoad(), 'relay' => StreamService::relayHealth(), 'watching' => count(Analytics::watchers())]);
     }
 
     /** New log lines since an id, for the live log on the stream page. */

@@ -65,7 +65,16 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
   </div>
 
   <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
-    <!-- 2. Setup: the source and the heading. Rarely changes. -->
+    <!-- 1b. Server load: this box, and the relay carrying the video. Refreshes every five seconds. -->
+  <div class="mono" data-server-load data-status-url="<?= url('/admin/stream/load-test') ?>"
+       style="display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin:.8rem 0 1.6rem;padding:.7rem 1rem;background:#FBF8F0;border:1px solid rgba(27,34,66,.14);font-size:.78rem;color:#5C5648">
+    <span>This server: load <strong data-sl-load>–</strong> on <span data-sl-cores>–</span> cores</span>
+    <span>memory <strong data-sl-mem>–</strong></span>
+    <span>watching <strong data-sl-watching><?= count($watchers) ?></strong></span>
+    <span data-sl-relay-row<?= env('STREAM_RELAY_URL', '') ? '' : ' hidden' ?>>video relay <strong data-sl-relay>–</strong></span>
+  </div>
+
+  <!-- 2. Setup: the source and the heading. Rarely changes. -->
     <div class="adm-panel">
       <h2 class="adm-panel__title" style="margin-bottom:.3rem">Setup</h2>
       <p class="adm-muted" style="margin:0 0 1rem;font-size:.9rem">Where the video comes from. Set this once; then use the buttons above on the day.</p>
@@ -78,7 +87,7 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         </label>
         <label style="display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem">
           <input type="checkbox" name="stream_proxy" value="1" <?= $proxy ? 'checked' : '' ?> style="margin-top:.25rem">
-          <span>Hide the stream address by passing HLS video through this server. Costs server capacity; run a load test before relying on it. No effect on YouTube or Vimeo.</span>
+          <span>Hide the stream address from viewers. With a video relay configured the relay server carries the video; without one this server does, which costs capacity. No effect on YouTube or Vimeo.</span>
         </label>
         <label style="display:block">
           <span class="mono" style="<?= $label ?>">Heading on the watch page</span>
@@ -433,5 +442,23 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
     }).catch(function () { setTimeout(poll, 4000); });
   }
   poll();
+})();
+</script>
+<script>
+(function () {
+  var root = document.querySelector('[data-server-load]'); if (!root) return;
+  var url = root.getAttribute('data-status-url');
+  function q(n) { return root.querySelector('[data-sl-' + n + ']'); }
+  function tick() {
+    fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+      var s = d.server || {};
+      q('load').textContent = s.load1; q('cores').textContent = s.cores;
+      q('load').style.color = s.load1 > s.cores ? '#B3261E' : '';
+      q('mem').textContent = s.mem_used_pct == null ? '–' : s.mem_used_pct + '%';
+      q('watching').textContent = d.watching;
+      if (d.relay) { q('relay').textContent = d.relay.ok ? 'up, ' + d.relay.ms + ' ms' : 'DOWN'; q('relay').style.color = d.relay.ok ? '#2E7D32' : '#B3261E'; }
+    }).catch(function () {}).then(function () { setTimeout(tick, 5000); });
+  }
+  tick();
 })();
 </script>
