@@ -242,6 +242,12 @@
       startsText: placeholder.querySelector('[data-holding-starts-text]'),
       now: placeholder.querySelector('[data-holding-now]')
     };
+    // Each line sits in a labelled row; hiding the value hides its row too.
+    ['countdown', 'startsText', 'now'].forEach(function (k) {
+      var el = hold[k]; if (!el) return;
+      var row = el.closest('[data-holding-countdown-row],[data-holding-starts-row],[data-holding-now-row]') || el;
+      Object.defineProperty(el, 'hidden', { set: function (v) { row.hidden = !!v; }, get: function () { return row.hidden; } });
+    });
     var startsAt = parseInt(placeholder.getAttribute('data-holding-starts') || '0', 10) || 0;
     var nowLine = document.querySelector('[data-watch-now]');
     var pill = document.querySelector('[data-watch-pill]');

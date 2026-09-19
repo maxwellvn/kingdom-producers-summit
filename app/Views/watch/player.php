@@ -44,12 +44,17 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
            data-beat-url="<?= e(url('/watch/beat')) ?>">
         <div class="watch__placeholder holding holding--<?= e($holding['state']) ?>" data-watch-placeholder
              data-holding-state="<?= e($holding['state']) ?>" data-holding-starts="<?= $holding['starts_at'] ? (int) $holding['starts_at'] : '' ?>">
-          <p class="mono holding__kicker"><span class="holding__dot" aria-hidden="true"></span><span data-holding-label><?= $live ? 'Connecting…' : e($holding['label']) ?></span></p>
-          <h2 class="holding__headline" data-holding-headline><?= $live ? 'One moment.' : e($holding['headline']) ?></h2>
-          <p class="holding__message" data-holding-message><?= $live ? 'Loading the stream.' : e($holding['message']) ?></p>
-          <p class="mono holding__countdown" data-holding-countdown <?= $holding['starts_at'] ? '' : 'hidden' ?>></p>
-          <p class="mono holding__starts" data-holding-starts-text <?= $holding['starts_text'] ? '' : 'hidden' ?>><?= e($holding['starts_text']) ?></p>
-          <p class="mono holding__now" data-holding-now <?= $holding['now'] ? '' : 'hidden' ?>><?= e($holding['now']) ?></p>
+          <div class="holding__card">
+            <p class="mono holding__kicker"><?= e($summit['short'] ?? 'The Producers Summit') ?> · <?= e($summit['edition'] ?? '') ?></p>
+            <p class="mono holding__label" data-holding-label><?= $live ? 'Connecting…' : e($holding['label']) ?></p>
+            <h2 class="holding__headline" data-holding-headline><?= $live ? 'One moment.' : e($holding['headline']) ?></h2>
+            <p class="holding__message" data-holding-message><?= $live ? 'Loading the stream.' : e($holding['message']) ?></p>
+            <dl class="mono holding__rows">
+              <div data-holding-countdown-row <?= $holding['starts_at'] ? '' : 'hidden' ?>><dt>Starts in</dt><dd data-holding-countdown></dd></div>
+              <div data-holding-starts-row <?= $holding['starts_text'] ? '' : 'hidden' ?>><dt>Start</dt><dd data-holding-starts-text><?= e($holding['starts_text']) ?></dd></div>
+              <div data-holding-now-row <?= $holding['now'] ? '' : 'hidden' ?>><dt>Up next</dt><dd data-holding-now><?= e($holding['now']) ?></dd></div>
+            </dl>
+          </div>
         </div>
         <?php // The <video> is created by the player only while something plays; some phones paint a hidden one as a black box. ?>
         <div class="watch__frame" data-watch-frame hidden></div>

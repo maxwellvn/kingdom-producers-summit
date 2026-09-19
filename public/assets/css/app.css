@@ -1083,8 +1083,6 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .footer__venue { margin: .4rem 0 0; font-size: .74rem; letter-spacing: .04em; color: rgba(243,238,226,.6); }
 @media (max-width: 800px) { .venue__grid { grid-template-columns: 1fr; } }
 
-.holding { place-content: center; text-align: center; gap: .6rem; padding: clamp(1.5rem, 5vw, 3rem); background:
-  radial-gradient(ellipse at 50% 120%, rgba(180,35,43,.28), transparent 60%), linear-gradient(180deg, #0b1029, #070b1c); }
 
 /* ================= Watch page (paper, like the rest of the site) ================= */
 .page-watch { background: var(--paper); }
@@ -1124,17 +1122,23 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .watch__fine a { color: var(--ink); border-bottom: 1px solid rgba(27,34,66,.3); }
 
 /* Holding screen inside the stage: the one place the page goes dark, as a screen would. */
-.holding { place-content: center; justify-items: center; text-align: center; gap: .55rem; padding: clamp(1.5rem, 5vw, 3rem); color: var(--paper); background: radial-gradient(ellipse at 50% 120%, rgba(180,35,43,.3), transparent 60%), linear-gradient(180deg, #131a3a, #0b0f1f); }
-.holding__kicker { display: inline-flex; align-items: center; gap: .55rem; margin: 0 auto .3rem; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(243,238,226,.7); }
-.holding__dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(243,238,226,.4); }
-.holding--soon .holding__dot { background: #e0a23a; box-shadow: 0 0 0 0 rgba(224,162,58,.5); animation: watchPulse 2s ease-out infinite; }
-.holding--paused .holding__dot { background: #9ec5ff; }
-.holding--ended .holding__dot { background: rgba(243,238,226,.35); }
-.holding__headline { margin: 0 auto; font-family: var(--font-display); font-size: clamp(1.7rem, 4.2vw, 3rem); line-height: 1; letter-spacing: -.01em; text-transform: uppercase; color: var(--paper); max-width: 16ch; }
-.holding__message { max-width: 44ch; margin: .2rem auto 0; color: rgba(243,238,226,.78); font-size: clamp(.92rem, 1.4vw, 1.02rem); line-height: 1.55; }
-.holding__countdown { margin: .8rem auto 0; font-size: clamp(1.5rem, 4vw, 2.4rem); letter-spacing: .08em; color: var(--paper); font-variant-numeric: tabular-nums; }
-.holding__starts, .holding__now { margin: .1rem auto 0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: rgba(243,238,226,.55); }
-.holding__now { margin-top: .7rem; padding-top: .7rem; border-top: 1px solid rgba(243,238,226,.14); color: rgba(243,238,226,.75); }
+/* The holding screen is a printed event card: halftone London, paper ink, ruled rows. */
+.holding { position: relative; isolation: isolate; display: grid; align-content: center; padding: clamp(1.2rem, 4vw, 2.4rem); color: var(--ink);
+  background: var(--paper) url('../img/summit-tower-bridge-halftone-v1.jpg') center / cover no-repeat; }
+.holding::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(243,238,226,.55) 0%, rgba(243,238,226,.92) 55%, var(--paper) 100%); }
+.holding::after { content: ""; position: absolute; inset: 10px; border: 1px solid rgba(27,34,66,.25); pointer-events: none; }
+.holding__card { max-width: 40rem; }
+.holding__kicker { margin: 0 0 .9rem; font-size: .66rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted-2); }
+.holding__label { display: inline-block; margin: 0 0 .7rem; padding: .3rem .6rem; font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--paper); background: var(--stamp); }
+.holding--paused .holding__label { background: var(--ink); }
+.holding--ended .holding__label { background: var(--muted-2); }
+.holding__headline { margin: 0; font-family: var(--font-display); font-size: clamp(2rem, 5.5vw, 3.6rem); line-height: .95; letter-spacing: -.01em; text-transform: uppercase; color: var(--ink); max-width: 14ch; }
+.holding__message { max-width: 42ch; margin: .8rem 0 0; color: var(--muted); font-size: clamp(.92rem, 1.4vw, 1.02rem); line-height: 1.55; }
+.holding__rows { margin: 1.2rem 0 0; display: grid; }
+.holding__rows > div { display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; align-items: baseline; padding: .55rem 0; border-top: 1px solid rgba(27,34,66,.22); }
+.holding__rows dt { font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-2); }
+.holding__rows dd { margin: 0; font-size: .82rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); font-variant-numeric: tabular-nums; }
+.holding__rows [data-holding-countdown] { font-size: clamp(1.3rem, 3vw, 1.9rem); letter-spacing: .06em; }
 
 /* Chat rail: a white card with a pinned composer. */
 .chat { display: flex; flex-direction: column; min-height: 0; border-radius: 10px; background: #FBF8F0; border: 1px solid rgba(27,34,66,.16); overflow: hidden; box-shadow: 0 16px 32px -28px rgba(21,27,55,.5); }
@@ -1167,7 +1171,7 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
   .chat__list { max-height: 50vh; }
   .watch--chat .watch__layout .chat__list { max-height: 50vh; }
 }
-@media (prefers-reduced-motion: reduce) { .watch__pill-dot, .holding__dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .watch__pill-dot { animation: none; } }
 
 /* ---------- Organisers' poll or question, popping up on the watch page ---------- */
 .prompt { position: fixed; right: max(1rem, 3vw); bottom: max(1rem, 3vw); z-index: 900; width: min(24rem, calc(100% - 2rem)); }
@@ -1203,12 +1207,10 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .watch__stage:has(> .holding:not([hidden])) > .holding { position: relative; inset: auto; min-height: 16rem; }
 @media (min-width: 701px) { .watch__stage:has(> .holding:not([hidden])) { aspect-ratio: 16 / 9; } .watch__stage:has(> .holding:not([hidden])) > .holding { position: absolute; inset: 0; } }
 @media (max-width: 700px) {
-  .holding { gap: .5rem; padding: 1.6rem 1.25rem 1.7rem; }
-  .holding__kicker { margin-bottom: .1rem; }
-  .holding__headline { font-size: clamp(1.6rem, 8vw, 2.1rem); }
+  .holding { padding: 1.4rem 1.1rem 1.5rem; }
+  .holding__headline { font-size: clamp(1.7rem, 8vw, 2.2rem); }
   .holding__message { font-size: .95rem; }
-  .holding__countdown { margin-top: .6rem; font-size: 1.8rem; }
-  .holding__now { margin-top: .6rem; padding-top: .6rem; }
+  .holding__rows > div { grid-template-columns: 5.5rem 1fr; }
 }
 
 /* ---------- The Commitment ---------- */
