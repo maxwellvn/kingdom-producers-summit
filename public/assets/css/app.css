@@ -1159,8 +1159,8 @@ html.js [data-split].is-inview .split-inner { transform: none; transition: trans
 .chat__list { flex: 1 1 auto; display: grid; align-content: start; gap: .7rem; min-height: 14rem; max-height: 60vh; overflow-y: auto; margin: 0; padding: .9rem 1rem; list-style: none; overscroll-behavior: contain; }
 .watch--chat .watch__layout .chat__list { max-height: none; }
 /* The video sets the row height; the chat fills it and scrolls inside, never stretching the frame. */
-.watch--chat .watch__layout .chat { height: 0; min-height: 100%; }
-@media (max-width: 900px) { .watch--chat .watch__layout .chat { height: auto; min-height: 0; } }
+.watch--chat .watch__layout .chat { contain: size; align-self: stretch; }
+@media (max-width: 900px) { .watch--chat .watch__layout .chat { contain: none; } }
 .chat__item { display: grid; grid-template-columns: 1.9rem minmax(0, 1fr); gap: .6rem; align-items: start; }
 .chat__initials { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: rgba(27,34,66,.1); font-size: .62rem; letter-spacing: .06em; color: var(--ink); }
 .chat__meta { display: flex; align-items: baseline; gap: .5rem; margin: 0 0 .1rem; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); font-family: var(--font-mono); }
