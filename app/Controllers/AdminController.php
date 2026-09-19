@@ -159,6 +159,7 @@ final class AdminController extends Controller
             'stats'     => Registration::stats(),
             'stages'    => Registration::byStage(),
             'recent'    => Registration::paginate(1, 8)['rows'],
+            'watchers'  => Analytics::watchers(),
             'express'   => Setting::get('express_registration', '') === '1',
             'openToken' => Setting::get('watch_open_token', ''),
             'attendance'=> Registration::attendanceStats(),

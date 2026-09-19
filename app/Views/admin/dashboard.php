@@ -1,4 +1,4 @@
-<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance @var bool $express @var string $openToken */
+<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance @var bool $express @var string $openToken @var array $watchers */
 $pathLabel = ['onsite' => 'Onsite', 'online' => 'Online', 'initiative' => 'Initiative'];
 $max = max(1, ...array_column($stages, 'count'));
 ?>
@@ -79,6 +79,31 @@ $max = max(1, ...array_column($stages, 'count'));
     </a>
   </div>
 
+  <section class="adm-panel" style="margin-bottom:1.4rem" data-connected data-url="<?= url('/admin/analytics/live') ?>">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
+      <h2 class="adm-panel__title">Connected to the stream <span class="mono adm-muted" style="font-size:.8rem" data-connected-count><?= count($watchers) ?> watching</span></h2>
+      <a class="mono adm-muted" style="font-size:.72rem" href="<?= url('/admin/stream') ?>">Stream controls →</a>
+    </div>
+    <div class="adm-table-wrap" style="max-height:18rem;overflow-y:auto;margin-top:.6rem">
+      <table class="adm-table">
+        <thead><tr><th>Name</th><th>Reference</th><th>Email</th><th>Device</th><th>Since</th></tr></thead>
+        <tbody data-connected-rows>
+          <?php if (!$watchers): ?>
+            <tr><td colspan="5" class="adm-muted">Nobody is connected at the moment.</td></tr>
+          <?php else: foreach ($watchers as $w): ?>
+            <tr>
+              <td data-label="Name"><?= e(trim(($w['first_name'] ?? '') . ' ' . ($w['last_name'] ?? '')) ?: 'Guest') ?></td>
+              <td data-label="Reference" class="mono"><?= e($w['reference'] ?? '—') ?></td>
+              <td data-label="Email"><?= e($w['email'] ?? '—') ?></td>
+              <td data-label="Device" class="mono"><?= e($w['device']) ?></td>
+              <td data-label="Since" class="mono adm-muted"><?= e(date('H:i', strtotime($w['started_at']))) ?></td>
+            </tr>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="adm-grid">
     <section class="adm-panel">
       <h2 class="adm-panel__title">Producer stage</h2>
@@ -123,6 +148,25 @@ $max = max(1, ...array_column($stages, 'count'));
   </div>
 </section>
 <script>
+  // Who is connected, refreshed every fifteen seconds.
+  (function () {
+    var root = document.querySelector('[data-connected]'); if (!root) return;
+    var rows = root.querySelector('[data-connected-rows]'), count = root.querySelector('[data-connected-count]');
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    function tick() {
+      fetch(root.getAttribute('data-url'), { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          count.textContent = d.watchers.length + ' watching';
+          rows.innerHTML = d.watchers.length ? d.watchers.map(function (w) {
+            var since = w.since ? new Date(w.since.replace(' ', 'T')) : null;
+            return '<tr><td data-label="Name">' + esc(w.name) + '</td><td data-label="Reference" class="mono">' + esc(w.reference || '—') + '</td><td data-label="Email">' + esc(w.email || '—') + '</td><td data-label="Device" class="mono">' + esc(w.device) + '</td><td data-label="Since" class="mono adm-muted">' + (since ? since.toTimeString().slice(0, 5) : '') + '</td></tr>';
+          }).join('') : '<tr><td colspan="5" class="adm-muted">Nobody is connected at the moment.</td></tr>';
+        }).catch(function () {});
+    }
+    setInterval(tick, 15000);
+  })();
   document.querySelectorAll('[data-copy]').forEach(function (b) {
     b.addEventListener('click', function () {
       var t = b.getAttribute('data-copy'), done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
