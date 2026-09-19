@@ -239,6 +239,24 @@
       check();
     }
 
+    // HD / Standard: two separate streams from the admin. Switching rebuilds the player on the other one.
+    var qBar = null;
+    function qualityButtons(active) {
+      if (!qBar) {
+        qBar = document.createElement('div');
+        qBar.className = 'watch__qbar';
+        qBar.innerHTML = '<button type="button" class="mono" data-q="hd">HD</button><button type="button" class="mono" data-q="sd">Standard</button>';
+        qBar.addEventListener('click', function (e) {
+          var b = e.target.closest('button[data-q]'); if (!b || b.classList.contains('is-on')) return;
+          try { localStorage.setItem(QUALITY_KEY, b.dataset.q); } catch (err) {}
+          reloadStream();
+        });
+        stage.appendChild(qBar);
+      }
+      qBar.querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.q === active); });
+      qBar.hidden = false;
+    }
+
     // Quality picker: only when the stream offers more than one rendition. Auto lets hls.js adapt.
     var quality = null;
     function qualityMenu(levels) {
@@ -256,6 +274,7 @@
     }
     function dropVideo() {
       reloadBtn.hidden = true;
+      if (qBar) qBar.hidden = true;
       if (quality) { quality.remove(); quality = null; }
       if (hls) { hls.destroy(); hls = null; }
       if (video) { try { video.pause(); } catch (e) {} video.removeAttribute('src'); try { video.load(); } catch (e) {} video.remove(); video = null; }
@@ -264,6 +283,10 @@
     var placeholder = stage.querySelector('[data-watch-placeholder]');
     var statusLabel = document.querySelector('[data-watch-status]');
     var loaded = false;
+    var build = null;
+    var sources = null;
+    var QUALITY_KEY = 'watch-quality';
+    function chosenQuality() { try { return localStorage.getItem(QUALITY_KEY) || 'hd'; } catch (e) { return 'hd'; } }
     var hls = null;
 
     // The holding screen: state, headline, message, countdown, now/next.
@@ -355,6 +378,13 @@
       placeholder.hidden = true;
       var video = ensureVideo();
 
+      sources = data.sources || null;
+      if (sources && sources.sd && data.kind === 'hls') {
+        var want = chosenQuality();
+        data = Object.assign({}, data, { source: want === 'sd' ? sources.sd : sources.hd });
+        qualityButtons(want);
+      }
+
       if (data.kind === 'hls') {
         // Safari plays HLS natively; everything else needs the library.
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -407,6 +437,11 @@
 
           var data = res.body;
           if (!data.ok) return;
+          // A new script was deployed: reload once so this tab runs it. Skipped only while a switch is mid-flight.
+          if (data.build) {
+            if (!build) build = data.build;
+            else if (build !== data.build) { location.reload(); return; }
+          }
           if (!data.live) {
             dropVideo();
             loaded = false;

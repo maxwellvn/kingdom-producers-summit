@@ -85,18 +85,50 @@ final class StreamService
      * Signed URL on the HLS relay (the standby server's nginx), valid for six hours.
      * Set STREAM_RELAY_URL and STREAM_RELAY_SECRET; the relay holds the real origin.
      */
-    public static function relayUrl(): ?string
+    public static function relayUrl(?string $origin = null): ?string
     {
         $relay = rtrim((string) env('STREAM_RELAY_URL', ''), '/');
         $secret = (string) env('STREAM_RELAY_SECRET', '');
-        if ($relay === '' || $secret === '') {
+        $origin = $origin ?? self::url();
+        if ($relay === '' || $secret === '' || $origin === '') {
             return null;
         }
         $expires = time() + 6 * 3600;
         $token = rtrim(strtr(base64_encode(md5($secret . $expires, true)), '+/', '-_'), '=');
-        $file = basename((string) parse_url(self::url(), PHP_URL_PATH));
 
-        return $relay . '/hls/' . $expires . '/' . $token . '/' . rawurlencode($file);
+        // The relay's ORIGIN is a base folder; STREAM_RELAY_BASE names the same folder here so
+        // several channels under it can be served. A link outside it falls back to its file name.
+        $base = rtrim((string) env('STREAM_RELAY_BASE', ''), '/');
+        $file = $base !== '' && str_starts_with($origin, $base . '/')
+            ? substr($origin, strlen($base) + 1)
+            : basename((string) parse_url($origin, PHP_URL_PATH));
+        $file = implode('/', array_map('rawurlencode', explode('/', (string) parse_url($file, PHP_URL_PATH))));
+
+        return $relay . '/hls/' . $expires . '/' . $token . '/' . $file;
+    }
+
+    /** Optional second HLS link at a lower bitrate; viewers pick between the two. */
+    public static function standardUrl(): string
+    {
+        return trim(Setting::get('stream_url_sd', ''));
+    }
+
+    /** What the watch page should play: the primary source plus the standard one when set. */
+    public static function sources(): array
+    {
+        $kind = self::kind();
+        $pick = static function (string $url) use ($kind): string {
+            return $kind === 'hls' && self::proxyEnabled() ? (self::relayUrl($url) ?? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url($url, PHP_URL_PATH))))) : $url;
+        };
+        $sd = self::standardUrl();
+
+        return ['hd' => $pick(self::url()), 'sd' => $kind === 'hls' && $sd !== '' && self::kind($sd) === 'hls' ? $pick($sd) : null];
+    }
+
+    /** Changes whenever the watch page's script changes; open tabs reload themselves when it does. */
+    public static function build(): string
+    {
+        return (string) @filemtime(BASE_PATH . '/public/assets/js/app.js');
     }
 
     /** Is the relay answering, and how fast. null when no relay is configured. */

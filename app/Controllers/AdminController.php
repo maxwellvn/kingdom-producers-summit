@@ -395,6 +395,7 @@ final class AdminController extends Controller
             'title'     => 'Stream',
             'live'      => StreamService::isLive(),
             'url'       => StreamService::url(),
+            'urlSd'     => StreamService::standardUrl(),
             'kind'      => StreamService::url() !== '' ? StreamService::kind() : '',
             'streamTitle' => StreamService::title(),
             'note'      => StreamService::note(),
@@ -670,7 +671,14 @@ final class AdminController extends Controller
             return $this->redirect('/admin/stream');
         }
 
+        $sd = trim($request->str('stream_url_sd'));
+        if ($sd !== '' && (!filter_var($sd, FILTER_VALIDATE_URL) || !SafeUrl::isPublicHttp($sd) || !str_ends_with(strtolower((string) parse_url($sd, PHP_URL_PATH)), '.m3u8'))) {
+            Session::flash('admin_flash', 'The standard quality link must be a public .m3u8 address, so nothing was saved.');
+            return $this->redirect('/admin/stream');
+        }
+
         Setting::set('stream_url', mb_substr($url, 0, 500));
+        Setting::set('stream_url_sd', mb_substr($sd, 0, 500));
         Setting::set('stream_title', mb_substr(trim($request->str('stream_title')), 0, 160));
         Setting::set('stream_note', mb_substr(trim($request->str('stream_note')), 0, 255));
         Setting::set('stream_proxy', $request->input('stream_proxy') === '1' ? '1' : '0');

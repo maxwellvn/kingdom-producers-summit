@@ -199,16 +199,15 @@ final class WatchController extends Controller
             return Response::json(['ok' => false, 'reason' => 'taken_over'], 409);
         }
         if (!StreamService::isLive()) {
-            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding()] + $this->watchingFor($viewer));
+            return Response::json(['ok' => true, 'live' => false, 'holding' => StreamService::holding(), 'build' => StreamService::build()] + $this->watchingFor($viewer));
         }
         $holding = StreamService::holding();
 
         $kind = StreamService::kind();
-        $source = $kind === 'hls' && StreamService::proxyEnabled()
-            ? (StreamService::relayUrl() ?? url('/watch/hls?file=' . rawurlencode(basename((string) parse_url(StreamService::url(), PHP_URL_PATH)))))
-            : ($kind === 'iframe' ? StreamService::embedUrl() : StreamService::url());
+        $sources = StreamService::sources();
+        $source = $kind === 'iframe' ? StreamService::embedUrl() : $sources['hd'];
 
-        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'now' => $holding['now']] + $this->watchingFor($viewer));
+        return Response::json(['ok' => true, 'live' => true, 'kind' => $kind, 'source' => $source, 'sources' => $sources, 'build' => StreamService::build(), 'now' => $holding['now']] + $this->watchingFor($viewer));
     }
 
     /** Heartbeat: keeps the pass alive and reports when it has been taken. */

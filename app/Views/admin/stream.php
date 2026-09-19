@@ -101,6 +101,11 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
           <input type="url" name="stream_url" value="<?= e($url) ?>" placeholder="https://…/index.m3u8 or a YouTube link" style="<?= $field ?>">
           <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">Detected: <strong><?= e($kindLabel) ?></strong>. HLS, YouTube, Vimeo, Facebook, Twitch or a video file.</span>
         </label>
+        <label style="display:block">
+          <span class="mono" style="<?= $label ?>">Standard quality link (optional)</span>
+          <input type="url" name="stream_url_sd" value="<?= e($urlSd ?? '') ?>" placeholder="https://…/master.m3u8 at a lower bitrate" style="<?= $field ?>">
+          <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">HLS only. When set, viewers get HD and Standard buttons on the video. Their open pages refresh themselves within seconds.</span>
+        </label>
         <label style="display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem">
           <input type="checkbox" name="stream_proxy" value="1" <?= $proxy ? 'checked' : '' ?> style="margin-top:.25rem">
           <span>Hide the stream address from viewers. With a video relay configured the relay server carries the video; without one this server does, which costs capacity. No effect on YouTube or Vimeo.</span>
@@ -121,6 +126,7 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
       <form method="post" action="<?= url('/admin/stream') ?>" style="display:grid;gap:1rem">
         <?= csrf_field() ?>
         <input type="hidden" name="stream_url" value="<?= e($url) ?>">
+        <input type="hidden" name="stream_url_sd" value="<?= e($urlSd ?? '') ?>">
         <input type="hidden" name="stream_title" value="<?= e($streamTitle) ?>">
         <input type="hidden" name="stream_note" value="<?= e($note) ?>">
         <?php if ($proxy): ?><input type="hidden" name="stream_proxy" value="1"><?php endif; ?>
