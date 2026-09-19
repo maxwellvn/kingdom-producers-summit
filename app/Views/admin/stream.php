@@ -65,13 +65,29 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
   </div>
 
   <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
-    <!-- 1b. Server load: this box, and the relay carrying the video. Refreshes every five seconds. -->
-  <div class="mono" data-server-load data-status-url="<?= url('/admin/stream/load-test') ?>"
-       style="display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin:.8rem 0 1.6rem;padding:.7rem 1rem;background:#FBF8F0;border:1px solid rgba(27,34,66,.14);font-size:.78rem;color:#5C5648">
-    <span>This server: load <strong data-sl-load>–</strong> on <span data-sl-cores>–</span> cores</span>
-    <span>memory <strong data-sl-mem>–</strong></span>
-    <span>watching <strong data-sl-watching><?= count($watchers) ?></strong></span>
-    <span data-sl-relay-row<?= env('STREAM_RELAY_URL', '') ? '' : ' hidden' ?>>video relay <strong data-sl-relay>–</strong></span>
+    <!-- 1b. Health: this box and the video relay, as bars. Green is fine, amber is near the limit, red is trouble. -->
+  <div data-server-load data-status-url="<?= url('/admin/stream/load-test') ?>"
+       style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem 1.4rem;margin:.8rem 0 1.6rem;padding:.9rem 1rem;background:#FBF8F0;border:1px solid rgba(27,34,66,.14)">
+    <?php
+    $gauges = [
+        ['cpu', 'Server CPU', 'load / cores'],
+        ['mem', 'Server memory', 'in use'],
+        ['viewers', 'Viewers', 'of ~500 relay capacity'],
+        ['relay', 'Video relay', 'response time'],
+    ];
+    foreach ($gauges as [$key, $name, $sub]):
+        if ($key === 'relay' && !env('STREAM_RELAY_URL', '')) continue; ?>
+    <div data-g="<?= $key ?>">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem">
+        <span class="mono" style="font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648"><?= $name ?></span>
+        <strong class="mono" data-g-value style="font-size:.85rem">–</strong>
+      </div>
+      <div style="height:8px;margin:.4rem 0 .25rem;background:rgba(27,34,66,.12);overflow:hidden">
+        <div data-g-bar style="height:100%;width:0;background:#9E9E9E;transition:width .4s ease-out,background-color .4s ease-out"></div>
+      </div>
+      <span class="mono" data-g-note style="font-size:.7rem;color:#5C5648"><?= $sub ?></span>
+    </div>
+    <?php endforeach; ?>
   </div>
 
   <!-- 2. Setup: the source and the heading. Rarely changes. -->
@@ -448,15 +464,31 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
 (function () {
   var root = document.querySelector('[data-server-load]'); if (!root) return;
   var url = root.getAttribute('data-status-url');
-  function q(n) { return root.querySelector('[data-sl-' + n + ']'); }
+  var COLOR = { good: '#2E7D32', warn: '#C77700', bad: '#B3261E', off: '#9E9E9E' };
+  // pct: 0-100 fill. level: good / warn / bad.
+  function set(key, pct, level, value, note) {
+    var g = root.querySelector('[data-g="' + key + '"]'); if (!g) return;
+    g.querySelector('[data-g-bar]').style.width = Math.max(0, Math.min(100, pct)) + '%';
+    g.querySelector('[data-g-bar]').style.backgroundColor = COLOR[level];
+    g.querySelector('[data-g-value]').textContent = value;
+    g.querySelector('[data-g-value]').style.color = level === 'good' ? '' : COLOR[level];
+    if (note) g.querySelector('[data-g-note]').textContent = note;
+  }
+  function level(pct, warnAt, badAt) { return pct >= badAt ? 'bad' : pct >= warnAt ? 'warn' : 'good'; }
+  var WORD = { good: 'fine', warn: 'getting busy', bad: 'overloaded' };
   function tick() {
     fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
       var s = d.server || {};
-      q('load').textContent = s.load1; q('cores').textContent = s.cores;
-      q('load').style.color = s.load1 > s.cores ? '#B3261E' : '';
-      q('mem').textContent = s.mem_used_pct == null ? '–' : s.mem_used_pct + '%';
-      q('watching').textContent = d.watching;
-      if (d.relay) { q('relay').textContent = d.relay.ok ? 'up, ' + d.relay.ms + ' ms' : 'DOWN'; q('relay').style.color = d.relay.ok ? '#2E7D32' : '#B3261E'; }
+      var cpu = Math.round(100 * s.load1 / (s.cores || 1));
+      set('cpu', cpu, level(cpu, 70, 100), cpu + '%', 'load ' + s.load1 + ' on ' + s.cores + ' cores · ' + WORD[level(cpu, 70, 100)]);
+      if (s.mem_used_pct != null) set('mem', s.mem_used_pct, level(s.mem_used_pct, 75, 90), s.mem_used_pct + '%', 'in use · ' + WORD[level(s.mem_used_pct, 75, 90)]);
+      // ponytail: 500 is the relay's rough ceiling at 720p on its 1 Gbps port; lower the bitrate to raise it.
+      var vp = Math.round(100 * d.watching / 500);
+      set('viewers', vp, level(vp, 80, 100), d.watching, 'of ~500 relay capacity · ' + WORD[level(vp, 80, 100)]);
+      if (d.relay) {
+        if (!d.relay.ok) set('relay', 100, 'bad', 'DOWN', 'not answering · video will stop');
+        else { var rp = Math.min(100, Math.round(d.relay.ms / 15)); set('relay', rp, level(d.relay.ms, 800, 2000), d.relay.ms + ' ms', 'response time · ' + WORD[level(d.relay.ms, 800, 2000)]); }
+      }
     }).catch(function () {}).then(function () { setTimeout(tick, 5000); });
   }
   tick();
