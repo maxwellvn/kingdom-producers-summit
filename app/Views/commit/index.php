@@ -1,14 +1,12 @@
 <?php /** @var array<string,string> $items */
 $errors = \App\Core\Session::get('_errors', []);
-$old = \App\Core\Session::get('_old', []);
-$fresh = $old === [];
 ?>
 <section class="reg">
   <div class="container pay">
     <div class="pay__card">
       <p class="mono pay__kicker"><span class="pay__dot" aria-hidden="true"></span> The Commitment</p>
       <h1 class="pay__title">Four things I will do.</h1>
-      <p class="pay__lede">Read them, tick the ones you mean, put your name to it. We pray over every card after the session.</p>
+      <p class="pay__lede">Read them, tick each one you mean, put your name to it. We pray over every card after the session.</p>
 
       <?php if ($err = ($errors['items'] ?? '')): ?>
         <div class="pay__alert" role="alert"><span><?= e($err) ?></span></div>
@@ -22,7 +20,7 @@ $fresh = $old === [];
           <?php $n = 0; foreach ($items as $key => $text): $n++; ?>
             <li>
               <label class="check commit__item">
-                <input type="checkbox" name="<?= $key ?>" value="1" <?= ($fresh || old_checked($key, '1')) ? 'checked' : '' ?>>
+                <input type="checkbox" name="<?= $key ?>" value="1" <?= old_checked($key, '1') ?>>
                 <span><span class="mono commit__num"><?= str_pad((string) $n, 2, '0', STR_PAD_LEFT) ?></span> <?= e($text) ?></span>
               </label>
             </li>
