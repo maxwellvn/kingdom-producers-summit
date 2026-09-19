@@ -77,7 +77,10 @@ final class Announcement
         $claim = $pdo->prepare("UPDATE announcements SET sent_at = ?, result = 'sending'
                     WHERE sent_at IS NULL AND send_at <= ? ORDER BY send_at LIMIT 1");
         $claim->execute([date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
-        $stmt = $pdo->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at LIMIT 1");
+        if ($claim->rowCount() === 0) {
+            return null; // nothing newly due; anything already in flight is handled by inFlight()
+        }
+        $stmt = $pdo->query("SELECT * FROM announcements WHERE result = 'sending' ORDER BY sent_at DESC LIMIT 1");
 
         return $stmt->fetch() ?: null;
     }
