@@ -17,7 +17,11 @@ server {
 
         # ponytail: relative playlist references only. An origin whose master playlist uses
         # absolute URLs would leak itself; rewrite with sub_filter if that ever happens.
-        proxy_pass ${ORIGIN}/$file;
+        # ORIGIN is the base folder holding one folder per channel. A path that names no channel
+        # (older player code, or a single-channel setup) goes to DEFAULT_CHANNEL.
+        set $path $file;
+        if ($file !~ "^[0-9a-f-]{36}/") { set $path "${DEFAULT_CHANNEL}/$file"; }
+        proxy_pass ${ORIGIN}/$path;
         proxy_ssl_server_name on;
         proxy_http_version 1.1;
         proxy_set_header Host $proxy_host;
@@ -26,7 +30,7 @@ server {
         proxy_hide_header Set-Cookie;
 
         proxy_cache hls;
-        proxy_cache_key $file;
+        proxy_cache_key $path;
         # ponytail: one TTL for playlists and segments. With the lock plus stale-while-updating,
         # the origin sees at most one fetch per file per second whatever the viewer count.
         proxy_cache_valid 200 206 1s;

@@ -7,7 +7,8 @@ services:
     environment:
       ORIGIN: "${ORIGIN:?Folder holding the .m3u8, no trailing slash, e.g. https://cdn.example.com/live}"
       SECRET: "${SECRET:?Same value as STREAM_RELAY_SECRET on the summit app}"
-      NGINX_ENVSUBST_FILTER: "^(ORIGIN|SECRET)$"
+      DEFAULT_CHANNEL: "${DEFAULT_CHANNEL:-}"
+      NGINX_ENVSUBST_FILTER: "^(ORIGIN|SECRET|DEFAULT_CHANNEL)$"
     volumes:
       - hls_cache:/var/cache/nginx
     expose:
