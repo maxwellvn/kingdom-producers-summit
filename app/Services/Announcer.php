@@ -48,6 +48,11 @@ final class Announcer
             'subject' => 'THE LOVEWORLD CONSULATE UK SAYS THANK YOU!',
             'body'    => "*THE LOVEWORLD CONSULATE UK SAYS THANK YOU!*\n\n💥🔥 𝐖𝐇𝐀𝐓 𝐀 𝐃𝐀𝐘. 𝐖𝐇𝐀𝐓 𝐀 𝐌𝐎𝐌𝐄𝐍𝐓. 𝐖𝐇𝐀𝐓 𝐀 𝐁𝐄𝐆𝐈𝐍𝐍𝐈𝐍𝐆!\n\nTo every Kingdom Producer who filled the room at Angel Studios, and to everyone who joined us LIVE from across the world — you made the inaugural LoveWorld Kingdom Producers Summit — London 2026 truly special. 🌍🚀\n\nYou came. You listened. You learned. You connected. You made the commitment.\n\n𝗔𝗻𝗱 𝗻𝗼𝘄… 𝗪𝗘 𝗣𝗥𝗢𝗗𝗨𝗖𝗘! 💥\n\nThe lights may have gone down on today’s stage, but the movement has only just begun. The ideas, insights and commitments made today now move from the room into action.\n\n𝗧𝗼 𝗼𝘂𝗿 𝗛𝗶𝗴𝗵𝗹𝘆 𝗘𝘀𝘁𝗲𝗲𝗺𝗲𝗱 𝗦𝗽𝗲𝗮𝗸𝗲𝗿𝘀, 𝗽𝗮𝗿𝘁𝗶𝗰𝗶𝗽𝗮𝗻𝘁, 𝗽𝗮𝗿𝘁𝗻𝗲𝗿, 𝘃𝗼𝗹𝘂𝗻𝘁𝗲𝗲𝗿 𝗮𝗻𝗱 𝗲𝘃𝗲𝗿𝘆𝗼𝗻𝗲 𝘄𝗵𝗼 𝗰𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 𝗼𝗻𝗹𝗶𝗻𝗲 — 𝗧𝗛𝗔𝗡𝗞 𝗬𝗢𝗨 𝗳𝗼𝗿 𝗯𝗲𝗶𝗻𝗴 𝗽𝗮𝗿𝘁 𝗼𝗳 𝘁𝗵𝗲 𝗯𝗲𝗴𝗶𝗻𝗻𝗶𝗻𝗴 𝗼𝗳 𝘀𝗼𝗺𝗲𝘁𝗵𝗶𝗻𝗴 𝗲𝘅𝘁𝗿𝗮𝗼𝗿𝗱𝗶𝗻𝗮𝗿𝘆. 💙✨\n\n🔥 London was only the beginning… Manchester, Ireland and Birmingham — GET READY! 👀🚀",
         ],
+        'initiative' => [
+            'label'   => '90-Day Producer Challenge (after the summit)',
+            'subject' => '🎉 Congratulations, Kingdom Producer. Your 90 days begin now',
+            'body'    => "🎉 CONGRATULATIONS, KINGDOM PRODUCER!\n\nYou took the first step by participating in the Loveworld Kingdom Producers Summit — London Edition 2026, receiving the knowledge, insights and charge to move from a consumer to a PRODUCER. But the Summit was only the beginning. Now, it’s time to turn everything you received into tangible, measurable results! 🚀🔥\n\n𝐘𝐎𝐔 𝐇𝐄𝐀𝐑𝐃 𝐓𝐇𝐄 𝐂𝐀𝐋𝐋, 𝐍𝐎𝐖 𝐀𝐂𝐓!\n\nAt the LoveWorld Kingdom Producers Summit — London Edition 2026, Esteemed Pastor Nike Gbenga-Kehinde, Executive Minister of Cost Economy, challenged us to move beyond inspiration into deliberate action through the 90-Day Producer Challenge.\n\nWatch the session by the Executive Minister of Cost Economy: https://www.kingsch.at/p/ci96Z0R\n\nFor the next 90 days, the question is simple: “How can you use what you already have better, eliminate waste, reduce unnecessary costs and release more resources for greater Kingdom productivity?”\n\nThis is where the Kingdom Producers Initiative comes in. Through the Initiative, we’ll journey together with practical actions, accountability, knowledge, support and measurable progress as we move from CONSUMERS to PRODUCERS.\n\n🔥 Your first step into the 90-Day Producer Challenge is to make the Kingdom Producers Commitment and to join the Kingdom Producers Initiative today.\n\nMake the commitment now: {commitment_url}\n\nJoin the Kingdom Producers Initiative now: {initiative_url}\n\nCongratulations once again! Your 90 days of intentional action, productivity and measurable results begins! 🚀🔥",
+        ],
         'today' => [
             'label'   => 'It is today',
             'subject' => 'The summit is today',
@@ -336,6 +341,8 @@ final class Announcer
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
             '{register_url}' => site_url() . '/register',
+            '{commitment_url}' => site_url() . '/commitment',
+            '{initiative_url}' => site_url() . '/register?mode=initiative',
             '{timing_lead}'   => self::timing()['lead'],
             '{timing_detail}' => self::timing()['detail'],
             // The person's own QR pass: the confirmation page carries it, signed to them. Onsite only.
@@ -347,7 +354,7 @@ final class Announcer
     }
 
     /** The placeholders an organiser may type, for the hint under the box. */
-    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
+    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'commitment_url', 'initiative_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
 
     /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
     public static function summary(array $p): string
@@ -359,22 +366,46 @@ final class Announcer
     {
         $paragraphs = array_filter(array_map('trim', preg_split('/\n{2,}/', $text) ?: []));
         $body = '';
-        $button = static function (string $label, string $url): string {
-            return '<p style="margin:0 0 20px"><a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" '
-                . 'style="display:inline-block;padding:14px 22px;background:#b4232b;color:#f3eee2;text-decoration:none;font:700 14px Arial,sans-serif;letter-spacing:1px;text-transform:uppercase">'
-                . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ' &rarr;</a></p>';
+        $button = static function (string $label, string $url, string $bg = '#b4232b'): string {
+            return '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 22px"><tr><td bgcolor="' . $bg . '" style="border-radius:6px;background:' . $bg . '">'
+                . '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" '
+                . 'style="display:inline-block;padding:15px 26px;color:#f3eee2;text-decoration:none;font:700 14px Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase">'
+                . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ' &nbsp;&rarr;</a></td></tr></table>';
         };
+        $headline = '';
+        // Lines written in bold Unicode letters or shouted in caps are headings, not paragraphs.
+        $isHeading = static fn (string $t): bool => mb_strlen($t) < 90 && !str_contains($t, "\n")
+            && (preg_match('/[\x{1D400}-\x{1D7FF}]/u', $t) || (mb_strtoupper($t) === $t && preg_match('/[A-Z]{3}/', $t)));
+        $first = true;
         foreach ($paragraphs as $paragraph) {
+            if ($first && $isHeading($paragraph)) {
+                $headline = htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8');
+                $first = false;
+                continue;
+            }
+            $first = false;
+            if ($isHeading($paragraph)) {
+                $body .= '<h2 style="margin:28px 0 12px;color:#b4232b;font:700 20px/1.25 Arial,sans-serif;letter-spacing:.5px">' . htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8') . '</h2>';
+                continue;
+            }
             // "Watch here: https://…" becomes text plus a button; the raw address stays out of the way.
             if (preg_match('/^(.*?)\\s*(https?:\\/\\/\\S+)$/s', $paragraph, $m)) {
                 $url = $m[2];
-                $label = str_contains($url, 'google.com/maps') ? 'Get directions'
-                    : (str_contains($url, '/watch') ? 'Watch live'
-                    : (str_contains($url, '/register/confirmed?access=') ? 'Open my QR pass'
-                    : (str_ends_with($url, '/share') ? 'Share the registration link' : 'Open')));
                 $lead = rtrim(trim($m[1]), ':');
-                $body .= ($lead !== '' ? '<p style="margin:0 0 10px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br(htmlspecialchars($lead, ENT_QUOTES, 'UTF-8')) . '</p>' : '')
-                    . $button($label, $url);
+                [$label, $bg] = match (true) {
+                    str_contains($url, 'google.com/maps') => ['Get directions', '#b4232b'],
+                    str_contains($url, '/register/confirmed?access=') => ['Open my QR pass', '#b4232b'],
+                    str_contains($url, '/commitment') => ['Make the commitment', '#b4232b'],
+                    str_contains($url, 'mode=initiative') => ['Join the initiative', '#1b2242'],
+                    str_contains($url, 'kingsch.at') => ['Watch the session', '#1b2242'],
+                    str_contains($url, '/watch') => ['Watch live', '#b4232b'],
+                    str_ends_with($url, '/share') => ['Share the registration link', '#b4232b'],
+                    default => [$lead !== '' && mb_strlen($lead) <= 48 ? $lead : 'Open', '#b4232b'],
+                };
+                // A short lead ("Make the commitment now") is the button itself; a long one stays as text above it.
+                $showLead = $lead !== '' && mb_strlen($lead) > 48;
+                $body .= ($showLead ? '<p style="margin:0 0 10px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br(htmlspecialchars($lead, ENT_QUOTES, 'UTF-8')) . '</p>' : '')
+                    . $button($label, $url, $bg);
                 continue;
             }
             $html = htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8');
@@ -388,6 +419,9 @@ final class Announcer
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2">'
             . '<tr><td align="center" style="padding:32px 16px">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
+            . ($headline !== '' ? '<tr><td bgcolor="#1b2242" style="padding:34px 32px 30px;background:#1b2242">'
+                . '<p style="margin:0 0 10px;color:#aaaebe;font:11px monospace;letter-spacing:2px;text-transform:uppercase">Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '</p>'
+                . '<h1 style="margin:0;color:#f3eee2;font:700 26px/1.2 Arial,sans-serif;letter-spacing:.3px">' . $headline . '</h1></td></tr>' : '')
             . '<tr><td style="padding:32px">' . $body . '</td></tr>'
             . '<tr><td bgcolor="#1b2242" style="padding:22px 32px;background:#1b2242;color:#aaaebe;font:11px/1.6 monospace;letter-spacing:1px;text-transform:uppercase">'
             . 'The Loveworld Consulate, United Kingdom<br>Kingdom Producers Summit · '
