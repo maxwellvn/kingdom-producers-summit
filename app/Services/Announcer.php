@@ -102,7 +102,7 @@ final class Announcer
     }
 
     private const MAX_ATTEMPTS = 5;
-    private const GAP_MICROSECONDS = 3000000; // three seconds between emails keeps the mail host calm
+    private const GAP_MICROSECONDS = 0; // no pacing; the throttle handler below waits if the host objects
 
     /** Put one row per recipient in the queue. Safe to call again; existing rows are kept. */
     public static function enqueue(array $announcement): void
