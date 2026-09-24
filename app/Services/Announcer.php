@@ -53,6 +53,11 @@ final class Announcer
             'subject' => '🎉 Congratulations, Kingdom Producer. Your 90 days begin now',
             'body'    => "🎉 CONGRATULATIONS, KINGDOM PRODUCER!\n\nYou took the first step by participating in the Loveworld Kingdom Producers Summit — London Edition 2026, receiving the knowledge, insights and charge to move from a consumer to a PRODUCER. But the Summit was only the beginning. Now, it’s time to turn everything you received into tangible, measurable results! 🚀🔥\n\n𝐘𝐎𝐔 𝐇𝐄𝐀𝐑𝐃 𝐓𝐇𝐄 𝐂𝐀𝐋𝐋, 𝐍𝐎𝐖 𝐀𝐂𝐓!\n\nAt the LoveWorld Kingdom Producers Summit — London Edition 2026, Esteemed Pastor Nike Gbenga-Kehinde, Executive Minister of Cost Economy, challenged us to move beyond inspiration into deliberate action through the 90-Day Producer Challenge.\n\nWatch the session by the Executive Minister of Cost Economy: https://www.kingsch.at/p/ci96Z0R\n\nFor the next 90 days, the question is simple: “How can you use what you already have better, eliminate waste, reduce unnecessary costs and release more resources for greater Kingdom productivity?”\n\nThis is where the Kingdom Producers Initiative comes in. Through the Initiative, we’ll journey together with practical actions, accountability, knowledge, support and measurable progress as we move from CONSUMERS to PRODUCERS.\n\n🔥 Your first step into the 90-Day Producer Challenge is to make the Kingdom Producers Commitment and to join the Kingdom Producers Initiative today.\n\nMake the commitment now: {commitment_url}\n\nJoin the Kingdom Producers Initiative now: {initiative_url}\n\nCongratulations once again! Your 90 days of intentional action, productivity and measurable results begins! 🚀🔥",
         ],
+        'hear_from_you' => [
+            'label'   => 'We would love to hear from you (after the summit)',
+            'subject' => 'We would love to hear from you, Kingdom Producer',
+            'body'    => "{site_url}/assets/img/hear-from-you.jpg\n\n*WE WOULD LOVE TO HEAR FROM YOU!*\n\nHello 👋🏾 Dear Esteemed!\n\nCongratulations once again, and thank you for being part of the LoveWorld Kingdom Producers Summit – UK! 🎉\n\nAs you continue your journey towards becoming a PRODUCER, we would love to know: *_Where are you right now? Do you have an idea you’re yet to start? Have you begun working on it? Or are you already running a business and looking to take it further?_*\n\nWhatever stage you’re at, start with the Holy Spirit. Pray about your idea and direction—He is the greatest Producer and your greatest Helper.\n\nThen, *RESEARCH!* Research your idea, your industry, your market and those who have successfully built similar things. There is an incredible amount of knowledge, information and founder stories available that can help you understand what works, avoid mistakes and identify your next practical step.\n\nAnd very importantly, make the Kingdom Producers Commitment and join the Kingdom Producers Initiative. 🚀 Your commitment is your decision to move beyond inspiration into action, while the Initiative gives you a community and practical support as you continue your Producer journey.\n\nCLICK TO MAKE THE COMMITMENT: {commitment_url}\n\nCLICK TO JOIN THE KINGDOM PRODUCERS INITIATIVE: {initiative_url}\n\nYou don’t have to figure it all out alone. The LoveWorld Consulate United Kingdom is here to support you with guidance, answers to your questions and practical advice as you move forward.\n\nIf you have a question, need direction, have reached a stumbling block, or simply want to tell us where you are on your journey, send us a message.\n\nReach out to us on KingsChat @lwconsul_uk! We’d love to hear from you!",
+        ],
         'today' => [
             'label'   => 'It is today',
             'subject' => 'The summit is today',
@@ -214,7 +219,9 @@ final class Announcer
     public static function deliverOrThrow(array $person, string $subject, string $body): void
     {
         $text = self::fill($body, $person);
-        (new Mailer())->send((string) $person['email'], self::fill($subject, $person), self::html($text, $person), $text, ['Reply-To' => contact_email()]);
+        $images = [];
+        $html = self::html($text, $person, $images);
+        (new Mailer())->send((string) $person['email'], self::fill($subject, $person), $html, $text, ['Reply-To' => contact_email()], $images);
     }
 
 
@@ -349,12 +356,13 @@ final class Announcer
             '{qr_url}'      => $path === 'onsite' ? site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{qr_image_url}' => $path === 'onsite' ? site_url() . '/access/qr?token=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{share_url}'   => site_url() . '/share',
+            '{site_url}'    => site_url(),
             '{sponsor_url}' => site_url() . '/sponsor',
         ]);
     }
 
     /** The placeholders an organiser may type, for the hint under the box. */
-    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'register_url', 'sponsor_url', 'commitment_url', 'initiative_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
+    public const PLACEHOLDERS = ['first_name', 'last_name', 'email', 'reference', 'participation', 'days_to_go', 'summit_date', 'summit_venue', 'summit_city', 'watch_url', 'qr_url', 'qr_image_url', 'timing_lead', 'timing_detail', 'directions_url', 'share_url', 'site_url', 'register_url', 'sponsor_url', 'commitment_url', 'initiative_url', 'online_only}…{/online_only', 'onsite_only}…{/onsite_only'];
 
     /** @param array{sent:int, emailed:int, messaged:int, failed:int} $r */
     public static function summary(array $p): string
@@ -362,7 +370,8 @@ final class Announcer
         return sprintf('Sent to %d of %d%s.', $p['sent'], $p['total'], $p['failed'] ? ', ' . $p['failed'] . ' could not be reached' : '');
     }
 
-    private static function html(string $text, array $person): string
+    /** @param array<string,array{type:string,data:string}> $images filled with any of our own images to embed */
+    private static function html(string $text, array $person, array &$images = []): string
     {
         $paragraphs = array_filter(array_map('trim', preg_split('/\n{2,}/', $text) ?: []));
         $body = '';
@@ -376,16 +385,36 @@ final class Announcer
         // Lines written in bold Unicode letters or shouted in caps are headings, not paragraphs.
         $isHeading = static fn (string $t): bool => mb_strlen($t) < 90 && !str_contains($t, "\n")
             && (preg_match('/[\x{1D400}-\x{1D7FF}]/u', $t) || (mb_strtoupper($t) === $t && preg_match('/[A-Z]{3}/', $t)));
+        // Chat-style *bold* and _italic_ become real emphasis; the markers stay in the plain-text copy.
+        $emphasis = static fn (string $html): string => (string) preg_replace(
+            ['/\*([^*\n]+)\*/u', '/(?<![\w\/=])_([^_\n]+)_(?![\w])/u'],
+            ['<strong>$1</strong>', '<em>$1</em>'],
+            $html
+        );
+        $hero = '';
         $first = true;
         foreach ($paragraphs as $paragraph) {
+            // A paragraph that is only an image address is the poster across the top.
+            if ($hero === '' && preg_match('~^https?://\S+\.(?:jpe?g|png|gif|webp)$~i', $paragraph)) {
+                $hero = htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8');
+                // Our own asset rides inside the email, so it shows even where remote images are blocked.
+                $file = str_starts_with($paragraph, site_url() . '/assets/')
+                    ? (string) realpath(BASE_PATH . '/public' . substr($paragraph, strlen(site_url()))) : '';
+                if ($file !== '' && str_starts_with($file, (string) realpath(BASE_PATH . '/public/assets') . '/')) {
+                    $cid = basename($file);
+                    $images[$cid] = ['type' => (string) mime_content_type($file), 'data' => (string) file_get_contents($file)];
+                    $hero = 'cid:' . $cid;
+                }
+                continue;
+            }
             if ($first && $isHeading($paragraph)) {
-                $headline = htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8');
+                $headline = htmlspecialchars(trim($paragraph, '*_ '), ENT_QUOTES, 'UTF-8');
                 $first = false;
                 continue;
             }
             $first = false;
             if ($isHeading($paragraph)) {
-                $body .= '<h2 style="margin:28px 0 12px;color:#b4232b;font:700 20px/1.25 Arial,sans-serif;letter-spacing:.5px">' . htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8') . '</h2>';
+                $body .= '<h2 style="margin:28px 0 12px;color:#b4232b;font:700 20px/1.25 Arial,sans-serif;letter-spacing:.5px">' . htmlspecialchars(trim($paragraph, '*_ '), ENT_QUOTES, 'UTF-8') . '</h2>';
                 continue;
             }
             // "Watch here: https://…" becomes text plus a button; the raw address stays out of the way.
@@ -410,7 +439,7 @@ final class Announcer
             }
             $html = htmlspecialchars($paragraph, ENT_QUOTES, 'UTF-8');
             $html = (string) preg_replace('~(https?://[^\\s<]+)~', '<a href="$1" style="color:#b4232b">$1</a>', $html);
-            $body .= '<p style="margin:0 0 16px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br($html) . '</p>';
+            $body .= '<p style="margin:0 0 16px;color:#1b2242;font-size:16px;line-height:1.6">' . nl2br($emphasis($html)) . '</p>';
         }
 
         return '<!doctype html><html><head><meta charset="utf-8">'
@@ -419,6 +448,9 @@ final class Announcer
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eae3d2">'
             . '<tr><td align="center" style="padding:32px 16px">'
             . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#f3eee2;border:1px solid #c9c1af">'
+            . ($hero !== '' ? '<tr><td style="padding:0;line-height:0;font-size:0">'
+                . '<img src="' . $hero . '" width="640" alt="' . ($headline !== '' ? $headline : 'Kingdom Producers Summit') . '" '
+                . 'style="display:block;width:100%;max-width:640px;height:auto;border:0"></td></tr>' : '')
             . ($headline !== '' ? '<tr><td bgcolor="#1b2242" style="padding:34px 32px 30px;background:#1b2242">'
                 . '<p style="margin:0 0 10px;color:#aaaebe;font:11px monospace;letter-spacing:2px;text-transform:uppercase">Kingdom Producers Summit · ' . htmlspecialchars((string) config('app.summit.edition'), ENT_QUOTES, 'UTF-8') . '</p>'
                 . '<h1 style="margin:0;color:#f3eee2;font:700 26px/1.2 Arial,sans-serif;letter-spacing:.3px">' . $headline . '</h1></td></tr>' : '')

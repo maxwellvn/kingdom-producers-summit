@@ -94,7 +94,7 @@ final class Mailer
                         . 'Content-Type: ' . $this->header((string) $image['type']) . "\r\n"
                         . "Content-Transfer-Encoding: base64\r\n"
                         . 'Content-ID: <' . $this->header((string) $cid) . ">\r\n"
-                        . 'Content-Disposition: inline; filename="' . $this->header((string) $cid) . ".png\"\r\n\r\n"
+                        . 'Content-Disposition: inline; filename="' . $this->header(str_contains((string) $cid, '.') ? (string) $cid : $cid . '.png') . "\"\r\n\r\n"
                         . chunk_split(base64_encode((string) $image['data']), 76, "\r\n");
                 }
 
