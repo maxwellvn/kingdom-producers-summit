@@ -72,7 +72,7 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
         'location' => [
             ['@type' => 'Place', 'name' => (string) config('app.summit.venue.name'),
              'address' => ['@type' => 'PostalAddress',
-                           'streetAddress' => config('app.summit.venue.unit') . ', ' . config('app.summit.venue.name') . ', ' . config('app.summit.venue.street'),
+                           'streetAddress' => implode(', ', array_filter([(string) config('app.summit.venue.unit'), (string) config('app.summit.venue.name'), (string) config('app.summit.venue.street')])),
                            'addressLocality' => (string) config('app.summit.venue.town'),
                            'addressRegion' => (string) config('app.summit.venue.region'), 'postalCode' => (string) config('app.summit.venue.postcode'),
                            'addressCountry' => 'GB']],
