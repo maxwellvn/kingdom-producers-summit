@@ -57,7 +57,7 @@ $stageLabels = [
           </ol>
 
           <dl class="reg__facts mono">
-            <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
+            <div><dt>Where</dt><dd><?= e($summit['address'] ?? $summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
             <div><dt>Onsite places</dt><dd><?= $seatsLeft <= 0 ? 'Fully booked' : number_format((int) config('app.summit.onsite_capacity')) . ' only' ?></dd></div>
             <?php if (!$isInitiative): ?>
@@ -117,7 +117,7 @@ $stageLabels = [
         <div class="tickets tickets--attendance" role="radiogroup" aria-label="How would you like to attend the summit?">
           <?php
           $paths = [
-            'onsite' => ['A', 'Attend onsite in Essex', 'The full day in the room: masterclasses, workshops, live mentoring, the business clinic, lunch and networking, a resource pack and a certificate.'],
+            'onsite' => ['A', 'Attend onsite in Manchester', 'The full day in the room: masterclasses, workshops, live mentoring, the business clinic, lunch and networking, a resource pack and a certificate.'],
             'online' => ['B', 'Attend online', 'The main sessions streamed to you, to follow from anywhere. You take no part in the room, so the workshops, mentoring, clinic and networking are not included.'],
           ];
           foreach ($paths as $value => [$letter, $label, $desc]): ?>
@@ -238,13 +238,13 @@ $stageLabels = [
           <div class="field <?= error_for('group_name') ? 'has-error' : '' ?>">
             <label for="group_name">Group <span class="field__opt">optional</span></label>
             <input id="group_name" name="group_name" type="text" maxlength="120"
-                   placeholder="e.g. Rainham Group" value="<?= old('group_name') ?>">
+                   placeholder="e.g. Cheetham Hill Group" value="<?= old('group_name') ?>">
             <?php if ($err = error_for('group_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field <?= error_for('church_name') ? 'has-error' : '' ?>">
             <label for="church_name">Church <span class="field__opt">optional</span></label>
             <input id="church_name" name="church_name" type="text" maxlength="160"
-                   placeholder="e.g. CE Rainham" value="<?= old('church_name') ?>">
+                   placeholder="e.g. CE Cheetham Hill" value="<?= old('church_name') ?>">
             <?php if ($err = error_for('church_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
         </div>

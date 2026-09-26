@@ -233,7 +233,7 @@ try {
         'participation' => 'initiative', 'first_name' => 'Initiative', 'last_name' => 'Only',
         'email' => 'initiative-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900321', 'country' => 'United Kingdom', 'age_band' => '25-34',
-        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'zone' => 'UK Zone 1', 'group_name' => 'Cheetham Hill Group', 'church_name' => 'CE Cheetham Hill',
         'consent_terms' => '1',
     ], []);
     [$initiativeErrors, $initiativeClean] = $service->validate($initiative);
@@ -245,7 +245,7 @@ try {
         'participation' => 'online', 'first_name' => 'Other', 'last_name' => 'Field',
         'email' => 'other-field-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900654', 'country' => 'United Kingdom', 'age_band' => '25-34',
-        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'zone' => 'UK Zone 1', 'group_name' => 'Cheetham Hill Group', 'church_name' => 'CE Cheetham Hill',
         'field' => 'Other', 'field_other' => 'Sport and recreation',
         'producer_stage' => 'build', 'consent_terms' => '1',
     ], []);
@@ -276,7 +276,7 @@ try {
         'participation' => 'onsite', 'first_name' => 'One', 'last_name' => 'TooMany',
         'email' => 'overflow-' . bin2hex(random_bytes(8)) . '@example.org',
         'phone' => '+447700900999', 'country' => 'United Kingdom', 'age_band' => '25-34',
-        'zone' => 'UK Zone 1', 'group_name' => 'Essex Group', 'church_name' => 'Rainham Church',
+        'zone' => 'UK Zone 1', 'group_name' => 'Cheetham Hill Group', 'church_name' => 'CE Cheetham Hill',
         'field' => Registration::FIELDS[0], 'producer_stage' => 'build', 'consent_terms' => '1',
     ], []);
     [$overflowErrors] = $service->validate($overflow);

@@ -28,10 +28,11 @@ return [
 
     'summit' => [
         'short'     => 'The Producers Summit',
-        'edition'   => 'London Edition 2026',
-        'city'      => 'Rainham, Essex, United Kingdom',
-        'date_text' => 'Saturday 19th September 2026, 12 noon',
-        'date_day'  => 'Saturday 19th September 2026',
+        'edition'   => 'Manchester Edition 2026',
+        'city'      => 'Cheetham Hill, Manchester, United Kingdom',
+        'address'   => '5 Knowsley St, Cheetham Hill, Manchester M8 8QN, United Kingdom',
+        'date_text' => 'Saturday 17th October 2026, 12 noon',
+        'date_day'  => 'Saturday 17th October 2026',
         'time'      => '12 noon',
         'organiser' => 'Loveworld Consulate UK',
         'office'    => 'The Loveworld Consulate, United Kingdom',

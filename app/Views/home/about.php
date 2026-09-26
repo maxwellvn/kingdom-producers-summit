@@ -18,7 +18,7 @@
         or a piece of intellectual property.
       </p>
       <p>
-        The summit in Rainham is the starting point. What it grows into is a permanent Kingdom Producers
+        The summit in Manchester is the starting point. What it grows into is a permanent Kingdom Producers
         ecosystem carrying mentorship, networks, marketplace access, expert support, investment
         opportunities and collaboration.
       </p>

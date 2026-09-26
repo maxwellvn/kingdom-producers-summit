@@ -4,19 +4,19 @@ $r = $registration;
 $pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
-    'Join us on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — arrival details and the full programme will follow by email.',
+    'Join us on ' . ($summit['date_text'] ?? 'Saturday 17th October 2026, 12 noon') . ' at ' . ($summit['address'] ?? 'Cheetham Hill, Manchester') . '.',
     'Your reference code is your ticket reference. Keep it — you will be asked for it at registration on the day.',
     'The programme and travel notes will follow by email.',
   ],
   'online' => [
-    'Watch the main sessions by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' — your link arrives by email.',
+    'Watch the main sessions by livestream from Manchester on ' . ($summit['date_text'] ?? 'Saturday 17th October 2026, 12 noon') . ' — your link arrives by email.',
     'The workshops, mentoring, clinic and networking happen in the room and are not part of online access.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
   'initiative' => [
     'You are now on the register of Kingdom Producers. Keep your initiative reference safe.',
     'You will be among the first to receive access to the portal as it opens — the repository, directory and opportunities.',
-    'Summit updates come to you too; if you want to attend in Essex, tell us by replying to any email.',
+    'Summit updates come to you too; if you want to attend in Manchester, tell us by replying to any email.',
   ],
 ][$r['participation']] ?? [];
 ?>

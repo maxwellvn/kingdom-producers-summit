@@ -53,7 +53,7 @@ $summit = $summit ?? config('app.summit');
   <?php if (($bodyClass ?? '') === 'page-home'): ?>
     <?php
     // Structured data lets search engines show the date, place and price.
-    $eventStart = '2026-09-19T12:00:00+01:00';
+    $eventStart = '2026-10-17T12:00:00+01:00';
     $schema = [
         '@context' => 'https://schema.org',
         '@type' => 'Event',
@@ -66,8 +66,9 @@ $summit = $summit ?? config('app.summit');
         'url' => $canonical,
         'location' => [
             ['@type' => 'Place', 'name' => $summit['city'],
-             'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Rainham',
-                           'addressRegion' => 'Essex', 'addressCountry' => 'GB']],
+             'address' => ['@type' => 'PostalAddress', 'streetAddress' => '5 Knowsley St, Cheetham Hill',
+                           'addressLocality' => 'Manchester', 'addressRegion' => 'Greater Manchester',
+                           'postalCode' => 'M8 8QN', 'addressCountry' => 'GB']],
             ['@type' => 'VirtualLocation', 'url' => $origin . url('/watch')],
         ],
         'organizer' => [

@@ -2,7 +2,7 @@
 /** @var int $seatsLeft @var int $capacity @var string $flash */
 $errors = \App\Core\Session::get('_errors', []);
 $paths = [
-    'onsite'     => ['Onsite in Rainham', 'Full access to the room. Counts against the ' . number_format($capacity) . ' places.'],
+    'onsite'     => ['Onsite in Manchester', 'Full access to the room. Counts against the ' . number_format($capacity) . ' places.'],
     'online'     => ['Online', 'Livestream access. No limit on numbers.'],
     'initiative' => ['Initiative only', 'On the register, not attending the summit.'],
 ];
