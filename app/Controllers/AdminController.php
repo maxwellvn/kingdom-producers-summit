@@ -166,6 +166,17 @@ final class AdminController extends Controller
         ], 'layouts/admin');
     }
 
+    /** Walk-in registration and the open watch link: the switches used on the day. */
+    public function frontDesk(Request $request): Response
+    {
+        return $this->view('admin/front_desk', [
+            'title'     => 'Front desk',
+            'flash'     => (string) Session::get('admin_flash', ''),
+            'express'   => Setting::get('express_registration', '') === '1',
+            'openToken' => Setting::get('watch_open_token', ''),
+        ], 'layouts/admin');
+    }
+
     public function scanner(Request $request): Response
     {
         return $this->view('admin/scanner', [
@@ -235,19 +246,34 @@ final class AdminController extends Controller
     public function registrations(Request $request): Response
     {
         $page = max(1, (int) $request->input('page', 1));
-        $participation = $request->str('type');
+        $participation = in_array($request->str('type'), ['onsite', 'online'], true) ? $request->str('type') : '';
         $search = mb_substr($request->str('q'), 0, 80);
         $support = in_array($request->str('support'), ['contributed', 'legacy'], true) ? $request->str('support') : '';
 
         return $this->view('admin/registrations', [
             'title'         => 'Registrations',
             'bodyClass'     => 'page-admin',
-            'result'        => Registration::paginate($page, 25, $participation ?: null, $search, $support),
+            'result'        => Registration::paginate($page, 25, $participation ?: 'summit', $search, $support),
             'bulk'          => BulkSender::state(),
             'bulkRunning'   => BulkSender::running(),
             'participation' => $participation,
             'search'        => $search,
             'support'       => $support,
+        ], 'layouts/admin');
+    }
+
+    /** Initiative members: the same list, on its own page, because the Initiative runs across editions. */
+    public function initiative(Request $request): Response
+    {
+        $search = mb_substr($request->str('q'), 0, 80);
+
+        return $this->view('admin/registrations', [
+            'title'         => 'Initiative',
+            'result'        => Registration::paginate(max(1, (int) $request->input('page', 1)), 25, 'initiative', $search),
+            'participation' => 'initiative',
+            'search'        => $search,
+            'support'       => '',
+            'base'          => '/admin/initiative',
         ], 'layouts/admin');
     }
 
@@ -278,23 +304,23 @@ final class AdminController extends Controller
     {
         $what = $request->str('what');
         if (!in_array($what, ['pass', 'live'], true)) {
-            return $this->redirect('/admin/registrations');
+            return $this->redirect('/admin/notifications');
         }
         if (BulkSender::running()) {
             Session::flash('admin_flash', 'A bulk send is already running. Wait for it to finish; progress is shown below.');
-            return $this->redirect('/admin/registrations#bulk');
+            return $this->redirect('/admin/notifications#bulk');
         }
         $audience = $what === 'pass' ? 'onsite'
             : (in_array($request->str('audience'), ['online', 'onsite', 'all', 'initiative'], true) ? $request->str('audience') : 'online');
         $by = (string) Session::get('admin_email', 'admin');
         if (!BulkSender::start($what, $audience, $by)) {
             Session::flash('admin_flash', 'The background sender could not be started on this server.');
-            return $this->redirect('/admin/registrations');
+            return $this->redirect('/admin/notifications');
         }
         StreamEvent::log('stream', ($what === 'pass' ? 'Passes' : 'Live links') . " bulk email started by {$by} ({$audience})");
         Session::flash('admin_flash', ($what === 'pass' ? 'Emailing passes to every onsite person. ' : 'Emailing live links to ' . $audience . ' registrants. ') . 'Progress is shown below; you can leave this page.');
 
-        return $this->redirect('/admin/registrations#bulk');
+        return $this->redirect('/admin/notifications#bulk');
     }
 
     public function bulkStatus(Request $request): Response
@@ -332,6 +358,15 @@ final class AdminController extends Controller
         ], 'layouts/admin');
     }
 
+    public function sponsorships(Request $request): Response
+    {
+        return $this->view('admin/sponsorships', [
+            'title'        => 'Sponsorships',
+            'sponsorships' => Sponsorship::recent(),
+            'sponsorTotal' => Sponsorship::totalPaidPence(),
+        ], 'layouts/admin');
+    }
+
     /** An Espees or Revolut gift has shown up in the account: mark it paid. */
     public function confirmSponsorship(Request $request): Response
     {
@@ -340,7 +375,7 @@ final class AdminController extends Controller
             Sponsorship::markPaid((int) $s['id'], 'manual-' . date('Ymd-His'), (int) $s['amount_pence']);
         }
 
-        return $this->redirect('/admin/payments#sponsorships');
+        return $this->redirect('/admin/sponsorships');
     }
 
     public function savePaymentSettings(Request $request): Response
@@ -387,12 +422,30 @@ final class AdminController extends Controller
     /** The stream: switch it on, set the link, and tell people. */
     public function stream(Request $request): Response
     {
+        return $this->streamPage('stream');
+    }
+
+    /** Polls, questions and the comment board, on their own page. */
+    public function engagement(Request $request): Response
+    {
+        return $this->streamPage('engagement');
+    }
+
+    /** Server health, live log, who is watching and the load test. */
+    public function diagnostics(Request $request): Response
+    {
+        return $this->streamPage('diagnostics');
+    }
+
+    private function streamPage(string $tab): Response
+    {
         if (!LoadTester::running()) {
             LoadTester::cleanup(); // a run that died leaves nothing behind once anyone opens this page
         }
 
         return $this->view('admin/stream', [
-            'title'     => 'Stream',
+            'title'     => ['stream' => 'Stream', 'engagement' => 'Polls & chat', 'diagnostics' => 'Diagnostics'][$tab],
+            'tab'       => $tab,
             'live'      => StreamService::isLive(),
             'url'       => StreamService::url(),
             'urlSd'     => StreamService::standardUrl(),
@@ -422,7 +475,7 @@ final class AdminController extends Controller
     {
         if (LoadTester::running()) {
             Session::flash('admin_flash', 'A load test is already running. Stop it first.');
-            return $this->redirect('/admin/stream#load-test');
+            return $this->redirect('/admin/diagnostics#load-test');
         }
         $viewers = (int) $request->str('viewers');
         $seconds = (int) $request->str('seconds');
@@ -430,7 +483,7 @@ final class AdminController extends Controller
         LoadTester::start($viewers, $seconds);
         Session::flash('admin_flash', "Load test started: {$viewers} simulated viewers for {$seconds} seconds. Results update below.");
 
-        return $this->redirect('/admin/stream#load-test');
+        return $this->redirect('/admin/diagnostics#load-test');
     }
 
     public function stopLoadTest(Request $request): Response
@@ -439,7 +492,7 @@ final class AdminController extends Controller
         StreamEvent::log('loadtest', 'Load test stopped by ' . Session::get('admin_email', 'admin'));
         Session::flash('admin_flash', 'Load test stopped and its test viewers removed.');
 
-        return $this->redirect('/admin/stream#load-test');
+        return $this->redirect('/admin/diagnostics#load-test');
     }
 
     public function loadTestStatus(Request $request): Response
@@ -466,7 +519,7 @@ final class AdminController extends Controller
         StreamEvent::clear();
         Session::flash('admin_flash', 'Live log cleared.');
 
-        return $this->redirect('/admin/stream#live-log');
+        return $this->redirect('/admin/diagnostics#live-log');
     }
 
     /** Put a poll or a question to everyone watching. */
@@ -479,11 +532,11 @@ final class AdminController extends Controller
 
         if ($question === '') {
             Session::flash('admin_flash', 'Write the question first.');
-            return $this->redirect('/admin/stream#prompts');
+            return $this->redirect('/admin/engagement#prompts');
         }
         if ($kind === 'poll' && count($options) < 2) {
             Session::flash('admin_flash', 'A poll needs at least two options, one per line.');
-            return $this->redirect('/admin/stream#prompts');
+            return $this->redirect('/admin/engagement#prompts');
         }
 
         // One at a time: opening a new one closes whatever was open.
@@ -496,7 +549,7 @@ final class AdminController extends Controller
         StreamEvent::log('prompt', ucfirst($kind) . ' posted by ' . Session::get('admin_email', 'admin') . ': ' . mb_substr($question, 0, 100));
         Session::flash('admin_flash', ucfirst($kind) . ' posted. It is on every viewer\'s screen now.');
 
-        return $this->redirect('/admin/stream#prompts');
+        return $this->redirect('/admin/engagement#prompts');
     }
 
     public function closePrompt(Request $request): Response
@@ -511,7 +564,7 @@ final class AdminController extends Controller
             Session::flash('admin_flash', 'Closed. Viewers can no longer answer.');
         }
 
-        return $this->redirect('/admin/stream#prompts');
+        return $this->redirect('/admin/engagement#prompts');
     }
 
     /** Live results for the admin panel. */
@@ -620,7 +673,7 @@ final class AdminController extends Controller
                 break;
         }
 
-        return $this->redirect('/admin#event-day');
+        return $this->redirect('/admin/front-desk');
     }
 
     public function saveComments(Request $request): Response
@@ -633,7 +686,7 @@ final class AdminController extends Controller
             ? 'Comments are open. Viewers holding a pass can post.'
             : 'Comments are closed. Nothing new can be posted.');
 
-        return $this->redirect('/admin/stream#comments');
+        return $this->redirect('/admin/engagement#comments');
     }
 
     /** Remove one comment, or clear the whole board. */
@@ -646,7 +699,7 @@ final class AdminController extends Controller
                 ? 'There were no comments to clear.'
                 : "Cleared {$removed} comment(s).");
 
-            return $this->redirect('/admin/stream#comments');
+            return $this->redirect('/admin/engagement#comments');
         }
 
         $id = (int) $request->str('id');
@@ -655,7 +708,7 @@ final class AdminController extends Controller
             Session::flash('admin_flash', 'Comment removed.');
         }
 
-        return $this->redirect('/admin/stream#comments');
+        return $this->redirect('/admin/engagement#comments');
     }
 
     public function saveStream(Request $request): Response
@@ -711,6 +764,8 @@ final class AdminController extends Controller
             ),
             'queue'     => Announcement::recent(),
             'summitStart' => (string) config('app.summit.starts_at'),
+            'bulk'        => BulkSender::state(),
+            'bulkRunning' => BulkSender::running(),
         ], 'layouts/admin');
     }
 

@@ -2,11 +2,11 @@
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>The Commitment</p>
-      <h1 class="adm-page__title"><?= count($rows) ?> <span class="adm-page__title-sub">card<?= count($rows) === 1 ? '' : 's' ?></span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>People</p>
+      <h1 class="adm-page__title">Commitments <span class="adm-page__title-sub"><?= count($rows) ?> card<?= count($rows) === 1 ? '' : 's' ?></span></h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end">
-      <a class="adm-btn" href="<?= url('/admin/commitments.csv') ?>">Export CSV ↓</a>
+      <a class="adm-btn" href="<?= url('/admin/commitments.csv') ?>"><?= ph('download-simple') ?> Export CSV</a>
     </div>
   </header>
 
@@ -27,7 +27,7 @@
 
   <section class="adm-panel">
     <?php if (!$rows): ?>
-      <p class="adm-muted">No cards yet.</p>
+      <div class="adm-empty"><?= ph('pen-nib') ?><strong>No commitments yet</strong>Show the QR above at the end of a session and cards appear here as people sign.</div>
     <?php else: ?>
     <div class="adm-table-wrap">
       <table class="adm-table">

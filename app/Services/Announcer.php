@@ -76,12 +76,38 @@ final class Announcer
             'checked_in' => 'Checked in at the venue',
             'watched'    => 'Watched online',
             'attended'   => 'Checked in or watched online',
-        ];
+        ] + self::archiveAudiences();
+    }
+
+    /** Past editions can be written to as well: "Everyone from London 2026". */
+    private static function archiveAudiences(): array
+    {
+        try {
+            $out = [];
+            foreach (Archive::all() as $a) {
+                $out['archive:' . $a['slug']] = 'Everyone from ' . $a['label'];
+            }
+
+            return $out;
+        } catch (\Throwable) {
+            return []; // archives table not migrated yet
+        }
+    }
+
+    /** Where a delivery's person is looked up: the live table, or an archived edition's copy. */
+    private static function peopleTable(string $audience): string
+    {
+        return str_starts_with($audience, 'archive:')
+            ? Archive::registrationsTable(substr($audience, 8))
+            : 'registrations';
     }
 
     /** @return array<int,array<string,mixed>> */
     public static function recipients(string $audience): array
     {
+        if (str_starts_with($audience, 'archive:')) {
+            return Archive::recipients(substr($audience, 8));
+        }
         $sql = "SELECT reference, first_name, last_name, email, kingschat_username, participation
                 FROM registrations
                 WHERE status = 'confirmed' AND email NOT LIKE '%@loadtest.invalid'";
@@ -134,10 +160,11 @@ final class Announcer
         $deadline = time() + $seconds;
         $byEmail = (bool) $announcement['by_email'];
         $byKingsChat = (bool) $announcement['by_kingschat'];
+        $people = self::peopleTable((string) $announcement['audience']);
 
         while (time() < $deadline) {
             $row = $pdo->prepare("SELECT d.*, r.first_name, r.last_name, r.kingschat_username, r.participation
-                                  FROM announcement_deliveries d JOIN registrations r ON r.reference = d.reference
+                                  FROM announcement_deliveries d JOIN `{$people}` r ON r.reference = d.reference
                                   WHERE d.announcement_id = ? AND d.status = 'pending' ORDER BY d.id LIMIT 1");
             $row->execute([$id]);
             $person = $row->fetch();
@@ -233,6 +260,9 @@ final class Announcer
     public static function timing(?int $now = null): array
     {
         $now ??= time();
+        if ((string) config('app.summit.starts_at') === '') {
+            return ['key' => 'later', 'lead' => 'The date is to be announced', 'detail' => 'We will write as soon as it is set.'];
+        }
         $start = (int) strtotime((string) config('app.summit.starts_at'));
         $tz = new \DateTimeZone('Europe/London');
         $s = (new \DateTimeImmutable('@' . $start))->setTimezone($tz);
@@ -240,12 +270,17 @@ final class Announcer
         $diff = $start - $now;
         $days = (int) $n->setTime(0, 0)->diff($s->setTime(0, 0))->format('%r%a');
         $timeText = $s->format('g:i') === '12:00' ? '12 noon' : $s->format('g:ia');
+        $hidden = (bool) config('app.summit.time_hidden', false);
+        $at = $hidden ? '' : ' at ' . $timeText;
 
         if ($diff <= 0 && $diff > -8 * 3600) {
             return ['key' => 'live', 'lead' => "We're live now", 'detail' => 'The summit started at ' . $timeText . ' today.'];
         }
         if ($diff <= -8 * 3600) {
             return ['key' => 'past', 'lead' => 'The summit was on ' . $s->format('l j F'), 'detail' => 'Thank you for being part of it.'];
+        }
+        if ($days === 0 && $hidden) {
+            return ['key' => 'today', 'lead' => "It's today", 'detail' => 'Today.'];
         }
         if ($days === 0) {
             $hours = (int) floor($diff / 3600);
@@ -255,13 +290,13 @@ final class Announcer
             return ['key' => 'today', 'lead' => $lead, 'detail' => "Today at {$timeText}."];
         }
         if ($days === 1) {
-            return ['key' => 'tomorrow', 'lead' => "It's tomorrow", 'detail' => $s->format('l j F') . " at {$timeText}."];
+            return ['key' => 'tomorrow', 'lead' => "It's tomorrow", 'detail' => $s->format('l j F') . "{$at}."];
         }
         if ($days <= 7) {
-            return ['key' => 'week', 'lead' => "It's this " . $s->format('l') . ", in {$days} days", 'detail' => $s->format('l j F') . " at {$timeText}."];
+            return ['key' => 'week', 'lead' => "It's this " . $s->format('l') . ", in {$days} days", 'detail' => $s->format('l j F') . "{$at}."];
         }
 
-        return ['key' => 'later', 'lead' => "It's in {$days} days", 'detail' => $s->format('l j F') . " at {$timeText}."];
+        return ['key' => 'later', 'lead' => "It's in {$days} days", 'detail' => $s->format('l j F') . "{$at}."];
     }
 
     /** The live-link message, sent to one person by email and KingsChat. Onsite and online only. */
@@ -343,7 +378,7 @@ final class Announcer
             '{directions_url}' => 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) ($summit['venue']['query'] ?? '')),
             '{summit_date}' => (string) ($summit['date_text'] ?? ''),
             '{summit_city}' => (string) ($summit['city'] ?? ''),
-            '{summit_venue}' => implode(', ', array_filter([$summit['venue']['unit'] ?? '', $summit['venue']['name'] ?? '', $summit['venue']['street'] ?? '', $summit['venue']['postcode'] ?? ''])),
+            '{summit_venue}' => venue_line(),
             '{email}'       => (string) ($person['email'] ?? ''),
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),

@@ -281,7 +281,10 @@ final class Registration
             $params['since'] = self::contributionsSince();
         }
 
-        if ($participation && in_array($participation, self::PARTICIPATION, true)) {
+        // 'summit': everyone with a place at the event; the Initiative is listed on its own page.
+        if ($participation === 'summit') {
+            $where[] = "r.participation <> 'initiative'";
+        } elseif ($participation && in_array($participation, self::PARTICIPATION, true)) {
             $where[] = 'r.participation = :participation';
             $params['participation'] = $participation;
         }

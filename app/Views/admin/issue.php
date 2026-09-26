@@ -2,23 +2,31 @@
 /** @var string $flash */
 $errors = \App\Core\Session::get('_errors', []);
 $paths = [
-    'onsite'     => ['Onsite in Rainham', 'Full access to the room.'],
-    'online'     => ['Online', 'Livestream access. No limit on numbers.'],
-    'initiative' => ['Initiative only', 'On the register, not attending the summit.'],
+    'onsite'     => ['map-pin', 'Onsite in ' . config('app.summit.place'), 'Full access to the room. Gets a QR pass for the door.'],
+    'online'     => ['broadcast', 'Online', 'Livestream access. No limit on numbers.'],
+    'initiative' => ['plant', 'Initiative only', 'On the register for the 90-day journey, not attending.'],
 ];
+$picked = (string) old('participation');
+$field = static function (string $id, string $label, string $input, bool $optional = false, string $hint = ''): void {
+    $err = error_for($id);
+    echo '<div class="adm-field' . ($err ? ' has-error' : '') . '">'
+        . '<label class="adm-field__label" for="' . e($id) . '">' . e($label) . ($optional ? ' <span class="adm-field__opt">Optional</span>' : '') . '</label>'
+        . $input
+        . ($hint !== '' ? '<p class="adm-field__hint">' . e($hint) . '</p>' : '')
+        . ($err ? '<p class="adm-field__error">' . ph('warning-circle') . ' ' . e($err) . '</p>' : '')
+        . '</div>';
+};
 ?>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Registrations</p>
-      <h1 class="adm-page__title">Issue <span class="adm-page__title-sub">a place</span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>People</p>
+      <h1 class="adm-page__title">Issue a place</h1>
     </div>
   </header>
 
   <?php if ($flash !== ''): ?>
-    <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5)">
-      <span><?= e($flash) ?></span>
-    </div>
+    <div class="form__alert" role="status"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
   <?php if ($errors): ?>
@@ -28,79 +36,53 @@ $paths = [
     </div>
   <?php endif; ?>
 
-  <p class="adm-muted" style="max-width:70ch;margin-bottom:1.6rem">
-    Registers someone on their behalf, for guests, speakers and anyone you add by hand.
-    They are emailed their reference and pass straight away, and messaged on KingsChat if you add a username.
-  </p>
-
-  <form method="post" action="<?= url('/admin/issue') ?>" class="form" style="max-width:720px">
+  <form method="post" action="<?= url('/admin/issue') ?>" class="adm-form">
     <?= csrf_field() ?>
 
-    <div class="field <?= error_for('participation') ? 'has-error' : '' ?>">
-      <span class="field__label">Which place</span>
-      <div class="chips" role="radiogroup">
-        <?php foreach ($paths as $value => [$label, $hint]): ?>
-          <label class="chip">
-            <input type="radio" name="participation" value="<?= $value ?>" <?= old_checked('participation', $value) ?> required>
-            <span><?= e($label) ?></span>
+    <section class="adm-panel adm-form__section">
+      <header class="adm-form__head">
+        <h2 class="adm-panel__title">Which place</h2>
+        <p>For guests, speakers and anyone you add by hand. They are emailed their reference and pass straight away.</p>
+      </header>
+      <div class="adm-choices" role="radiogroup" aria-label="Which place">
+        <?php foreach ($paths as $value => [$ico, $label, $hint]): ?>
+          <label class="adm-choice">
+            <input type="radio" name="participation" value="<?= e($value) ?>" <?= $picked === $value || ($picked === '' && $value === 'onsite') ? 'checked' : '' ?> required>
+            <span class="adm-choice__icon"><?= ph($ico) ?></span>
+            <span class="adm-choice__text"><strong><?= e($label) ?></strong><span><?= e($hint) ?></span></span>
+            <span class="adm-choice__tick"><?= ph('check') ?></span>
           </label>
         <?php endforeach; ?>
       </div>
-      <p class="field__hint"><?= e($paths['onsite'][1]) ?></p>
-      <?php if ($err = error_for('participation')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-    </div>
+      <?php if ($err = error_for('participation')): ?><p class="adm-field__error"><?= ph('warning-circle') ?> <?= e($err) ?></p><?php endif; ?>
+    </section>
 
-    <div class="form__row form__row--title">
-      <div class="field field--sm">
-        <label for="title">Title <span class="field__opt">optional</span></label>
-        <select id="title" name="title">
-          <option value="">—</option>
-          <?php foreach (['Mr', 'Mrs', 'Ms', 'Miss', 'Brother', 'Sister', 'Dr', 'Pastor', 'Deacon', 'Deaconess', 'Rev'] as $t): ?>
-            <option value="<?= $t ?>" <?= old('title') === $t ? 'selected' : '' ?>><?= $t ?></option>
-          <?php endforeach; ?>
-        </select>
+    <section class="adm-panel adm-form__section">
+      <header class="adm-form__head"><h2 class="adm-panel__title">Who</h2></header>
+      <div class="adm-form__grid adm-form__grid--name">
+        <?php
+        $titles = '<option value="">None</option>';
+        foreach (['Mr', 'Mrs', 'Ms', 'Miss', 'Brother', 'Sister', 'Dr', 'Pastor', 'Deacon', 'Deaconess', 'Rev'] as $t) {
+            $titles .= '<option value="' . $t . '"' . (old('title') === $t ? ' selected' : '') . '>' . $t . '</option>';
+        }
+        $field('title', 'Title', '<select id="title" name="title">' . $titles . '</select>', true);
+        $field('first_name', 'First name', '<input id="first_name" name="first_name" type="text" autocomplete="off" value="' . old('first_name') . '" required>');
+        $field('last_name', 'Surname', '<input id="last_name" name="last_name" type="text" autocomplete="off" value="' . old('last_name') . '" required>');
+        ?>
       </div>
-      <div class="field <?= error_for('first_name') ? 'has-error' : '' ?>">
-        <label for="first_name">First name</label>
-        <input id="first_name" name="first_name" type="text" value="<?= old('first_name') ?>" required>
-        <?php if ($err = error_for('first_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
+      <div class="adm-form__grid adm-form__grid--2">
+        <?php
+        $field('email', 'Email address', '<input id="email" name="email" type="email" autocomplete="off" inputmode="email" value="' . old('email') . '" required>', false, 'Their reference and pass go here.');
+        $field('kingschat_username', 'KingsChat username', '<span class="adm-input-affix"><span>@</span><input id="kingschat_username" name="kingschat_username" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="username" value="' . old('kingschat_username') . '"></span>', true, 'They also get the pass by KingsChat message.');
+        $field('phone', 'Phone', '<input id="phone" name="phone" type="tel" autocomplete="off" inputmode="tel" value="' . old('phone') . '">', true);
+        $field('zone', 'Zone', '<input id="zone" name="zone" type="text" autocomplete="off" value="' . old('zone') . '">', true);
+        ?>
       </div>
-      <div class="field <?= error_for('last_name') ? 'has-error' : '' ?>">
-        <label for="last_name">Surname</label>
-        <input id="last_name" name="last_name" type="text" value="<?= old('last_name') ?>" required>
-        <?php if ($err = error_for('last_name')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-      </div>
-    </div>
+      <?php $field('note', 'Why it was issued', '<input id="note" name="note" type="text" maxlength="255" placeholder="Guest speaker" value="' . old('note') . '">', true, 'Shown on the registration so the team knows where it came from.'); ?>
+    </section>
 
-    <div class="form__row">
-      <div class="field <?= error_for('email') ? 'has-error' : '' ?>">
-        <label for="email">Email address</label>
-        <input id="email" name="email" type="email" value="<?= old('email') ?>" required>
-        <p class="field__hint">Their reference and pass go here.</p>
-        <?php if ($err = error_for('email')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
-      </div>
-      <div class="field">
-        <label for="kingschat_username">KingsChat username <span class="field__opt">optional</span></label>
-        <input id="kingschat_username" name="kingschat_username" type="text" placeholder="username" value="<?= old('kingschat_username') ?>">
-      </div>
+    <div class="adm-form__actions">
+      <button type="submit" class="adm-btn adm-btn--dark adm-btn--lg"><?= ph('ticket') ?> Issue the place</button>
     </div>
-
-    <div class="form__row">
-      <div class="field">
-        <label for="phone">Phone <span class="field__opt">optional</span></label>
-        <input id="phone" name="phone" type="tel" value="<?= old('phone') ?>">
-      </div>
-      <div class="field">
-        <label for="zone">Zone <span class="field__opt">optional</span></label>
-        <input id="zone" name="zone" type="text" value="<?= old('zone') ?>">
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="note">Why it was issued <span class="field__opt">optional</span></label>
-      <input id="note" name="note" type="text" maxlength="255" placeholder="e.g. Guest speaker" value="<?= old('note') ?>">
-    </div>
-
-    <button type="submit" class="adm-btn adm-btn--dark">Issue the place</button>
   </form>
 </section>

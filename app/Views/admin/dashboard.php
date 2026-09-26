@@ -5,8 +5,8 @@ $max = max(1, ...array_column($stages, 'count'));
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Overview</p>
-      <h1 class="adm-page__title">Registrations</h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span><?= e((string) config('app.summit.edition')) ?></p>
+      <h1 class="adm-page__title">Overview</h1>
     </div>
     <span class="mono adm-page__meta">Updated <?= date('j M Y, H:i') ?></span>
   </header>
@@ -16,62 +16,26 @@ $max = max(1, ...array_column($stages, 'count'));
     <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5);margin-bottom:1.2rem"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
-  <section id="event-day" class="adm-panel eventday">
-    <h2 class="adm-panel__title">Event day</h2>
-    <div class="eventday__grid">
-      <div class="eventday__item">
-        <div>
-          <strong>Express registration</strong>
-          <span class="mono eventday__state <?= $express ? 'is-on' : '' ?>"><?= $express ? 'On' : 'Off' ?></span>
-          <p>Walk-ins at the desk fill in name, contact and consent only. Everything else is skipped.</p>
-        </div>
-        <form method="post" action="<?= url('/admin/event-day') ?>">
-          <?= csrf_field() ?>
-          <input type="hidden" name="action" value="<?= $express ? 'express_off' : 'express_on' ?>">
-          <button type="submit" class="adm-btn <?= $express ? '' : 'adm-btn--solid' ?>"><?= $express ? 'Turn off' : 'Turn on' ?></button>
-        </form>
-      </div>
-      <div class="eventday__item">
-        <div>
-          <strong>Open watch link</strong>
-          <span class="mono eventday__state <?= $openToken !== '' ? 'is-on' : '' ?>"><?= $openToken !== '' ? 'Active' : 'Off' ?></span>
-          <p>Anyone with the link enters the stream with just a name and email; unregistered people are added as online registrants.</p>
-          <?php if ($openToken !== ''): ?>
-            <?php $openUrl = site_url() . '/watch?open=' . $openToken; ?>
-            <p class="eventday__link"><input type="text" readonly value="<?= e($openUrl) ?>" onclick="this.select()" aria-label="Open watch link"> <button type="button" class="adm-btn" data-copy="<?= e($openUrl) ?>">Copy</button></p>
-          <?php endif; ?>
-        </div>
-        <form method="post" action="<?= url('/admin/event-day') ?>" style="display:flex;gap:.4rem;flex-wrap:wrap">
-          <?= csrf_field() ?>
-          <?php if ($openToken !== ''): ?>
-            <button type="submit" name="action" value="open_link_new" class="adm-btn" onclick="return confirm('Make a new link? The old one stops working.')">New link</button>
-            <button type="submit" name="action" value="open_link_off" class="adm-btn">Revoke</button>
-          <?php else: ?>
-            <button type="submit" name="action" value="open_link_new" class="adm-btn adm-btn--solid">Create link</button>
-          <?php endif; ?>
-        </form>
-      </div>
-    </div>
-  </section>
 
   <div class="adm-stats">
     <div class="adm-stat adm-stat--lead">
-      <span class="adm-stat__label mono">Total registered</span>
-      <span class="adm-stat__value"><?= number_format($stats['total']) ?></span>
+      <span class="adm-stat__label mono">Summit places</span>
+      <span class="adm-stat__value"><?= number_format($stats['onsite'] + $stats['online']) ?></span>
       <span class="adm-stat__sub mono">+<?= $stats['today'] ?> today · <?= $stats['countries'] ?> countries</span>
     </div>
     <div class="adm-stat">
-      <span class="adm-stat__label mono">A · Onsite</span>
+      <span class="adm-stat__label mono">Onsite</span>
       <span class="adm-stat__value"><?= number_format($stats['onsite']) ?></span>
     </div>
     <div class="adm-stat">
-      <span class="adm-stat__label mono">B · Online</span>
+      <span class="adm-stat__label mono">Online</span>
       <span class="adm-stat__value"><?= number_format($stats['online']) ?></span>
     </div>
-    <div class="adm-stat">
-      <span class="adm-stat__label mono">C · Initiative</span>
+    <a class="adm-stat" href="<?= url('/admin/initiative') ?>">
+      <span class="adm-stat__label mono">Initiative members</span>
       <span class="adm-stat__value"><?= number_format($stats['initiative']) ?></span>
-    </div>
+      <span class="adm-stat__sub mono">Carries on between editions</span>
+    </a>
     <a class="adm-stat adm-stat--attendance" href="<?= url('/admin/scanner') ?>">
       <span class="adm-stat__label mono">Checked in today</span>
       <span class="adm-stat__value"><?= number_format($attendance['today']) ?></span>
@@ -82,7 +46,7 @@ $max = max(1, ...array_column($stages, 'count'));
   <section class="adm-panel" style="margin-bottom:1.4rem" data-connected data-url="<?= url('/admin/analytics/live') ?>">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
       <h2 class="adm-panel__title">Connected to the stream <span class="mono adm-muted" style="font-size:.8rem" data-connected-count><?= count($watchers) ?> watching</span></h2>
-      <a class="mono adm-muted" style="font-size:.72rem" href="<?= url('/admin/stream') ?>">Stream controls →</a>
+      <a class="mono adm-muted" style="font-size:.72rem" href="<?= url('/admin/stream') ?>">Stream controls <?= ph('arrow-right') ?></a>
     </div>
     <div class="adm-table-wrap" style="max-height:18rem;overflow-y:auto;margin-top:.6rem">
       <table class="adm-table">
@@ -118,13 +82,13 @@ $max = max(1, ...array_column($stages, 'count'));
       </ul>
     </section>
 
-    <section class="adm-panel adm-panel--wide">
+    <section class="adm-panel">
       <div class="adm-panel__head">
         <h2 class="adm-panel__title">Most recent</h2>
-        <a class="mono adm-link" href="<?= url('/admin/registrations') ?>">All registrations →</a>
+        <a class="mono adm-link" href="<?= url('/admin/registrations') ?>">All registrations <?= ph('arrow-right') ?></a>
       </div>
       <?php if (!$recent): ?>
-        <p class="adm-empty mono">No registrations yet.</p>
+        <div class="adm-empty"><?= ph('users-three') ?><strong>No registrations yet</strong>New sign-ups show here the moment they register.</div>
       <?php else: ?>
         <div class="adm-table-wrap">
         <table class="adm-table">
@@ -167,11 +131,4 @@ $max = max(1, ...array_column($stages, 'count'));
     }
     setInterval(tick, 15000);
   })();
-  document.querySelectorAll('[data-copy]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var t = b.getAttribute('data-copy'), done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
-      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done); }
-      else { var i = b.previousElementSibling; i.select(); document.execCommand('copy'); done(); }
-    });
-  });
 </script>

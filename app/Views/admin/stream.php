@@ -14,21 +14,23 @@ $stateHelp = [
 ][$state];
 $hasSource = $url !== '';
 $field = 'width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff;font:inherit';
-$label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648';
+$label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#4F5568';
+$tab = $tab ?? 'stream';
 ?>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Live</p>
-      <h1 class="adm-page__title">Stream</h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span><?= $tab === 'diagnostics' ? 'Insights' : 'Event day' ?></p>
+      <h1 class="adm-page__title"><?= ['stream' => 'Stream', 'engagement' => 'Polls & chat', 'diagnostics' => 'Diagnostics'][$tab] ?></h1>
     </div>
-    <a class="adm-btn" href="<?= url('/watch') ?>" target="_blank" rel="noopener">Open the watch page ↗</a>
+    <a class="adm-btn" href="<?= url('/watch') ?>" target="_blank" rel="noopener">Open the watch page <?= ph('arrow-square-out') ?></a>
   </header>
 
   <?php if ($flash !== ''): ?>
     <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5)"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
+  <?php if ($tab === 'stream'): ?>
   <!-- 1. Control bar: what viewers see right now, and one button to change it. -->
   <div class="control control--<?= e($state) ?>">
     <div class="control__status">
@@ -64,10 +66,12 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
     <?php endif; ?>
   </div>
 
-  <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
+  <?php endif; ?>
+
+  <?php if ($tab === 'diagnostics'): ?>
     <!-- 1b. Health: this box and the video relay, as bars. Green is fine, amber is near the limit, red is trouble. -->
   <div data-server-load data-status-url="<?= url('/admin/stream/load-test') ?>"
-       style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem 1.4rem;margin:.8rem 0 1.6rem;padding:.9rem 1rem;background:#FBF8F0;border:1px solid rgba(27,34,66,.14)">
+       style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem 1.4rem;margin:.8rem 0 1.6rem;padding:.9rem 1rem;background:#FFFFFF;border:1px solid rgba(27,34,66,.14)">
     <?php
     $gauges = [
         ['cpu', 'Server CPU', 'load / cores'],
@@ -79,17 +83,21 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         if ($key === 'relay' && !env('STREAM_RELAY_URL', '')) continue; ?>
     <div data-g="<?= $key ?>">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem">
-        <span class="mono" style="font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648"><?= $name ?></span>
+        <span class="mono" style="font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:#4F5568"><?= $name ?></span>
         <strong class="mono" data-g-value style="font-size:.85rem">–</strong>
       </div>
       <div style="height:8px;margin:.4rem 0 .25rem;background:rgba(27,34,66,.12);overflow:hidden">
         <div data-g-bar style="height:100%;width:0;background:#9E9E9E;transition:width .4s ease-out,background-color .4s ease-out"></div>
       </div>
-      <span class="mono" data-g-note style="font-size:.7rem;color:#5C5648"><?= $sub ?></span>
+      <span class="mono" data-g-note style="font-size:.7rem;color:#4F5568"><?= $sub ?></span>
     </div>
     <?php endforeach; ?>
   </div>
 
+  <?php endif; ?>
+
+  <?php if ($tab === 'stream'): ?>
+  <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
   <!-- 2. Setup: the source and the heading. Rarely changes. -->
     <div class="adm-panel">
       <h2 class="adm-panel__title" style="margin-bottom:.3rem">Setup</h2>
@@ -99,12 +107,12 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         <label style="display:block">
           <span class="mono" style="<?= $label ?>">Stream link</span>
           <input type="url" name="stream_url" value="<?= e($url) ?>" placeholder="https://…/index.m3u8 or a YouTube link" style="<?= $field ?>">
-          <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">Detected: <strong><?= e($kindLabel) ?></strong>. HLS, YouTube, Vimeo, Facebook, Twitch or a video file.</span>
+          <span style="display:block;margin-top:.35rem;color:#4F5568;font-size:.85rem">Detected: <strong><?= e($kindLabel) ?></strong>. HLS, YouTube, Vimeo, Facebook, Twitch or a video file.</span>
         </label>
         <label style="display:block">
           <span class="mono" style="<?= $label ?>">Standard quality link (optional)</span>
           <input type="url" name="stream_url_sd" value="<?= e($urlSd ?? '') ?>" placeholder="https://…/master.m3u8 at a lower bitrate" style="<?= $field ?>">
-          <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">HLS only. When set, viewers get HD and Standard buttons on the video. Their open pages refresh themselves within seconds.</span>
+          <span style="display:block;margin-top:.35rem;color:#4F5568;font-size:.85rem">HLS only. When set, viewers get HD and Standard buttons on the video. Their open pages refresh themselves within seconds.</span>
         </label>
         <label style="display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem">
           <input type="checkbox" name="stream_proxy" value="1" <?= $proxy ? 'checked' : '' ?> style="margin-top:.25rem">
@@ -133,18 +141,18 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         <label style="display:block">
           <span class="mono" style="<?= $label ?>">Scheduled start</span>
           <input type="datetime-local" name="stream_starts_at" value="<?= e($startsAtValue) ?>" style="padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff;font:inherit">
-          <span style="display:block;margin-top:.35rem;color:#5C5648;font-size:.85rem">Shows a countdown on the "Starting soon" screen. Going live is still your button above; the countdown does not start the video.</span>
+          <span style="display:block;margin-top:.35rem;color:#4F5568;font-size:.85rem">Shows a countdown on the "Starting soon" screen. Going live is still your button above; the countdown does not start the video.</span>
         </label>
         <label style="display:block">
-          <span class="mono" style="<?= $label ?>">Headline <span style="text-transform:none;letter-spacing:0;color:#756f60">(optional)</span></span>
+          <span class="mono" style="<?= $label ?>">Headline <span style="text-transform:none;letter-spacing:0;color:#858B9C">(optional)</span></span>
           <input type="text" name="stream_headline" value="<?= e($headlineValue) ?>" maxlength="120" placeholder="<?= e($holding['headline']) ?>" style="<?= $field ?>">
         </label>
         <label style="display:block">
-          <span class="mono" style="<?= $label ?>">Message <span style="text-transform:none;letter-spacing:0;color:#756f60">(optional)</span></span>
+          <span class="mono" style="<?= $label ?>">Message <span style="text-transform:none;letter-spacing:0;color:#858B9C">(optional)</span></span>
           <textarea name="stream_message" rows="2" maxlength="300" placeholder="<?= e($holding['message']) ?>" style="<?= $field ?>"><?= e($messageValue) ?></textarea>
         </label>
         <label style="display:block">
-          <span class="mono" style="<?= $label ?>">Now / next <span style="text-transform:none;letter-spacing:0;color:#756f60">(optional, shows while live too)</span></span>
+          <span class="mono" style="<?= $label ?>">Now / next <span style="text-transform:none;letter-spacing:0;color:#858B9C">(optional, shows while live too)</span></span>
           <input type="text" name="stream_now" value="<?= e($nowValue) ?>" maxlength="160" placeholder="Now: Opening session · Next: Masterclass, 13:00" style="<?= $field ?>">
         </label>
         <div><button type="submit" class="adm-btn adm-btn--dark">Save holding screen</button></div>
@@ -152,6 +160,9 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
     </div>
   </div>
 
+  <?php endif; ?>
+
+  <?php if ($tab === 'engagement'): ?>
   <!-- 4. Polls and questions -->
   <section id="prompts" class="adm-panel" style="margin-top:1.4rem" data-prompts data-results-url="<?= url('/admin/prompts/results') ?>">
     <h2 class="adm-panel__title" style="margin-bottom:.3rem">Polls &amp; questions</h2>
@@ -167,7 +178,7 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
         <input type="text" name="question" maxlength="255" required placeholder="Which session are you most looking forward to?" style="<?= $field ?>">
       </label>
       <label style="display:block" data-prompt-options>
-        <span class="mono" style="<?= $label ?>">Options, one per line <span style="text-transform:none;letter-spacing:0;color:#756f60">(2 to <?= \App\Models\Prompt::MAX_OPTIONS ?>)</span></span>
+        <span class="mono" style="<?= $label ?>">Options, one per line <span style="text-transform:none;letter-spacing:0;color:#858B9C">(2 to <?= \App\Models\Prompt::MAX_OPTIONS ?>)</span></span>
         <textarea name="options" rows="3" placeholder="Masterclass&#10;Business clinic&#10;Networking" style="<?= $field ?>"></textarea>
       </label>
       <div><button type="submit" class="adm-btn adm-btn--dark">Post to viewers</button></div>
@@ -193,8 +204,6 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
       <?php endforeach; ?>
     </div>
   </section>
-
-</section>
 
 <section id="comments" style="margin-top:1.4rem">
   <div class="adm-panel">
@@ -248,12 +257,15 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
   </div>
 </section>
 
+<?php endif; ?>
+
+<?php if ($tab === 'diagnostics'): ?>
 <section id="live-log" style="margin-top:1.4rem" data-livelog data-log-url="<?= url('/admin/stream/log') ?>">
   <div class="adm-panel">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.6rem 1rem;margin-bottom:.8rem">
       <h2 class="adm-panel__title" style="margin:0">Live log <span class="livelog__dot" data-log-dot aria-hidden="true"></span></h2>
       <div style="display:flex;gap:.6rem;align-items:center">
-        <label class="mono" style="display:flex;gap:.4rem;align-items:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#5C5648"><input type="checkbox" data-log-follow checked> Follow</label>
+        <label class="mono" style="display:flex;gap:.4rem;align-items:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#4F5568"><input type="checkbox" data-log-follow checked> Follow</label>
         <form method="post" action="<?= url('/admin/stream/log/clear') ?>" onsubmit="return confirm('Clear the live log?')">
           <?= csrf_field() ?>
           <button type="submit" class="adm-btn" style="padding:.3rem .7rem;font-size:.7rem">Clear</button>
@@ -304,11 +316,11 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
     <form method="post" action="<?= url('/admin/stream/load-test') ?>" style="display:flex;flex-wrap:wrap;gap:.8rem 1.2rem;align-items:flex-end">
       <?= csrf_field() ?>
       <label style="display:block">
-        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Viewers</span>
+        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#4F5568">Viewers</span>
         <input type="number" name="viewers" value="50" min="1" max="<?= \App\Services\LoadTester::MAX_VIEWERS ?>" required style="width:8rem;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
       </label>
       <label style="display:block">
-        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648">Seconds</span>
+        <span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#4F5568">Seconds</span>
         <input type="number" name="seconds" value="60" min="10" max="<?= \App\Services\LoadTester::MAX_SECONDS ?>" required style="width:8rem;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">
       </label>
       <button type="submit" class="adm-btn adm-btn--dark" <?= $loadTestRunning ? 'disabled' : '' ?>>Start test</button>
@@ -339,6 +351,9 @@ $label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5
       <p class="adm-muted loadtest__verdict" data-lt-verdict></p>
     </div>
   </div>
+</section>
+
+<?php endif; ?>
 </section>
 
 <script>

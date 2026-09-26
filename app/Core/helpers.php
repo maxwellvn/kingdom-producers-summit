@@ -219,8 +219,22 @@ function error_for(string $key): ?string
 
 function icon_arrow(string $class = 'icon-arrow'): string
 {
-    return sprintf(
-        '<svg class="%s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg>',
-        e($class)
-    );
+    return ph('arrow-right', $class);
+}
+
+/** The venue on one line, or "Venue to be announced" until the admin sets one. */
+function venue_line(): string
+{
+    $v = (array) config('app.summit.venue');
+    if (trim((string) ($v['name'] ?? '')) === '') {
+        return 'Venue to be announced';
+    }
+
+    return implode(', ', array_filter([$v['unit'] ?? '', $v['name'] ?? '', $v['street'] ?? '', trim(($v['town'] ?? '') . ' ' . ($v['postcode'] ?? ''))]));
+}
+
+/** A Phosphor icon (regular weight, self-hosted). Decorative: the text beside it carries the meaning. */
+function ph(string $name, string $class = ''): string
+{
+    return '<i class="ph ph-' . e($name) . ($class !== '' ? ' ' . e($class) : '') . '" aria-hidden="true"></i>';
 }

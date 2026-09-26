@@ -69,7 +69,7 @@ final class RegistrationMail
         $qrCid = 'access-pass';
         $qrUrl = $qrPng !== null ? 'cid:' . $qrCid : htmlspecialchars($site . '/access/qr?token=' . rawurlencode($accessToken), ENT_QUOTES, 'UTF-8');
         $v = (array) config('app.summit.venue');
-        $venueLine = htmlspecialchars($v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'], ENT_QUOTES, 'UTF-8');
+        $venueLine = htmlspecialchars(venue_line(), ENT_QUOTES, 'UTF-8');
         $directions = htmlspecialchars('https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']), ENT_QUOTES, 'UTF-8');
 
         $subject = $timing['lead'] . ' — your QR pass for the summit (' . (string) $registration['reference'] . ')';
@@ -218,7 +218,7 @@ final class RegistrationMail
         }
 
         $v = (array) config('app.summit.venue');
-        $venueLine = htmlspecialchars($v['unit'] . ', ' . $v['name'] . ', ' . $v['street'] . ', ' . $v['town'] . ' ' . $v['postcode'], ENT_QUOTES, 'UTF-8');
+        $venueLine = htmlspecialchars(venue_line(), ENT_QUOTES, 'UTF-8');
         $directions = htmlspecialchars('https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']), ENT_QUOTES, 'UTF-8');
         $passBlock = $onsite
             ? '<p style="margin:22px 0 0;color:#6e6857;font-size:15px;line-height:1.6"><strong style="color:#1b2242">Where:</strong> ' . $venueLine . '</p>'

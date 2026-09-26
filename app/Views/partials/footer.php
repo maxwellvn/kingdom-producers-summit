@@ -20,7 +20,7 @@
       <span class="footer__kicker mono"><?= e(config('app.summit.edition')) ?></span>
       <p class="footer__office"><?= e($summit['office']) ?></p>
       <?php $fv = (array) config('app.summit.venue'); ?>
-      <p class="footer__venue mono"><?= e($fv['unit']) ?>, <?= e($fv['name']) ?>, <?= e($fv['street']) ?>, <?= e($fv['town']) ?> <?= e($fv['postcode']) ?></p>
+      <p class="footer__venue mono"><?= e(venue_line()) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
     </div>
 

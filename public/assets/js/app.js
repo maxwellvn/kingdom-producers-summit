@@ -1125,3 +1125,15 @@
     setInterval(load, 3000); // comments and any poll or question, a few seconds at most
   })();
 })();
+
+/* FAQ: one answer open at a time. Browsers that know <details name> do this themselves; this covers the rest. */
+(function () {
+  var items = document.querySelectorAll('details.faq__item');
+  if (!items.length || 'name' in HTMLDetailsElement.prototype) return;
+  items.forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      items.forEach(function (o) { if (o !== d) o.open = false; });
+    });
+  });
+})();

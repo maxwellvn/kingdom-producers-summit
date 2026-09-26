@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AdminController;
+use App\Controllers\ArchiveController;
 use App\Controllers\ConsentController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
@@ -63,6 +64,7 @@ $router->get('/sponsor/send', [SponsorController::class, 'send']);
 $router->post('/sponsor/send', [SponsorController::class, 'claim'], [VerifyCsrf::class]);
 $router->get('/sponsor/stripe/return', [SponsorController::class, 'stripeReturn']);
 $router->get('/sponsor/thanks', [SponsorController::class, 'thanks']);
+$router->get('/admin/sponsorships', [AdminController::class, 'sponsorships'], [RequireAdmin::class]);
 $router->post('/admin/sponsorships/confirm', [AdminController::class, 'confirmSponsorship'], [VerifyCsrf::class, RequireAdmin::class]);
 
 $router->post('/webhooks/stripe', [PaymentController::class, 'stripeWebhook']);
@@ -80,7 +82,9 @@ $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::cl
 $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin', [AdminController::class, 'dashboard'], [RequireAdmin::class]);
 $router->get('/admin/registrations', [AdminController::class, 'registrations'], [RequireAdmin::class]);
+$router->get('/admin/initiative', [AdminController::class, 'initiative'], [RequireAdmin::class]);
 $router->get('/admin/scanner', [AdminController::class, 'scanner'], [RequireAdmin::class]);
+$router->get('/admin/front-desk', [AdminController::class, 'frontDesk'], [RequireAdmin::class]);
 $router->get('/admin/payments', [AdminController::class, 'paymentSettings'], [RequireAdmin::class]);
 $router->post('/admin/payments', [AdminController::class, 'savePaymentSettings'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/registrations/resend', [AdminController::class, 'resend'], [VerifyCsrf::class, RequireAdmin::class]);
@@ -94,6 +98,8 @@ $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/check-in/search', [AdminController::class, 'checkInSearch'], [RequireAdmin::class]);
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
+$router->get('/admin/engagement', [AdminController::class, 'engagement'], [RequireAdmin::class]);
+$router->get('/admin/diagnostics', [AdminController::class, 'diagnostics'], [RequireAdmin::class]);
 $router->post('/admin/stream', [AdminController::class, 'saveStream'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/stream/state', [AdminController::class, 'setStreamState'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/notifications', [AdminController::class, 'notifications'], [RequireAdmin::class]);
@@ -123,3 +129,11 @@ $router->post('/admin/kingschat/callback', [AdminController::class, 'kingschatRe
 $router->post('/admin/kingschat/disconnect', [AdminController::class, 'kingschatDisconnect'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/kingschat/test', [AdminController::class, 'kingschatTest'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/export.csv', [AdminController::class, 'exportCsv'], [RequireAdmin::class]);
+$router->get('/admin/archives', [ArchiveController::class, 'index'], [RequireAdmin::class]);
+$router->post('/admin/archives', [ArchiveController::class, 'create'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/archives/view', [ArchiveController::class, 'show'], [RequireAdmin::class]);
+$router->get('/admin/archives/export.csv', [ArchiveController::class, 'csv'], [RequireAdmin::class]);
+$router->post('/admin/archives/rename', [ArchiveController::class, 'rename'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/archives/delete', [ArchiveController::class, 'delete'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/edition', [ArchiveController::class, 'edition'], [RequireAdmin::class]);
+$router->post('/admin/edition', [ArchiveController::class, 'saveEdition'], [VerifyCsrf::class, RequireAdmin::class]);

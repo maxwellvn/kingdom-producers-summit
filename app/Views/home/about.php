@@ -6,7 +6,7 @@
       <p class="eyebrow"><span class="eyebrow__dot"></span>The Initiative</p>
       <h1 class="about-hero__title" data-split>Loveworld<br>Kingdom<br>Producers</h1>
     </div>
-    <div class="about-hero__copy" data-reveal>
+    <div class="about-hero__copy about-hero__copy--card" data-reveal>
       <p class="about-hero__lede">
         An initiative of the Loveworld Consulate UK to identify, equip and develop
         100 young people per edition into measurable Kingdom Producers.
@@ -18,13 +18,13 @@
         or a piece of intellectual property.
       </p>
       <p>
-        The summit in Rainham is the starting point. What it grows into is a permanent Kingdom Producers
+        The summit in <?= e((string) config('app.summit.place')) ?> is the starting point. What it grows into is a permanent Kingdom Producers
         ecosystem carrying mentorship, networks, marketplace access, expert support, investment
         opportunities and collaboration.
       </p>
-      <dl class="statement__facts mono">
-        <div><dt>Per edition</dt><dd>100 producers</dd></div>
-        <div><dt>Principle</dt><dd><?= e($summit['motto']) ?></dd></div>
+      <dl class="statement__stats statement__stats--2">
+        <div><dt>Per edition</dt><dd>100 <span>producers</span></dd></div>
+        <div class="statement__stat--text"><dt>Principle</dt><dd><?= e($summit['motto']) ?></dd></div>
       </dl>
     </div>
   </div>
@@ -61,8 +61,8 @@
 <section class="statement statement--plain section" id="become">
   <div class="container statement__grid">
     <h2 class="statement__title" data-split>From consumer to producer.</h2>
-    <div class="statement__body" data-reveal>
-      <p>
+    <div class="statement__body statement__body--card" data-reveal>
+      <p class="statement__lead">
         The goal is to develop you into a creator of value: a builder of enterprises, an owner of
         intellectual property, a developer of solutions, a producer of goods and services, an employer
         of people and a contributor to the prosperity of nations.
@@ -71,15 +71,16 @@
         In the end you do not simply become someone who produces. You become someone able to create
         opportunities, mentor others and produce other producers.
       </p>
-      <dl class="statement__facts mono">
-        <div><dt>Per edition</dt><dd>100 producers</dd></div>
-        <div><dt>Across the UK</dt><dd>1,000 producers</dd></div>
-        <div><dt>Globally</dt><dd>10,000 producers</dd></div>
+      <dl class="statement__stats">
+        <div><dt>Per edition</dt><dd>100 <span>producers</span></dd></div>
+        <div><dt>Across the UK</dt><dd>1,000 <span>producers</span></dd></div>
+        <div><dt>Globally</dt><dd>10,000 <span>producers</span></dd></div>
       </dl>
-      <p>
-        The long-term vision is a permanent ecosystem where Kingdom Producers create, build, innovate,
+      <p class="statement__vision">
+        <?= ph('binoculars') ?>
+        <span>The long-term vision is a permanent ecosystem where Kingdom Producers create, build, innovate,
         own, produce, employ, trade and multiply, building enterprises and solutions that advance the
-        Kingdom and reach nations.
+        Kingdom and reach nations.</span>
       </p>
     </div>
   </div>

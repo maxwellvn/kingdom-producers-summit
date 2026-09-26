@@ -4,19 +4,21 @@ $r = $registration;
 $pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
   'onsite' => [
-    'Join us on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . ' at ' . config('app.summit.venue.unit') . ', ' . config('app.summit.venue.name') . ', ' . config('app.summit.venue.street') . ', Rainham ' . config('app.summit.venue.postcode') . '. Directions are on the summit page.',
+    App\Services\Edition::hasVenue()
+      ? 'Join us on ' . $summit['date_text'] . ' at ' . venue_line() . '. Directions are on the summit page.'
+      : 'Join us in ' . $summit['place'] . '. ' . (App\Services\Edition::hasDate() ? 'It is on ' . $summit['date_text'] . '; the venue' : 'The date and venue') . ' will be announced by email.',
     'Your reference code is your ticket reference. Keep it — you will be asked for it at registration on the day.',
     'The programme and travel notes will follow by email.',
   ],
   'online' => [
-    'Watch the main sessions by livestream from Rainham, Essex on ' . ($summit['date_text'] ?? 'Saturday 19th September 2026, 12 noon') . '. Open ' . site_url() . '/watch and sign in with this email or your reference.',
+    'Watch the main sessions by livestream from ' . $summit['place'] . (App\Services\Edition::hasDate() ? ' on ' . $summit['date_text'] : ' once the date is announced') . '. Open ' . site_url() . '/watch and sign in with this email or your reference.',
     'The workshops, mentoring, clinic and networking happen in the room and are not part of online access.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
   'initiative' => [
     'You are now on the register of Kingdom Producers. Keep your initiative reference safe.',
     'You will be among the first to receive access to the portal as it opens — the repository, directory and opportunities.',
-    'Summit updates come to you too; if you want to attend in Essex, tell us by replying to any email.',
+    'Summit updates come to you too; if you want to attend in ' . $summit['place'] . ', tell us by replying to any email.',
   ],
 ][$r['participation']] ?? [];
 ?>
@@ -28,7 +30,7 @@ $next = [
     <div class="confirmed__headline">
       <h1 class="confirmed__title">You're in,<br><?= e($r['first_name']) ?>.</h1>
       <p>Your place is registered. A copy of this pass has been sent to <strong><?= e($r['email']) ?></strong>.</p>
-      <p class="mono confirmed__countdown" data-countdown="<?= e($summit['starts_at']) ?>" hidden>Starting in <span></span></p>
+      <p class="mono confirmed__countdown" <?= $summit['starts_at'] === '' || !empty($summit['time_hidden']) ? 'data-tba' : 'data-countdown' ?>="<?= e($summit['starts_at']) ?>" hidden>Starting in <span></span></p>
     </div>
   </div>
 
@@ -107,18 +109,20 @@ $next = [
 $gcal = 'https://calendar.google.com/calendar/render?' . http_build_query([
   'action' => 'TEMPLATE',
   'text' => $summit['short'] . ' — ' . $summit['edition'],
-  'dates' => gmdate('Ymd\THis\Z', strtotime($summit['starts_at'])) . '/' . gmdate('Ymd\THis\Z', strtotime($summit['ends_at'])),
+  'dates' => $summit['starts_at'] === '' ? '' : (!empty($summit['time_hidden']) ? date('Ymd', strtotime($summit['starts_at'])) . '/' . date('Ymd', strtotime($summit['starts_at']) + 86400) : gmdate('Ymd\THis\Z', strtotime($summit['starts_at'])) . '/' . gmdate('Ymd\THis\Z', strtotime($summit['ends_at']))),
   'location' => $summit['venue']['query'],
   'details' => site_url(),
 ]);
 $shareText = "I've registered for " . $summit['short'] . ' (' . $summit['date_day'] . '). Join me: ' . site_url() . '/register';
 ?>
       <div class="confirmed__tools">
+        <?php if ($summit['starts_at'] !== ''): ?>
         <span class="mono confirmed__tools-label">Add to calendar</span>
         <div class="confirmed__tools-row">
           <a class="btn btn--outline" href="<?= e($gcal) ?>" target="_blank" rel="noopener"><span class="btn__label">Google</span></a>
           <a class="btn btn--outline" href="<?= url('/register/calendar.ics') ?>" download><span class="btn__label">Apple / Outlook (.ics)</span></a>
         </div>
+        <?php endif; ?>
         <span class="mono confirmed__tools-label">Invite a friend</span>
         <div class="confirmed__tools-row">
           <a class="btn btn--outline" href="https://wa.me/?text=<?= rawurlencode($shareText) ?>" target="_blank" rel="noopener"><span class="btn__label">WhatsApp</span></a>

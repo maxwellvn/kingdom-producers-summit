@@ -18,7 +18,7 @@
       <input id="password" name="password" type="password" autocomplete="current-password" required>
     </div>
 
-    <button type="submit" class="btn btn--ink btn--block"><span class="btn__label">Continue</span><span class="btn__arrow" aria-hidden="true">→</span></button>
+    <button type="submit" class="btn btn--ink btn--block"><span class="btn__label">Continue</span><span class="btn__arrow" aria-hidden="true"><?= ph('arrow-right') ?></span></button>
     <p class="adm-login__fine mono">Authorised staff only. Attempts are rate-limited.</p>
   </form>
 </section>

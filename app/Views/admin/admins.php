@@ -5,8 +5,8 @@ $errors = \App\Core\Session::get('_errors', []);
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Access</p>
-      <h1 class="adm-page__title">Admin <span class="adm-page__title-sub">users</span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Settings</p>
+      <h1 class="adm-page__title">Admin users</h1>
     </div>
   </header>
 
@@ -29,6 +29,7 @@ $errors = \App\Core\Session::get('_errors', []);
     <button type="submit" class="adm-btn adm-btn--dark">Add admin</button>
   </form>
 
+  <div class="adm-table-wrap">
   <table class="adm-table">
     <thead>
       <tr><th>Email</th><th>Added</th><th></th></tr>
@@ -50,15 +51,16 @@ $errors = \App\Core\Session::get('_errors', []);
               <form method="post" action="<?= url('/admin/admins/delete') ?>" style="display:inline">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int) $admin['id'] ?>">
-                <button type="submit" class="adm-btn adm-btn--solid" style="padding:.25rem .6rem;font-size:.75rem;color:#b4232b">Remove</button>
+                <button type="submit" class="adm-btn adm-btn--danger">Remove</button>
               </form>
             <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
       <?php if (!$admins): ?>
-        <tr><td colspan="3" class="adm-empty mono">No extra admins yet — the root login above is the only access.</td></tr>
+        <tr><td colspan="3" class="adm-empty">No extra admins yet. The root login above is the only access.</td></tr>
       <?php endif; ?>
     </tbody>
   </table>
+  </div>
 </section>

@@ -1,6 +1,6 @@
 <?php /** @var string $flash @var array $audiences @var array $templates @var array $placeholders @var array $counts @var array $queue @var string $summitStart */
 $field = 'width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff';
-$label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#5C5648';
+$label = 'display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#4F5568';
 $start = strtotime($summitStart) ?: time();
 $suggest = [
     'One week before' => $start - 7 * 86400,
@@ -12,8 +12,8 @@ $suggest = [
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Notifications</p>
-      <h1 class="adm-page__title">Tell <span class="adm-page__title-sub">people</span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Campaigns</p>
+      <h1 class="adm-page__title">Notifications</h1>
     </div>
   </header>
 
@@ -21,7 +21,37 @@ $suggest = [
     <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5);margin-bottom:1.2rem"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
-  <div class="adm-columns">
+  <section class="adm-panel" id="bulk-links" style="margin-bottom:1.4rem">
+    <h2 class="adm-panel__title">Personal links</h2>
+    <p class="adm-muted" style="margin:.3rem 0 1rem">Each person gets their own QR pass or watch link, signed to them. Runs in the background.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Email every confirmed onsite person their QR pass? It runs in the background; progress shows below.')">
+        <?= csrf_field() ?><input type="hidden" name="what" value="pass">
+        <button type="submit" class="adm-btn">Email all QR passes</button>
+      </form>
+      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('Email the live link to everyone in the chosen group? It runs in the background; progress shows below.')">
+        <?= csrf_field() ?><input type="hidden" name="what" value="live">
+        <select name="audience" aria-label="Who gets the live link" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
+          <option value="online">Online registrants</option>
+          <option value="onsite">Onsite registrants</option>
+          <option value="all">Everyone confirmed</option>
+        </select>
+        <button type="submit" class="adm-btn">Email live links</button>
+      </form>
+    </div>
+  <div id="bulk" class="bulk" style="margin-top:1rem" data-bulk data-bulk-url="<?= url('/admin/registrations/bulk-status') ?>" <?= $bulk ? '' : 'hidden' ?>>
+    <div class="bulk__head">
+      <strong data-bulk-title><?= $bulk ? (($bulk['what'] ?? '') === 'pass' ? 'Emailing passes' : 'Emailing live links') : '' ?></strong>
+      <span class="mono bulk__phase" data-bulk-phase></span>
+      <button type="button" class="bulk__close" data-bulk-close aria-label="Dismiss"><?= ph('x') ?></button>
+    </div>
+    <div class="bulk__track"><span class="bulk__fill" data-bulk-fill style="width:0%"></span></div>
+    <p class="mono bulk__line" data-bulk-line></p>
+    <ul class="bulk__failures mono" data-bulk-failures hidden></ul>
+  </div>
+  </section>
+
+  <div class="adm-columns adm-columns--compose">
     <div class="adm-panel">
       <h2 class="adm-panel__title">Write a message</h2>
       <form method="post" action="<?= url('/admin/notifications') ?>" style="display:grid;gap:1rem">
@@ -55,7 +85,7 @@ $suggest = [
           <span class="mono" style="<?= $label ?>">Message</span>
           <textarea name="body" rows="9" data-announce-body style="<?= $field ?>;font:inherit"></textarea>
         </label>
-        <div style="color:#5C5648;font-size:.85rem">
+        <div style="color:#4F5568;font-size:.85rem">
           <p style="margin:0 0 .4rem">Wrap a part in <code>{online_only}…{/online_only}</code> or <code>{onsite_only}…{/onsite_only}</code> and only that group sees it. <code>{timing_lead}</code> and <code>{timing_detail}</code> say where we are in time when the message goes out ("It's tomorrow", "It starts in 3 hours", "We're live now"). <code>{qr_url}</code> opens an onsite person's own QR pass and <code>{qr_image_url}</code> is the QR image itself; both are blank for online and initiative. <code>{watch_url}</code> is a personal sign-in link and is blank for onsite people; give them <code>{directions_url}</code>. In emails, a line ending in a link becomes a button.</p>
           Click to insert:
           <?php foreach ($placeholders as $ph): ?>
@@ -78,7 +108,7 @@ $suggest = [
               <button type="button" class="adm-btn" data-when="<?= date('Y-m-d\TH:i', $ts) ?>" style="padding:.2rem .6rem;font-size:.72rem"><?= e($text) ?></button>
             <?php endforeach; ?>
           </div>
-          <span style="color:#5C5648;font-size:.85rem">Times are UK time. Scheduled messages go out within a minute of the chosen time.</span>
+          <span style="color:#4F5568;font-size:.85rem">Times are UK time. Scheduled messages go out within a minute of the chosen time.</span>
         </fieldset>
 
         <button type="submit" class="adm-btn adm-btn--dark" onclick="return confirm('Queue this for everyone in the chosen group?')">Queue it</button>
@@ -139,5 +169,33 @@ $suggest = [
     });
   });
   sendAt.addEventListener('input', function () { document.querySelector('input[name="when"][value="later"]').checked = true; });
+})();
+</script>
+
+<script>
+// Bulk email progress: poll while it runs, show the outcome when it ends.
+(function () {
+  var root = document.querySelector('[data-bulk]'); if (!root) return;
+  var url = root.getAttribute('data-bulk-url');
+  root.querySelector('[data-bulk-close]').addEventListener('click', function () { root.hidden = true; });
+  var wasRunning = <?= !empty($bulkRunning) ? 'true' : 'false' ?>;
+  function paint(d) {
+    var s = d.state; if (!s) return false;
+    root.hidden = false;
+    root.querySelector('[data-bulk-title]').textContent = (s.what === 'pass' ? 'Emailing passes' : 'Emailing live links') + (s.audience ? ' · ' + s.audience : '');
+    var pct = s.total ? Math.round(100 * s.done / s.total) : 0;
+    root.querySelector('[data-bulk-fill]').style.width = pct + '%';
+    root.querySelector('[data-bulk-phase]').textContent = s.phase === 'done' ? (s.error ? 'Stopped' : 'Finished') : (s.phase === 'starting' ? 'Starting…' : (s.phase === 'waiting' ? 'Waiting for mail server (rate limit)…' : 'Sending…'));
+    root.querySelector('[data-bulk-line]').textContent = (s.error ? s.error + ' · ' : '') + s.done + ' of ' + s.total + ' · ' + s.sent + ' sent' + (s.failed ? ' · ' + s.failed + ' failed' : '') + (s.finished_at ? ' · took ' + Math.max(1, s.finished_at - s.started_at) + 's' : '');
+    var f = root.querySelector('[data-bulk-failures]'); f.innerHTML = ''; f.hidden = !(s.failures && s.failures.length);
+    (s.failures || []).slice(0, 20).forEach(function (t) { var li = document.createElement('li'); li.textContent = t; f.appendChild(li); });
+    return d.running;
+  }
+  function poll() {
+    fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+      if (paint(d)) setTimeout(poll, 2000);
+    }).catch(function () { setTimeout(poll, 4000); });
+  }
+  poll();
 })();
 </script>

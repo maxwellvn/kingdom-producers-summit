@@ -2,8 +2,8 @@
 <section class="adm-page adm-scan" data-access-scanner data-endpoint="<?= e(url('/admin/check-in')) ?>">
   <header class="adm-page__head adm-scan__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Attendance desk</p>
-      <h1 class="adm-page__title">Confirm access</h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Event day</p>
+      <h1 class="adm-page__title">Access scanner</h1>
       <p class="adm-scan__intro">Scan an attendee’s pass. Each registration can be checked in once.</p>
     </div>
     <div class="adm-scan__count">
@@ -31,7 +31,7 @@
         </label>
       </div>
       <p class="adm-scan__help mono" data-scanner-help>Allow camera access when your browser asks.</p>
-      <a class="adm-scan__external mono" href="<?= e(url('/admin/scanner')) ?>" target="_blank" rel="noopener">Open camera desk in a new tab ↗</a>
+      <a class="adm-scan__external mono" href="<?= e(url('/admin/scanner')) ?>" target="_blank" rel="noopener">Open camera desk in a new tab <?= ph('arrow-square-out') ?></a>
     </section>
 
     <aside class="adm-scan__desk">

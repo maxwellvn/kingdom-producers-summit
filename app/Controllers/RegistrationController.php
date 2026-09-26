@@ -154,6 +154,9 @@ final class RegistrationController extends Controller
     public function calendar(): Response
     {
         $s = config('app.summit');
+        if ((string) $s['starts_at'] === '') {
+            return $this->redirect('/'); // no date yet, nothing to put in a calendar
+        }
         $venue = (string) $s['venue']['query'];
         $stamp = fn (string $iso): string => gmdate('Ymd\THis\Z', strtotime($iso));
         $fold = fn (string $v): string => str_replace(["\\", ";", ",", "\n"], ["\\\\", "\\;", "\\,", "\\n"], $v);
@@ -162,8 +165,10 @@ final class RegistrationController extends Controller
             'BEGIN:VEVENT',
             'UID:summit-' . md5((string) $s['starts_at'] . site_url()) . '@' . parse_url(site_url(), PHP_URL_HOST),
             'DTSTAMP:' . gmdate('Ymd\THis\Z'),
-            'DTSTART:' . $stamp((string) $s['starts_at']),
-            'DTEND:' . $stamp((string) $s['ends_at']),
+            // No public start time yet: an all-day entry, so the calendar does not invent one.
+            ...(empty($s['time_hidden'])
+                ? ['DTSTART:' . $stamp((string) $s['starts_at']), 'DTEND:' . $stamp((string) $s['ends_at'])]
+                : ['DTSTART;VALUE=DATE:' . date('Ymd', strtotime((string) $s['starts_at'])), 'DTEND;VALUE=DATE:' . date('Ymd', strtotime((string) $s['starts_at']) + 86400)]),
             'SUMMARY:' . $fold($s['short'] . ' — ' . $s['edition']),
             'LOCATION:' . $fold($venue),
             'DESCRIPTION:' . $fold('Your pass and details: ' . site_url() . '/register'),

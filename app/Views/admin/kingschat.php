@@ -5,7 +5,7 @@
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Notifications</p>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Settings</p>
       <h1 class="adm-page__title">KingsChat</h1>
     </div>
   </header>
@@ -28,11 +28,11 @@
 
       <?php if ($connected): ?>
         <dl class="mono" style="display:grid;grid-template-columns:auto 1fr;gap:.35rem 1rem;margin:0 0 1.2rem;font-size:.8rem">
-          <dt style="color:#756f60">Token</dt>
+          <dt style="color:#858B9C">Token</dt>
           <dd style="margin:0"><?= $status['expired'] ? 'Lapsed' : 'Valid until ' . e(date('D d M, H:i', (int) $status['expires_at'])) ?> — renewed automatically 45 minutes before it lapses, and on demand when a message is sent.</dd>
-          <dt style="color:#756f60">Last renewed</dt>
+          <dt style="color:#858B9C">Last renewed</dt>
           <dd style="margin:0"><?= $status['last_refresh'] !== '' ? e($status['last_refresh']) : 'Not yet since connecting' ?></dd>
-          <dt style="color:#756f60">Last message</dt>
+          <dt style="color:#858B9C">Last message</dt>
           <dd style="margin:0"><?= $status['last_sent'] !== '' ? e($status['last_sent']) : 'None sent yet' ?></dd>
           <?php if ($status['last_error'] !== ''): ?>
             <dt style="color:#b4232b">Last problem</dt>

@@ -5,7 +5,12 @@ $bodyClass = $bodyClass ?? '';
 $summit = $summit ?? config('app.summit');
 ?>
 <!DOCTYPE html>
-<html lang="en-GB">
+<?php
+// The edition's halftone prints and accent set, chosen in admin → Current edition.
+$artworkSet = (string) config('app.summit.artwork', 'london');
+$artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.london'));
+?>
+<html lang="en-GB" data-edition="<?= e($artworkSet) ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -53,7 +58,7 @@ $summit = $summit ?? config('app.summit');
   <?php if (($bodyClass ?? '') === 'page-home'): ?>
     <?php
     // Structured data lets search engines show the date, place and price.
-    $eventStart = '2026-09-19T12:00:00+01:00';
+    $eventStart = !empty($summit['time_hidden']) && $summit['starts_at'] !== '' ? date('Y-m-d', strtotime($summit['starts_at'])) : (string) $summit['starts_at'];
     $schema = [
         '@context' => 'https://schema.org',
         '@type' => 'Event',
@@ -69,7 +74,7 @@ $summit = $summit ?? config('app.summit');
              'address' => ['@type' => 'PostalAddress',
                            'streetAddress' => config('app.summit.venue.unit') . ', ' . config('app.summit.venue.name') . ', ' . config('app.summit.venue.street'),
                            'addressLocality' => (string) config('app.summit.venue.town'),
-                           'addressRegion' => 'Essex', 'postalCode' => (string) config('app.summit.venue.postcode'),
+                           'addressRegion' => (string) config('app.summit.venue.region'), 'postalCode' => (string) config('app.summit.venue.postcode'),
                            'addressCountry' => 'GB']],
             ['@type' => 'VirtualLocation', 'url' => $origin . url('/watch')],
         ],
@@ -89,7 +94,7 @@ $summit = $summit ?? config('app.summit');
         ],
     ];
     ?>
-    <script type="application/ld+json"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+    <?php if ($eventStart !== ''): // search engines reject an Event without a date ?><script type="application/ld+json"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
   <?php endif; ?>
 
 <?php $showIntro = $bodyClass === 'page-home'; ?>
@@ -114,7 +119,9 @@ $summit = $summit ?? config('app.summit');
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="<?= asset('vendor/phosphor/style.css') ?>">
   <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+  <style>:root{<?php foreach ($artwork as $slot => $file): ?>--art-<?= e($slot) ?>:url("<?= e(asset('img/' . $file)) ?>");<?php endforeach; ?>}</style>
 </head>
 <body class="<?= e($bodyClass) ?>"
       data-presence="<?= e($presenceContext ?? 'site') ?>"
@@ -143,9 +150,7 @@ $summit = $summit ?? config('app.summit');
 
   <aside class="cookie-banner" data-cookie-banner data-consent-endpoint="<?= e(url('api/consent')) ?>" aria-label="Cookie preferences" hidden>
     <div class="cookie-banner__top">
-      <span class="cookie-banner__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.1 12.1A9 9 0 1 1 11.9 2.9a3.4 3.4 0 0 0 4.1 4.1 3.4 3.4 0 0 0 5.1 5.1z"/><circle cx="9" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.2" cy="14.4" r=".6" fill="currentColor" stroke="none"/><circle cx="13" cy="13.2" r=".6" fill="currentColor" stroke="none"/><circle cx="12.2" cy="17.6" r=".6" fill="currentColor" stroke="none"/></svg>
-      </span>
+      <span class="cookie-banner__icon" aria-hidden="true"><?= ph('cookie') ?></span>
       <p class="cookie-banner__title">Cookies &amp; storage</p>
     </div>
     <p class="cookie-banner__text">We use essential storage to run this site. Choose which optional categories you're happy with — you can change your mind anytime.</p>

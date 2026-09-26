@@ -21,6 +21,14 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
       </span>
     </a>
 
+    <nav class="nav__links" aria-label="Main">
+      <a class="nav__link" href="<?= url('/') ?>#summit">The Summit</a>
+      <a class="nav__link" href="<?= url('/') ?>#pathways">Ways to join</a>
+      <a class="nav__link<?= $current === '/about' ? ' is-active' : '' ?>" href="<?= url('/about') ?>">The Initiative</a>
+      <a class="nav__link<?= str_starts_with($current, '/sponsor') ? ' is-active' : '' ?>" href="<?= url('/sponsor') ?>">Sponsor</a>
+    </nav>
+    <span class="nav__edition"><i aria-hidden="true"></i><?= e((string) config('app.summit.edition')) ?></span>
+
     <div class="nav__cta">
       <a href="<?= url('/register') ?>" class="btn btn--ink <?= str_starts_with($current, '/register') ? 'is-active' : '' ?>">
         <span class="btn__label">Register</span>

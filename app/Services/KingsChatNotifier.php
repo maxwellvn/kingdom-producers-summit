@@ -29,8 +29,8 @@ final class KingsChatNotifier
         $where = '';
         if ((string) $registration['participation'] === 'onsite') {
             $v = (array) config('app.summit.venue');
-            $where = "Where: {$v['unit']}, {$v['name']}, {$v['street']}, {$v['town']} {$v['postcode']}\n"
-                . 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n\n";
+            $where = 'Where: ' . venue_line() . "\n"
+                . (trim((string) $v['name']) !== '' ? 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n" : '') . "\n";
         }
 
         $text = "You are registered, {$name}.\n\n"
@@ -53,8 +53,8 @@ final class KingsChatNotifier
         $text = "{$timing['lead']}, {$name}. {$timing['detail']}\n\n"
             . "Your QR pass for the door: " . site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor($reference)) . "\n"
             . "Reference: {$reference}\n\n"
-            . "Where: {$v['unit']}, {$v['name']}, {$v['street']}, {$v['town']} {$v['postcode']}\n"
-            . 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n\n"
+            . 'Where: ' . venue_line() . "\n"
+            . (trim((string) $v['name']) !== '' ? 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n" : '') . "\n"
             . 'The Loveworld Consulate, United Kingdom';
 
         return $this->deliver($registration, $text);

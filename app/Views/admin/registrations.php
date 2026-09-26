@@ -1,36 +1,25 @@
 <?php /** @var array $result @var string $participation @var string $search */
 $pathLabel = ['onsite' => 'Onsite', 'online' => 'Online', 'initiative' => 'Initiative'];
 $support = $support ?? '';
-$qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build_query(array_filter(array_merge(['type' => $participation, 'q' => $search, 'support' => $support], $extra), static fn ($v) => $v !== '' && $v !== null));
+$base = $base ?? '/admin/registrations';
+$isInitiative = $participation === 'initiative';
+$qs = static fn (array $extra) => url($base) . '?' . http_build_query(array_filter(array_merge(['type' => $participation, 'q' => $search, 'support' => $support], $extra), static fn ($v) => $v !== '' && $v !== null));
 ?>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Registrations</p>
-      <h1 class="adm-page__title"><?= number_format($result['total']) ?> <span class="adm-page__title-sub">record<?= $result['total'] === 1 ? '' : 's' ?></span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>People</p>
+      <h1 class="adm-page__title"><?= $isInitiative ? 'Initiative' : 'Registrations' ?> <span class="adm-page__title-sub"><?= number_format($result['total']) ?> record<?= $result['total'] === 1 ? '' : 's' ?></span></h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end">
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" onsubmit="return confirm('Email every confirmed onsite person their QR pass? It runs in the background; progress shows on this page.')">
-        <?= csrf_field() ?><input type="hidden" name="what" value="pass">
-        <button type="submit" class="adm-btn">Email all QR passes</button>
-      </form>
-      <form method="post" action="<?= url('/admin/registrations/resend-all') ?>" style="display:flex;gap:.4rem;align-items:center" onsubmit="return confirm('Email the live link to everyone in the chosen group? It runs in the background; progress shows on this page.')">
-        <?= csrf_field() ?><input type="hidden" name="what" value="live">
-        <select name="audience" aria-label="Who gets the live link" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-          <option value="online">Online registrants</option>
-          <option value="onsite">Onsite registrants</option>
-          <option value="all">Everyone confirmed</option>
-        </select>
-        <button type="submit" class="adm-btn">Email live links</button>
-      </form>
       <form method="get" action="<?= url('/admin/export.csv') ?>" style="display:flex;gap:.4rem;align-items:center">
         <select name="type" aria-label="Who to export" style="padding:.45rem .5rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-          <option value="" <?= $participation === '' ? 'selected' : '' ?>>Everyone</option>
+          <option value="" <?= $participation === '' ? 'selected' : '' ?>>Everyone, summit and Initiative</option>
           <option value="onsite" <?= $participation === 'onsite' ? 'selected' : '' ?>>Onsite only</option>
           <option value="online" <?= $participation === 'online' ? 'selected' : '' ?>>Online only</option>
           <option value="initiative" <?= $participation === 'initiative' ? 'selected' : '' ?>>Initiative only</option>
         </select>
-        <button type="submit" class="adm-btn">Export CSV ↓</button>
+        <button type="submit" class="adm-btn"><?= ph('download-simple') ?> Export CSV</button>
       </form>
     </div>
   </header>
@@ -40,29 +29,21 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
     <div class="form__alert" role="status" style="border-color: rgba(46,160,67,.5);margin-bottom:1.2rem"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
-  <section id="bulk" class="bulk" data-bulk data-bulk-url="<?= url('/admin/registrations/bulk-status') ?>" <?= $bulk ? '' : 'hidden' ?>>
-    <div class="bulk__head">
-      <strong data-bulk-title><?= $bulk ? (($bulk['what'] ?? '') === 'pass' ? 'Emailing passes' : 'Emailing live links') : '' ?></strong>
-      <span class="mono bulk__phase" data-bulk-phase></span>
-      <button type="button" class="bulk__close" data-bulk-close aria-label="Dismiss">×</button>
-    </div>
-    <div class="bulk__track"><span class="bulk__fill" data-bulk-fill style="width:0%"></span></div>
-    <p class="mono bulk__line" data-bulk-line></p>
-    <ul class="bulk__failures mono" data-bulk-failures hidden></ul>
-  </section>
 
-  <form class="adm-filters" method="get" action="<?= url('/admin/registrations') ?>">
+  <form class="adm-filters" method="get" action="<?= url($base) ?>">
+    <?php if (!$isInitiative): ?>
     <div class="adm-tabs" role="tablist">
-      <?php foreach (['' => 'All', 'onsite' => 'A · Onsite', 'online' => 'B · Online', 'initiative' => 'C · Initiative'] as $val => $label): ?>
+      <?php foreach (['' => 'All summit places', 'onsite' => 'Onsite', 'online' => 'Online'] as $val => $label): ?>
         <a class="adm-tab <?= $participation === $val ? 'is-active' : '' ?>" href="<?= $qs(['type' => $val, 'page' => null]) ?>"><?= $label ?></a>
       <?php endforeach; ?>
     </div>
     <div class="adm-tabs adm-tabs--support" role="tablist" aria-label="Support">
-      <?php foreach (['' => 'Everyone', 'contributed' => '★ Contributed', 'legacy' => '⚑ Paid before the change'] as $val => $label): ?>
+      <?php foreach (['' => 'Everyone', 'contributed' => ph('star') . ' Contributed', 'legacy' => ph('flag') . ' Paid before the change'] as $val => $label): ?>
         <a class="adm-tab <?= $support === $val ? 'is-active' : '' ?> <?= $val === 'legacy' ? 'adm-tab--legacy' : '' ?>" href="<?= $qs(['support' => $val, 'page' => null]) ?>"><?= $label ?></a>
       <?php endforeach; ?>
     </div>
     <input type="hidden" name="type" value="<?= e($participation) ?>">
+    <?php endif; ?>
     <div class="adm-search">
       <input type="search" name="q" value="<?= e($search) ?>" placeholder="Search name, email, reference, country" aria-label="Search">
       <button type="submit" class="adm-btn adm-btn--ghost">Search</button>
@@ -70,7 +51,11 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
   </form>
 
   <?php if (!$result['rows']): ?>
-    <p class="adm-empty mono">Nothing matches.</p>
+    <?php if ($search !== ''): ?>
+      <div class="adm-empty"><?= ph('magnifying-glass') ?><strong>Nothing matches</strong>Try a shorter search<?= $isInitiative ? '' : ' or another tab' ?>.</div>
+    <?php else: ?>
+      <div class="adm-empty"><?= ph($isInitiative ? 'plant' : 'users-three') ?><strong><?= $isInitiative ? 'No Initiative members yet' : 'No registrations yet' ?></strong><?= $isInitiative ? 'People who join the Initiative show here, whichever edition they joined in.' : 'New sign-ups show here the moment they register.' ?></div>
+    <?php endif; ?>
   <?php else: ?>
     <div class="adm-table-wrap">
     <table class="adm-table">
@@ -95,15 +80,15 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
                 $legacy = $paidPath && \App\Models\Registration::isLegacyPayment($r);
                 $method = !empty($r['payment_method']) ? ' · ' . $r['payment_method'] : '';
                 [$pill, $label] = match (true) {
-                    $legacy && $payState === 'paid'    => ['legacy', '⚑ Paid before the change · ' . paid_amount($r) . $method],
-                    $legacy && $payState === 'claimed' => ['legacy', '⚑ Claimed before the change' . $method],
-                    $payState === 'paid'               => ['paid', '★ Contributed · ' . paid_amount($r) . $method],
-                    $payState === 'claimed'            => ['claimed', '★ Contribution claimed' . $method],
+                    $legacy && $payState === 'paid'    => ['legacy', 'Paid before the change · ' . paid_amount($r) . $method],
+                    $legacy && $payState === 'claimed' => ['legacy', 'Claimed before the change' . $method],
+                    $payState === 'paid'               => ['paid', 'Contributed · ' . paid_amount($r) . $method],
+                    $payState === 'claimed'            => ['claimed', 'Contribution claimed' . $method],
                     $payState === 'none'               => ['initiative', '—'],
                     default                            => ['none', 'No contribution'],
                 };
               ?>
-              <span class="adm-pill adm-pill--<?= e($pill) ?> mono"><?= e($label) ?></span>
+              <span class="adm-pill adm-pill--<?= e($pill) ?>"><?= ['legacy' => ph('flag'), 'paid' => ph('star'), 'claimed' => ph('star')][$pill] ?? '' ?> <?= e($label) ?></span>
               <?php if ($paidPath && in_array($payState, ['not_required', 'claimed'], true)): ?>
                 <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
                   <?= csrf_field() ?>
@@ -137,7 +122,7 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
               <form method="post" action="<?= url('/admin/check-in') ?>" style="margin:0">
                 <?= csrf_field() ?>
                 <input type="hidden" name="token" value="<?= e($r['reference']) ?>">
-                <input type="hidden" name="back" value="<?= e('/admin/registrations?' . http_build_query(array_filter(['type' => $participation, 'q' => $search, 'support' => $support, 'page' => $result['page'] ?? null]))) ?>">
+                <input type="hidden" name="back" value="<?= e($base . '?' . http_build_query(array_filter(['type' => $participation, 'q' => $search, 'support' => $support, 'page' => $result['page'] ?? null]))) ?>">
                 <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem" onclick="return confirm('Check in <?= e(addslashes($r['first_name'] . ' ' . $r['last_name'])) ?> now?')">Check in</button>
               </form>
             <?php endif; ?></td>
@@ -150,38 +135,12 @@ $qs = static fn (array $extra) => url('/admin/registrations') . '?' . http_build
 
     <?php if ($result['pages'] > 1): ?>
       <nav class="adm-pager mono" aria-label="Pagination">
-        <?php if ($result['page'] > 1): ?><a href="<?= $qs(['page' => $result['page'] - 1]) ?>">← Prev</a><?php endif; ?>
+        <?php if ($result['page'] > 1): ?><a href="<?= $qs(['page' => $result['page'] - 1]) ?>"><?= ph('caret-left') ?> Prev</a><?php endif; ?>
         <span>Page <?= $result['page'] ?> of <?= $result['pages'] ?></span>
-        <?php if ($result['page'] < $result['pages']): ?><a href="<?= $qs(['page' => $result['page'] + 1]) ?>">Next →</a><?php endif; ?>
+        <?php if ($result['page'] < $result['pages']): ?><a href="<?= $qs(['page' => $result['page'] + 1]) ?>">Next <?= ph('caret-right') ?></a><?php endif; ?>
       </nav>
     <?php endif; ?>
   <?php endif; ?>
 </section>
 
-<script>
-// Bulk email progress: poll while it runs, show the outcome when it ends.
-(function () {
-  var root = document.querySelector('[data-bulk]'); if (!root) return;
-  var url = root.getAttribute('data-bulk-url');
-  root.querySelector('[data-bulk-close]').addEventListener('click', function () { root.hidden = true; });
-  var wasRunning = <?= !empty($bulkRunning) ? 'true' : 'false' ?>;
-  function paint(d) {
-    var s = d.state; if (!s) return false;
-    root.hidden = false;
-    root.querySelector('[data-bulk-title]').textContent = (s.what === 'pass' ? 'Emailing passes' : 'Emailing live links') + (s.audience ? ' · ' + s.audience : '');
-    var pct = s.total ? Math.round(100 * s.done / s.total) : 0;
-    root.querySelector('[data-bulk-fill]').style.width = pct + '%';
-    root.querySelector('[data-bulk-phase]').textContent = s.phase === 'done' ? (s.error ? 'Stopped' : 'Finished') : (s.phase === 'starting' ? 'Starting…' : (s.phase === 'waiting' ? 'Waiting for mail server (rate limit)…' : 'Sending…'));
-    root.querySelector('[data-bulk-line]').textContent = (s.error ? s.error + ' · ' : '') + s.done + ' of ' + s.total + ' · ' + s.sent + ' sent' + (s.failed ? ' · ' + s.failed + ' failed' : '') + (s.finished_at ? ' · took ' + Math.max(1, s.finished_at - s.started_at) + 's' : '');
-    var f = root.querySelector('[data-bulk-failures]'); f.innerHTML = ''; f.hidden = !(s.failures && s.failures.length);
-    (s.failures || []).slice(0, 20).forEach(function (t) { var li = document.createElement('li'); li.textContent = t; f.appendChild(li); });
-    return d.running;
-  }
-  function poll() {
-    fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
-      if (paint(d)) setTimeout(poll, 2000);
-    }).catch(function () { setTimeout(poll, 4000); });
-  }
-  poll();
-})();
-</script>
+

@@ -14,8 +14,8 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span>Analytics</p>
-      <h1 class="adm-page__title">Traffic <span class="adm-page__title-sub">and viewers</span></h1>
+      <p class="eyebrow"><span class="eyebrow__dot"></span>Insights</p>
+      <h1 class="adm-page__title">Analytics <span class="adm-page__title-sub">traffic and viewers</span></h1>
     </div>
     <div class="adm-tabs">
       <?php foreach ($windows as $value => $label): ?>
@@ -91,7 +91,7 @@ $windows = [1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days'];
       <div class="adm-panel">
         <h2 class="adm-panel__title"><?= e($heading) ?></h2>
         <?php if (!$rows): ?>
-          <p class="adm-empty mono">Nothing yet.</p>
+          <div class="adm-empty"><?= ph('chart-bar') ?>Nothing recorded for this period yet.</div>
         <?php else: ?>
           <ul class="adm-rank">
             <?php $top = max(1, max(array_column($rows, 'count'))); ?>

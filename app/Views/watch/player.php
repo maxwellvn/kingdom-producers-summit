@@ -90,7 +90,7 @@ $initials = strtoupper(mb_substr((string) $viewer['first_name'], 0, 1) . mb_subs
             <textarea id="commentBody" name="body" rows="1" maxlength="<?= (int) \App\Models\Comment::MAX_LENGTH ?>"
                       placeholder="Write a message…" data-comments-input required></textarea>
             <button type="submit" class="chat__send" aria-label="Send">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+              <?= ph('paper-plane-tilt') ?>
             </button>
           </div>
           <span class="mono chat__hint" data-comments-hint>Posting as <?= e($isOrganiser ? 'Organiser' : $name) ?></span>
