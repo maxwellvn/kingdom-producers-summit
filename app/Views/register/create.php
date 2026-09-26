@@ -59,7 +59,7 @@ $stageLabels = [
           </ol>
 
           <dl class="reg__facts mono">
-            <div><dt>Where</dt><dd><?= e($summit['city']) ?></dd></div>
+            <div><dt>Where</dt><dd><?= e(App\Services\Edition::hasVenue() ? venue_line() : $summit['city']) ?></dd></div>
             <div><dt>When</dt><dd><?= e($summit['date_text']) ?></dd></div>
           </dl>
         </div>

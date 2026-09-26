@@ -34,7 +34,7 @@
       <dl class="hero__date" aria-label="Summit date, time and place">
         <div><dt class="mono">Date</dt><dd><?= e($summit['date_day']) ?></dd></div>
         <?php if ($summit['time'] !== ''): ?><div><dt class="mono">Time</dt><dd><?= e($summit['time']) ?></dd></div><?php endif; ?>
-        <div><dt class="mono">Place</dt><dd><?= e($summit['city']) ?></dd></div>
+        <div><dt class="mono">Place</dt><dd><?= e(App\Services\Edition::hasVenue() ? venue_line() : $summit['city']) ?></dd></div>
       </dl>
     </div>
 
