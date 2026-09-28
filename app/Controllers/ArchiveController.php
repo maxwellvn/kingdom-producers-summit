@@ -77,7 +77,7 @@ final class ArchiveController extends Controller
 
         $handle = fopen('php://temp', 'r+');
         foreach (Archive::each($archive['slug'], $table, trim($request->str('q'))) as $row) {
-            fputcsv($handle, array_map(static fn ($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v, $row));
+            fputcsv($handle, array_map(static fn ($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v, $row), ',', '"', '');
         }
         rewind($handle);
         $csv = stream_get_contents($handle) ?: '';

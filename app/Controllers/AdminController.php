@@ -1020,10 +1020,10 @@ final class AdminController extends Controller
     public function commitmentsCsv(Request $request): Response
     {
         $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, ['title', 'first_name', 'last_name', 'email', 'kingschat', 'produce', 'records', 'buy', 'teach', 'made_at']);
+        fputcsv($handle, ['title', 'first_name', 'last_name', 'email', 'kingschat', 'produce', 'records', 'buy', 'teach', 'made_at'], ',', '"', '');
         foreach (Commitment::all() as $r) {
             fputcsv($handle, array_map(static fn ($v) => is_string($v) ? self::csvSafe($v) : $v,
-                [$r['title'], $r['first_name'], $r['last_name'], $r['email'], $r['kingschat'], $r['produce'], $r['records'], $r['buy'], $r['teach'], $r['created_at']]));
+                [$r['title'], $r['first_name'], $r['last_name'], $r['email'], $r['kingschat'], $r['produce'], $r['records'], $r['buy'], $r['teach'], $r['created_at']]), ',', '"', '');
         }
         rewind($handle);
         $csv = stream_get_contents($handle) ?: '';
@@ -1057,13 +1057,13 @@ final class AdminController extends Controller
             unset($row['ip_address'], $row['user_agent']);
             if ($header === null) {
                 $header = array_keys($row);
-                fputcsv($handle, $header);
+                fputcsv($handle, $header, ',', '"', '');
             }
-            fputcsv($handle, array_map(static fn ($v) => is_string($v) ? self::csvSafe($v) : $v, $row));
+            fputcsv($handle, array_map(static fn ($v) => is_string($v) ? self::csvSafe($v) : $v, $row), ',', '"', '');
         }
 
         if ($header === null) {
-            fputcsv($handle, ['no registrations yet']);
+            fputcsv($handle, ['no registrations yet'], ',', '"', '');
         }
 
         rewind($handle);

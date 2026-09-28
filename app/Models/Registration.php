@@ -249,7 +249,7 @@ final class Registration
         $rows = Database::connection()
             ->query("SELECT producer_stage AS label, COUNT(*) AS count FROM registrations WHERE status <> 'cancelled' GROUP BY producer_stage")
             ->fetchAll();
-        $map = array_column($rows, 'count', 'label');
+        $map = array_column(array_filter($rows, static fn (array $r) => $r['label'] !== null), 'count', 'label');
         return array_map(static fn (string $s) => ['label' => $s, 'count' => (int) ($map[$s] ?? 0)], self::STAGES);
     }
 
