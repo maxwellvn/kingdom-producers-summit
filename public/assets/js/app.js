@@ -94,7 +94,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
-            action: action,
+            action: { accepted: 'accept_all', rejected: 'essential_only' }[action] || action,
             preferences: !!prefs.preferences,
             analytics: !!prefs.analytics,
             marketing: !!prefs.marketing
@@ -388,10 +388,12 @@
       }
 
       if (data.kind === 'hls') {
-        // Safari plays HLS natively; everything else needs the library.
-        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Prefer the library wherever it runs: recent Chrome also claims native HLS but has none of the
+        // retry and recovery below. Native playback is the fallback (older iOS Safari has no MSE).
+        var useLibrary = window.Hls && window.Hls.isSupported();
+        if (!useLibrary && video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = data.source;
-        } else if (window.Hls && window.Hls.isSupported()) {
+        } else if (useLibrary) {
           // Dacast publishes a 6-second window (three 2 s segments). Sit one segment back from the
           // edge and keep buffering ahead, or any hiccup empties the buffer. Not a low-latency stream.
           hls = new window.Hls({
