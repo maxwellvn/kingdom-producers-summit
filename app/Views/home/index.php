@@ -44,7 +44,8 @@
     <div class="hero__collage">
       <figure class="poster">
         <img class="poster__crest" src="<?= e(asset('img/crest.png')) ?>" alt="Loveworld Consulate United Kingdom crest" width="1040" height="764">
-        <span class="poster__edition">London<br>Edition</span>
+        <?php // "Manchester Edition 2026" reads as "Manchester" over "Edition" on the poster. ?>
+        <span class="poster__edition"><?= e(preg_replace('/\s*Edition\b.*$/i', '', $summit['edition'])) ?><br>Edition</span>
         <span class="poster__rule" aria-hidden="true"></span>
         <div class="collage__note">
           <span class="hand">Next<br>level</span>
