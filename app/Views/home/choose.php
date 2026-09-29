@@ -4,8 +4,8 @@
  */
 $date = (string) ($events['manchester']['date_day'] ?? '');
 $copy = [
-    'manchester' => ['label' => 'Manchester', 'country' => 'England, United Kingdom', 'note' => 'Halls, mills and the old town hall.'],
-    'ireland'    => ['label' => 'Ireland', 'country' => 'Dublin, Cork, Galway and beyond', 'note' => 'Stone bridges, spires and the long river.'],
+    'manchester' => ['label' => 'Manchester', 'country' => 'England, United Kingdom'],
+    'ireland'    => ['label' => 'Ireland', 'country' => 'Dublin, Cork, Galway and beyond'],
 ];
 ?>
 
@@ -37,7 +37,6 @@ $copy = [
         <span class="choose__body">
           <span class="choose__tag mono"><?= e($c['country']) ?></span>
           <span class="choose__city"><?= e($c['label']) ?></span>
-          <span class="choose__note"><?= e($c['note']) ?></span>
           <span class="choose__facts">
             <span class="choose__fact"><i class="ph ph-map-pin" aria-hidden="true"></i><?= e($venue) ?></span>
             <span class="choose__fact"><i class="ph ph-calendar-blank" aria-hidden="true"></i><?= e((string) ($ev['date_day'] ?? '')) ?><?= $time !== '' ? ', ' . e($time) : '' ?></span>

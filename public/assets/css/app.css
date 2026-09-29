@@ -1634,7 +1634,6 @@ body { background: var(--paper); }
 .choose__body { display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; width: 100%; padding: clamp(1.4rem, 3vw, 2.4rem); }
 .choose__tag { padding: .3rem .65rem; border-radius: var(--r-pill); background: rgba(255,255,255,.55); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--p-ink); }
 .choose__city { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; line-height: .9; letter-spacing: -.01em; font-size: clamp(2.4rem, 15cqi, 6.5rem); color: var(--p-ink); }
-.choose__note { max-width: 28ch; font-size: 1.05rem; line-height: 1.45; color: var(--p-ink); opacity: .82; }
 .choose__facts { display: grid; gap: .45rem; margin-top: .6rem; padding: .85rem 1rem; border-radius: var(--r-md); background: rgba(255,255,255,.82); backdrop-filter: blur(6px); }
 .choose__fact { display: flex; align-items: flex-start; gap: .55rem; font-size: .95rem; font-weight: 500; line-height: 1.35; }
 .choose__fact i { margin-top: .1rem; color: var(--p-accent); font-size: 1.05rem; }
