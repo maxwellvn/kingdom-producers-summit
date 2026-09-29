@@ -34,8 +34,7 @@ final class Url
 
     public static function to(string $path = ''): string
     {
-        $path = ltrim($path, '/');
-        return self::$base . '/' . $path;
+        return self::$base . '/' . ltrim(Events::scope('/' . ltrim($path, '/')), '/');
     }
 
     /** Current request path relative to the app base, e.g. "/register". */
@@ -47,6 +46,6 @@ final class Url
         }
         $uri = preg_replace('#^/public#', '', $uri) ?? $uri;
         $uri = '/' . trim($uri, '/');
-        return $uri === '' ? '/' : $uri;
+        return Events::detect($uri === '' ? '/' : $uri);
     }
 }

@@ -73,7 +73,7 @@
       </p>
       <dl class="statement__stats">
         <div><dt>Per edition</dt><dd>100 <span>producers</span></dd></div>
-        <div><dt>Across the UK</dt><dd>1,000 <span>producers</span></dd></div>
+        <div><dt>Across <?= e((string) config('app.summit.country_phrase')) ?></dt><dd>1,000 <span>producers</span></dd></div>
         <div><dt>Globally</dt><dd>10,000 <span>producers</span></dd></div>
       </dl>
       <p class="statement__vision">

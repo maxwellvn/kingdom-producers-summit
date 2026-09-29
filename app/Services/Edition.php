@@ -40,7 +40,7 @@ final class Edition
     public static function saved(): array
     {
         try {
-            $data = json_decode(Setting::get(self::SETTING), true);
+            $data = json_decode(Setting::get(\App\Core\Events::settingKey()), true);
         } catch (\Throwable) {
             return []; // no database yet: the config file stands
         }
@@ -65,7 +65,7 @@ final class Edition
             }
             $clean[$key] = mb_substr($value, 0, $key === 'travel.train' || $key === 'travel.bus' || $key === 'travel.car' ? 600 : 160);
         }
-        Setting::set(self::SETTING, (string) json_encode($clean, JSON_UNESCAPED_UNICODE));
+        Setting::set(\App\Core\Events::settingKey(), (string) json_encode($clean, JSON_UNESCAPED_UNICODE));
     }
 
     /** Lay the saved values over the config block and fill in the derived lines. */

@@ -40,6 +40,13 @@ return [
             'cta' => 'cta-salford-quays-halftone-v1.jpg', 'portal' => 'portal-john-rylands-halftone-v1.jpg',
             'footer' => 'footer-manchester-skyline-halftone-v1.jpg',
         ],
+        // Ireland draws on several cities rather than one: Dublin, Cork, Galway, Limerick, Kilkenny.
+        'ireland' => [
+            'summit' => 'summit-ha-penny-halftone-v1.jpg', 'poster' => 'poster-shandon-cork-halftone-v1.jpg',
+            'pathways' => 'pathways-galway-halftone-v1.jpg', 'process' => 'process-limerick-halftone-v1.jpg',
+            'cta' => 'cta-kilkenny-halftone-v1.jpg', 'portal' => 'portal-trinity-halftone-v1.jpg',
+            'footer' => 'footer-dublin-skyline-halftone-v1.jpg',
+        ],
     ],
 
     'summit' => [
@@ -71,11 +78,37 @@ return [
             'bus'   => 'Routes 103, 165, 287 and 372 serve Rainham. Check the stop nearest Barlow Way on the day, as routes change.',
             'car'   => 'Off the A1306 and close to the A13, with the M25 at junction 30 a short drive away. Parking is available at the business centre.',
         ],
+        // What the event's country changes on the forms and in the copy.
+        'country'        => 'United Kingdom',
+        'country_phrase' => 'the United Kingdom',
+        'dial'           => '+44',
         'organiser' => 'Loveworld Consulate UK',
         'office'    => 'The Loveworld Consulate, United Kingdom',
         'motto'     => 'Exceptionalism. Expansionism. Perfectionism.',
         'targets'   => ['1,000 Producers', '90 Days', 'One Community'],
         'stages'    => ['Nothing yet', 'Getting started', 'Growing', 'Scaling'],
         'partners'  => ['Ministry of Commerce', 'The Office of the Exchequer', 'Loveworld Consulate UK'],
+    ],
+
+    // Each event's own block, laid over 'summit'. Manchester keeps the values above and admin edits;
+    // Ireland starts as "to be announced" and is filled in from admin → Current edition.
+    'events' => [
+        'ireland' => [
+            'edition'   => 'Ireland Edition 2026',
+            'country'        => 'Ireland',
+            'country_phrase' => 'Ireland',
+            'dial'           => '+353',
+            'place'     => 'Ireland',
+            'city'      => 'Ireland',
+            'artwork'   => 'ireland',
+            'venue'     => ['name' => '', 'unit' => '', 'street' => '', 'town' => '', 'region' => '', 'postcode' => '', 'query' => ''],
+            'travel'    => ['train' => '', 'bus' => '', 'car' => ''],
+            'starts_at' => '2026-10-17T12:00:00+01:00',
+            'ends_at'   => '2026-10-17T18:00:00+01:00',
+            'date_text' => 'Saturday 17th October 2026',
+            'date_day'  => 'Saturday 17th October 2026',
+            'time'      => '',
+            'time_hidden' => true,
+        ],
     ],
 ];

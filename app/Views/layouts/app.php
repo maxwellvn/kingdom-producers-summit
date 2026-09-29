@@ -10,14 +10,15 @@ $summit = $summit ?? config('app.summit');
 $artworkSet = (string) config('app.summit.artwork', 'london');
 $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.london'));
 ?>
-<html lang="en-GB" data-edition="<?= e($artworkSet) ?>">
+<html lang="<?= \App\Core\Events::active() === 'ireland' && !\App\Core\Events::isChooser(\App\Core\Url::currentPath()) ? 'en-IE' : 'en-GB' ?>" data-edition="<?= e($artworkSet) ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title) ?></title>
 <?php
   $summit = (array) config('app.summit');
-  $canonical = rtrim(site_url(), '/') . \App\Core\Url::currentPath();
+  $here = \App\Core\Url::currentPath();
+  $canonical = rtrim(site_url(), '/') . (\App\Core\Events::isChooser($here) ? '/' : rtrim(\App\Core\Events::scope($here), '/'));
   $pageDescription = $description ?? (
       $summit['edition'] . ' of the Loveworld Kingdom Producers Summit. '
       . $summit['date_day'] . ' in ' . $summit['city'] . '. '
@@ -30,7 +31,7 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
   $private = $noIndex ?? false;
 ?>
   <meta name="description" content="<?= e($pageDescription) ?>">
-  <meta name="theme-color" content="#F3EEE3">
+  <meta name="theme-color" content="#FFFFFF">
   <link rel="canonical" href="<?= e($canonical) ?>">
   <?php if ($private): ?>
     <meta name="robots" content="noindex, nofollow">
@@ -75,7 +76,7 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
                            'streetAddress' => implode(', ', array_filter([(string) config('app.summit.venue.unit'), (string) config('app.summit.venue.name'), (string) config('app.summit.venue.street')])),
                            'addressLocality' => (string) config('app.summit.venue.town'),
                            'addressRegion' => (string) config('app.summit.venue.region'), 'postalCode' => (string) config('app.summit.venue.postcode'),
-                           'addressCountry' => 'GB']],
+                           'addressCountry' => \App\Core\Events::active() === 'ireland' ? 'IE' : 'GB']],
             ['@type' => 'VirtualLocation', 'url' => $origin . url('/watch')],
         ],
         'organizer' => [
@@ -97,7 +98,8 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
     <?php if ($eventStart !== ''): // search engines reject an Event without a date ?><script type="application/ld+json"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script><?php endif; ?>
   <?php endif; ?>
 
-<?php $showIntro = $bodyClass === 'page-home'; ?>
+<?php // The opening ident is a Union Jack and a London skyline: Manchester's only. ?>
+<?php $showIntro = $bodyClass === 'page-home' && \App\Core\Events::active() === \App\Core\Events::DEFAULT; ?>
 <?php if ($showIntro): ?>
   <script>
     (function () {
@@ -146,7 +148,9 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
     <?= $content ?>
   </main>
 
-  <?= \App\Core\View::partial('partials/footer', ['summit' => $summit]) ?>
+  <?= \App\Core\Events::isChooser(\App\Core\Url::currentPath())
+      ? \App\Core\View::partial('partials/footer_choose', ['summit' => $summit])
+      : \App\Core\View::partial('partials/footer', ['summit' => $summit]) ?>
 
   <aside class="cookie-banner" data-cookie-banner data-consent-endpoint="<?= e(url('api/consent')) ?>" aria-label="Cookie preferences" hidden>
     <div class="cookie-banner__top">

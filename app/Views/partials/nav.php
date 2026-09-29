@@ -1,10 +1,12 @@
 <?php
 $current = \App\Core\Url::currentPath();
+$chooser = \App\Core\Events::isChooser($current);
+$other = \App\Core\Events::active() === 'ireland' ? 'manchester' : 'ireland';
 $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.png') : null;
 ?>
 <header class="nav" id="nav">
   <div class="nav__inner container">
-    <a href="<?= url('/') ?>" class="brand" aria-label="Loveworld Consulate United Kingdom — home">
+    <a href="<?= e(\App\Core\Url::base() . '/') ?>" class="brand" aria-label="Loveworld Kingdom Producers Summit — choose your city">
       <?php if ($crest): ?>
         <img class="brand__crest" src="<?= $crest ?>" alt="" width="44" height="44">
       <?php else: ?>
@@ -21,13 +23,21 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
       </span>
     </a>
 
+    <?php if ($chooser): ?>
+    <span class="nav__edition"><i aria-hidden="true"></i>Manchester and Ireland</span>
+    <?php else: ?>
     <nav class="nav__links" aria-label="Main">
       <a class="nav__link" href="<?= url('/') ?>#summit">The Summit</a>
       <a class="nav__link" href="<?= url('/') ?>#pathways">Ways to join</a>
       <a class="nav__link<?= $current === '/about' ? ' is-active' : '' ?>" href="<?= url('/about') ?>">The Initiative</a>
       <a class="nav__link<?= str_starts_with($current, '/sponsor') ? ' is-active' : '' ?>" href="<?= url('/sponsor') ?>">Sponsor</a>
     </nav>
-    <span class="nav__edition"><i aria-hidden="true"></i><?= e((string) config('app.summit.edition')) ?></span>
+    <nav class="city-switch" aria-label="Choose event" data-city-switch>
+      <span class="city-switch__thumb" aria-hidden="true"></span>
+      <?php foreach (['manchester' => 'Manchester', 'ireland' => 'Ireland'] as $slug => $label): $on = \App\Core\Events::active() === $slug; ?>
+        <a class="city-switch__opt<?= $on ? ' is-active' : '' ?>" data-city="<?= e($slug) ?>" href="<?= e(\App\Core\Url::base() . '/' . $slug . '/') ?>"<?= $on ? ' aria-current="true"' : '' ?>><?= e($label) ?></a>
+      <?php endforeach; ?>
+    </nav>
 
     <div class="nav__cta">
       <a href="<?= url('/register') ?>" class="btn btn--ink <?= str_starts_with($current, '/register') ? 'is-active' : '' ?>">
@@ -39,15 +49,21 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
     <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
       <span></span><span></span>
     </button>
+    <?php endif; ?>
   </div>
 </header>
 
+<?php if (!$chooser): ?>
 <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
   <div class="mobile-menu__inner">
     <div class="mobile-menu__meta mono">
       <span>Navigate</span>
       <span><?= e(config('app.summit.edition')) ?></span>
     </div>
+    <a class="mobile-menu__switch" href="<?= e(\App\Core\Url::base() . '/') ?>">
+      <span class="mono">You are viewing <?= e((string) config('app.summit.place')) ?></span>
+      <span class="mobile-menu__switch-go">Change city <span aria-hidden="true">→</span></span>
+    </a>
     <nav class="mobile-menu__links" aria-label="Mobile navigation">
       <a href="<?= url('/') ?>#summit" class="mobile-menu__link">The Summit</a>
       <a href="<?= url('/') ?>#pathways" class="mobile-menu__link">Ways to Join</a>
@@ -63,3 +79,4 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
     </div>
   </div>
 </div>
+<?php endif; ?>

@@ -199,7 +199,7 @@ final class RegistrationService
             'email'             => $email,
             'phone'             => $this->nullable($request->str('phone')),
             'kingschat_username'=> $this->nullable(ltrim($request->str('kingschat_username'), '@')),
-            'country'           => $request->str('country') ?: 'United Kingdom',
+            'country'           => $request->str('country') ?: (string) config('app.summit.country', 'United Kingdom'),
             'city'              => null,
             'age_band'          => null,
             'church_group'      => null,

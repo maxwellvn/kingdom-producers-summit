@@ -136,7 +136,38 @@
     });
   }
 
-  document.querySelectorAll('.footer__flag-video').forEach(function (video) {
+
+  // City toggle: the thumb slides to the chosen city, then the page follows. The new page draws the
+  // thumb already in place, so the slide and the load read as one motion.
+  document.querySelectorAll('[data-city-switch]').forEach(function (bar) {
+    var thumb = bar.querySelector('.city-switch__thumb');
+    var opts = bar.querySelectorAll('.city-switch__opt');
+    var active = bar.querySelector('.city-switch__opt.is-active');
+    if (!thumb || !active) return;
+    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function place(opt) {
+      bar.style.setProperty('--thumb-x', opt.offsetLeft + 'px');
+      bar.style.setProperty('--thumb-w', opt.offsetWidth + 'px');
+    }
+    place(active);
+    bar.offsetWidth; // commit the position before transitions switch on
+    bar.classList.add('is-ready');
+    window.addEventListener('resize', function () { place(bar.querySelector('.city-switch__opt.is-active')); });
+
+    opts.forEach(function (opt) {
+      opt.addEventListener('click', function (event) {
+        if (opt.classList.contains('is-active') || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        var current = bar.querySelector('.city-switch__opt.is-active');
+        current.classList.remove('is-active');
+        opt.classList.add('is-active');
+        place(opt);
+        window.setTimeout(function () { window.location.href = opt.href; }, still ? 0 : 260);
+      });
+    });
+  });
+
+  document.querySelectorAll('video.footer__flag-video').forEach(function (video) {
     var startVideo = function () { video.play().catch(function () {}); };
     if (video.readyState >= 2) startVideo();
     else video.addEventListener('canplay', startVideo, { once: true });
@@ -743,7 +774,7 @@
         var delay = parseFloat(el.getAttribute('data-reveal-delay') || '0');
         ScrollTrigger.create({
           trigger: el, start: 'top 88%', once: true,
-          onEnter: function () { gsap.to(el, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: delay }); }
+          onEnter: function () { gsap.to(el, { opacity: 1, y: 0, duration: 0.9, ease: 'expo.out', delay: delay }); }
         });
       });
     } else {
@@ -758,7 +789,7 @@
         ScrollTrigger.create({
           trigger: el, start: 'top 85%', once: true,
           onEnter: function () {
-            gsap.to(lines, { yPercent: 0, duration: 1, ease: 'power4.out', stagger: 0.08 });
+            gsap.to(lines, { yPercent: 0, duration: 1, ease: 'expo.out', stagger: 0.08 });
           }
         });
       } else {
@@ -788,7 +819,7 @@
       ScrollTrigger.create({
         trigger: note, start: 'top 92%', once: true,
         onEnter: function () {
-          gsap.from(note, { opacity: 0, y: 26, rotation: -8.5, duration: .9, ease: 'power3.out' });
+          gsap.from(note, { opacity: 0, y: 26, rotation: -8.5, duration: .9, ease: 'expo.out' });
         }
       });
     }

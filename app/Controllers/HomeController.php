@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Events;
 use App\Core\Request;
 use App\Core\Response;
 use App\Models\Registration;
@@ -13,6 +14,9 @@ final class HomeController extends Controller
 {
     public function index(Request $request): Response
     {
+        if (Events::isChooser($request->path)) {
+            return $this->choose();
+        }
 
         return $this->view('home/index', [
             'title'     => config('app.name') . ' — ' . config('app.summit.edition'),
@@ -21,6 +25,23 @@ final class HomeController extends Controller
                 . config('app.summit.date_day') . ' in ' . config('app.summit.city')
                 . '. Attend in person, watch online, or join the Kingdom Producers initiative.',
             'summit'    => config('app.summit'),
+        ]);
+    }
+
+    /** The front door while two events share one day: pick a city, land on its own site. */
+    private function choose(): Response
+    {
+        $events = [];
+        foreach (Events::SLUGS as $slug) {
+            $events[$slug] = Events::summit($slug);
+        }
+
+        return $this->view('home/choose', [
+            'title'       => config('app.name') . ' — Manchester and Ireland, one day',
+            'bodyClass'   => 'page-choose',
+            'description' => 'The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland on the same day. '
+                . 'Choose your city to register, or to watch online.',
+            'events'      => $events,
         ]);
     }
 

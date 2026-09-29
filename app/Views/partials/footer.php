@@ -22,6 +22,7 @@
       <?php $fv = (array) config('app.summit.venue'); ?>
       <p class="footer__venue mono"><?= e(venue_line()) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
+      <a class="footer__switch mono" href="<?= e(\App\Core\Url::base() . '/') ?>">Manchester or Ireland? Choose your city <span aria-hidden="true">→</span></a>
     </div>
 
     <div class="footer__col">
@@ -56,8 +57,12 @@
   <div class="footer__flag-wordmark" aria-hidden="true">Kingdom Producers</div>
 
   <div class="footer__flag-stage" aria-hidden="true">
-    <video class="footer__flag-video" autoplay muted loop playsinline preload="metadata" poster="<?= e(asset('img/union-jack-still.jpg')) ?>">
-      <source src="<?= e(media('union-jack-wind-loop-higgsfield-v1.mp4')) ?>" type="video/mp4">
-    </video>
+    <?php if (\App\Core\Events::active() === 'ireland'): ?>
+      <img class="footer__flag-video" src="<?= e(asset('img/ireland-tricolour-still.jpg')) ?>" alt="" width="1280" height="720" loading="lazy">
+    <?php else: ?>
+      <video class="footer__flag-video" autoplay muted loop playsinline preload="metadata" poster="<?= e(asset('img/union-jack-still.jpg')) ?>">
+        <source src="<?= e(media('union-jack-wind-loop-higgsfield-v1.mp4')) ?>" type="video/mp4">
+      </video>
+    <?php endif; ?>
   </div>
 </footer>

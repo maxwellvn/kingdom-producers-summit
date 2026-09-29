@@ -182,7 +182,7 @@
       <p class="eyebrow"><span class="eyebrow__dot"></span>100 producers per edition</p>
       <h2 class="section__title">The initiative</h2>
       <p class="section__lede">The summit is one afternoon. The initiative is what follows it: a structured 30, 60 and 90 day production journey that takes you from working out what you can produce, to developing and testing it, to launching something real.</p>
-      <p>That might be a product, a service, a solution, an enterprise or a piece of intellectual property. Everyone in the United Kingdom is welcome to join, whether or not you come to <?= e($summit['place']) ?>.</p>
+      <p>That might be a product, a service, a solution, an enterprise or a piece of intellectual property. Everyone in <?= e((string) $summit['country_phrase']) ?> is welcome to join, whether or not you come to <?= e($summit['place']) ?>.</p>
       <div class="initiative__actions">
         <a href="<?= url('/register') ?>?mode=initiative" class="btn btn--ink"><span class="btn__label">Join the initiative</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>
         <a href="<?= url('/about') ?>" class="initiative__more">Read the full initiative <span aria-hidden="true"><?= icon_arrow() ?></span></a>

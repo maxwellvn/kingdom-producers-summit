@@ -96,7 +96,7 @@ $stageLabels = [
           <div class="initiative-enrolment">
             <p class="initiative-enrolment__eyebrow mono">100 producers per edition</p>
             <h2>Join the initiative</h2>
-            <p>The Kingdom Producers initiative develops 100 young people per edition into working producers. It is open to everyone in the United Kingdom, whether or not you attend the summit.</p>
+            <p>The Kingdom Producers initiative develops 100 young people per edition into working producers. It is open to everyone in <?= e((string) config('app.summit.country_phrase')) ?>, whether or not you attend the summit.</p>
             <p>You enter a structured 30, 60 and 90 day journey: working out what you can produce, developing and testing it, then launching something real. A product, a service, a solution, an enterprise or a piece of intellectual property.</p>
             <h3>What you receive</h3>
             <ul class="initiative-benefits">
@@ -174,7 +174,7 @@ $stageLabels = [
           </div>
           <div class="field <?= error_for('phone') ? 'has-error' : '' ?>">
             <label for="phone">Phone number</label>
-            <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+44" value="<?= old('phone') ?>" required>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="<?= e((string) config('app.summit.dial')) ?>" value="<?= old('phone') ?>" required>
             <?php if ($err = error_for('phone')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
           </div>
           <div class="field <?= error_for('kingschat_username') ? 'has-error' : '' ?>">
@@ -191,7 +191,7 @@ $stageLabels = [
             <select id="country" name="country" autocomplete="country-name" required>
               <option value="">Select a country</option>
               <?php foreach ($countries as $c): ?>
-                <option value="<?= e($c) ?>" <?= old('country', 'United Kingdom') === e($c) ? 'selected' : '' ?>><?= e($c) ?></option>
+                <option value="<?= e($c) ?>" <?= old('country', (string) config('app.summit.country')) === e($c) ? 'selected' : '' ?>><?= e($c) ?></option>
               <?php endforeach; ?>
             </select>
             <?php if ($err = error_for('country')): ?><p class="field__error"><?= e($err) ?></p><?php endif; ?>
