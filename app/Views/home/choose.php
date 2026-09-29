@@ -14,8 +14,8 @@ $copy = [
     <p class="eyebrow eyebrow--pill"><?= e($date) ?></p>
     <h1 class="choose__title">Two cities.<br>One day.<br><span>Choose yours.</span></h1>
     <p class="choose__lede">
-      The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland at the same time.
-      Each has its own venue, its own room and its own live stream, so pick where you will be.
+      The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland on the same day.
+      Choose your city to register, whether you're coming in person or watching online.
     </p>
   </div>
 
