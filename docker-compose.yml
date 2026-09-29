@@ -29,6 +29,9 @@ services:
       MAIL_PASSWORD: "${MAIL_PASSWORD:?Set MAIL_PASSWORD in Coolify}"
     expose:
       - "80"
+    volumes:
+      # Files that must outlive a redeploy (images linked from emails): served at /uploads.
+      - producers_uploads:/var/www/html/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +55,4 @@ services:
 
 volumes:
   producers_db:
+  producers_uploads:

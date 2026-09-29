@@ -1,0 +1,5 @@
+# Hosted files only: never run code or list the folder.
+Options -Indexes
+<FilesMatch "\.(php\d?|phtml|phar|cgi|pl|py|sh)$">
+  Require all denied
+</FilesMatch>
