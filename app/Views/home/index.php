@@ -228,6 +228,33 @@
   </div>
 </section>
 
+<!-- ============ SPONSOR ============ -->
+<?php $presets = \App\Controllers\SponsorController::PRESETS_PENCE; ?>
+<section class="give section" id="sponsor" aria-labelledby="give-title">
+  <div class="container">
+    <div class="give__panel" data-reveal>
+      <span class="give__print" aria-hidden="true"></span>
+      <div class="give__copy">
+        <p class="eyebrow eyebrow--pill">Sponsor the <?= e((string) $summit['place']) ?> summit</p>
+        <h2 class="give__title" id="give-title">Fund what the room makes possible.</h2>
+        <p class="give__lede">Attending is free. Gifts pay for the venue, the resource packs, the live stream and 90 days of mentoring after <?= e((string) $summit['place']) ?>.</p>
+      </div>
+      <div class="give__act">
+        <p class="give__label mono">Choose an amount</p>
+        <div class="give__chips">
+          <?php foreach ($presets as $p): ?>
+            <a class="give__chip" href="<?= e(url('/sponsor') . '?amount=' . ($p / 100)) ?>">£<?= e(number_format($p / 100)) ?></a>
+          <?php endforeach; ?>
+        </div>
+        <a class="btn btn--ink give__cta" href="<?= e(url('/sponsor')) ?>">
+          <span class="btn__label">Give any amount</span>
+          <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ FAQ ============ -->
 <section class="venue section" id="getting-there">
   <div class="container venue__grid">

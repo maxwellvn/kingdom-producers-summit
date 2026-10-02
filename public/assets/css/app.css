@@ -1716,3 +1716,34 @@ body { background: var(--paper); }
   @view-transition { navigation: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* ---------- Sponsor band on each event's home: its own print, ink and accent ---------- */
+.give__panel {
+  position: relative; display: grid; gap: clamp(1.5rem, 3vw, 2.5rem); align-items: end; overflow: hidden; isolation: isolate;
+  padding: clamp(1.75rem, 4vw, 3.5rem); border-radius: var(--r-lg); background: #fff; box-shadow: var(--lift-2);
+}
+.give__print {
+  position: absolute; z-index: -1; inset: 0 0 0 48%; background: var(--art-cta) right bottom / cover no-repeat; opacity: .9;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 40%); mask-image: linear-gradient(to right, transparent, #000 40%);
+}
+.give__copy { max-width: 34rem; }
+.give__title { margin: 1rem 0 .75rem; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; line-height: .95; letter-spacing: -.01em; font-size: clamp(2.2rem, 4.6vw, 3.8rem); color: var(--ink); text-wrap: balance; }
+.give__lede { margin: 0; max-width: 42ch; font-size: var(--fs-lede); line-height: 1.55; color: var(--ink-soft); }
+.give__act { display: grid; gap: .85rem; justify-items: start; padding: 1.1rem 1.2rem; border-radius: var(--r-md); background: rgba(255,255,255,.88); backdrop-filter: blur(6px); box-shadow: var(--lift-1); }
+.give__label { margin: 0; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.give__chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.give__chip {
+  display: inline-flex; align-items: center; min-height: 2.6rem; padding: .5rem 1rem; border-radius: var(--r-pill);
+  background: #F3F3F1; color: var(--ink); font-weight: 600; text-decoration: none;
+  transition-property: background-color, box-shadow, transform; transition-duration: var(--dur-fast); transition-timing-function: var(--ease-smooth);
+}
+.give__chip:active { transform: scale(.97); }
+.give__chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .give__chip:hover { background: #fff; box-shadow: var(--lift-1), inset 0 0 0 1.5px var(--accent); } }
+@media (min-width: 900px) {
+  .give__panel { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); min-height: 26rem; }
+  .give__act { justify-self: end; }
+}
+@media (max-width: 899px) {
+  .give__print { inset: 45% 0 0 0; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%); mask-image: linear-gradient(to bottom, transparent, #000 35%); }
+}

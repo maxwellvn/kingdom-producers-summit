@@ -100,6 +100,12 @@ final class RegistrationController extends Controller
         if ($registration === null) {
             return $this->redirect('/register');
         }
+        // A pass for the other event is shown on that event's own page.
+        if ($registration['event'] !== \App\Core\Events::active()) {
+            $query = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_QUERY);
+
+            return Response::redirect(\App\Core\Url::base() . '/' . $registration['event'] . '/register/confirmed' . ($query !== '' ? '?' . $query : ''));
+        }
 
         return $this->view('register/confirmed', [
             'title'        => 'You are registered — ' . config('app.name'),

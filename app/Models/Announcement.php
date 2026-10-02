@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 final class Announcement
 {
@@ -12,10 +13,10 @@ final class Announcement
     {
         $pdo = Database::connection();
         $stmt = $pdo->prepare(
-            'INSERT INTO announcements (audience, subject, body, by_email, by_kingschat, send_at, created_by)
-             VALUES (:audience, :subject, :body, :by_email, :by_kingschat, :send_at, :created_by)'
+            'INSERT INTO announcements (event, audience, subject, body, by_email, by_kingschat, send_at, created_by)
+             VALUES (:event, :audience, :subject, :body, :by_email, :by_kingschat, :send_at, :created_by)'
         );
-        $stmt->execute($data);
+        $stmt->execute(['event' => Events::active()] + $data);
 
         return (int) $pdo->lastInsertId();
     }
@@ -24,9 +25,10 @@ final class Announcement
     public static function recent(int $limit = 50): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT * FROM announcements ORDER BY (sent_at IS NULL) DESC, send_at DESC LIMIT ?'
+            'SELECT * FROM announcements WHERE event = ? ORDER BY (sent_at IS NULL) DESC, send_at DESC LIMIT ?'
         );
-        $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(1, Events::active());
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();

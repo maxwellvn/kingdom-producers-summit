@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 final class Sponsorship
 {
@@ -15,10 +16,10 @@ final class Sponsorship
     {
         $pdo = Database::connection();
         $stmt = $pdo->prepare(
-            'INSERT INTO sponsorships (name, email, amount_pence, method)
-             VALUES (:name, :email, :amount_pence, :method)'
+            'INSERT INTO sponsorships (event, name, email, amount_pence, method)
+             VALUES (:event, :name, :email, :amount_pence, :method)'
         );
-        $stmt->execute($data);
+        $stmt->execute(['event' => Events::active()] + $data);
 
         return (int) $pdo->lastInsertId();
     }
@@ -61,8 +62,9 @@ final class Sponsorship
     /** @return array<int, array> newest first */
     public static function recent(int $limit = 200): array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM sponsorships ORDER BY created_at DESC LIMIT ?');
-        $stmt->bindValue(1, $limit, \PDO::PARAM_INT);
+        $stmt = Database::connection()->prepare('SELECT * FROM sponsorships WHERE event = ? ORDER BY created_at DESC LIMIT ?');
+        $stmt->bindValue(1, Events::active());
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -70,6 +72,9 @@ final class Sponsorship
 
     public static function totalPaidPence(): int
     {
-        return (int) Database::connection()->query("SELECT COALESCE(SUM(amount_pence), 0) FROM sponsorships WHERE status = 'paid'")->fetchColumn();
+        $stmt = Database::connection()->prepare("SELECT COALESCE(SUM(amount_pence), 0) FROM sponsorships WHERE event = ? AND status = 'paid'");
+        $stmt->execute([Events::active()]);
+
+        return (int) $stmt->fetchColumn();
     }
 }

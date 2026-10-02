@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 /** A running log of what happens around the stream, shown live in the admin. */
 final class StreamEvent
@@ -14,8 +15,8 @@ final class StreamEvent
     {
         try {
             Database::connection()
-                ->prepare('INSERT INTO stream_events (kind, detail) VALUES (?, ?)')
-                ->execute([mb_substr($kind, 0, 24), mb_substr($detail, 0, 255)]);
+                ->prepare('INSERT INTO stream_events (event, kind, detail) VALUES (?, ?, ?)')
+                ->execute([Events::active(), mb_substr($kind, 0, 24), mb_substr($detail, 0, 255)]);
         } catch (\Throwable $e) {
             error_log('Stream event not logged: ' . $e->getMessage()); // never let logging break the page
         }
@@ -27,18 +28,20 @@ final class StreamEvent
         $limit = max(1, min(500, $limit));
         $pdo = Database::connection();
         if ($afterId > 0) {
-            $stmt = $pdo->prepare("SELECT id, at, kind, detail FROM stream_events WHERE id > ? ORDER BY id LIMIT {$limit}");
-            $stmt->execute([$afterId]);
+            $stmt = $pdo->prepare("SELECT id, at, kind, detail FROM stream_events WHERE event = ? AND id > ? ORDER BY id LIMIT {$limit}");
+            $stmt->execute([Events::active(), $afterId]);
             return $stmt->fetchAll();
         }
-        $rows = $pdo->query("SELECT id, at, kind, detail FROM stream_events ORDER BY id DESC LIMIT {$limit}")->fetchAll();
+        $stmt = $pdo->prepare("SELECT id, at, kind, detail FROM stream_events WHERE event = ? ORDER BY id DESC LIMIT {$limit}");
+        $stmt->execute([Events::active()]);
+        $rows = $stmt->fetchAll();
 
         return array_reverse($rows);
     }
 
     public static function clear(): void
     {
-        Database::connection()->exec('DELETE FROM stream_events');
+        Database::connection()->prepare('DELETE FROM stream_events WHERE event = ?')->execute([Events::active()]);
     }
 
     /** Keep the table from growing forever: a week is plenty. */

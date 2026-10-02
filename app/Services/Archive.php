@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Database;
+use App\Core\Events;
 use PDO;
 
 /**
@@ -15,8 +16,22 @@ use PDO;
  */
 final class Archive
 {
-    /** The Kingdom Producers Initiative runs across editions: its members and commitments stay live. */
-    private const KEEP_LIVE = ['commitments'];
+    /** The Kingdom Producers Initiative runs across editions: its members and commitments stay live.
+     *  Page views and viewers are site-wide, shared by both events: copied, never emptied. */
+    private const KEEP_LIVE = ['commitments', 'presence', 'page_views'];
+
+    /** Rows of a table that belong to the event being archived. Child tables follow their parent. */
+    private static function scope(string $table): string
+    {
+        return match ($table) {
+            'attendances'             => 'registration_id IN (SELECT id FROM registrations WHERE event = :event)',
+            'watch_passes'            => 'reference IN (SELECT reference FROM registrations WHERE event = :event)',
+            'prompt_answers'          => 'prompt_id IN (SELECT id FROM prompts WHERE event = :event)',
+            'announcement_deliveries' => 'announcement_id IN (SELECT id FROM announcements WHERE event = :event)',
+            'presence', 'page_views'  => ':event IS NOT NULL', // every row: shared by both events
+            default                   => 'event = :event',
+        };
+    }
 
     /** Per-edition tables, children before parents so emptying never trips a foreign key. */
     public const TABLES = [
@@ -48,7 +63,9 @@ final class Archive
     /** @return array<int,array<string,mixed>> newest first */
     public static function all(): array
     {
-        $rows = Database::connection()->query('SELECT * FROM archives ORDER BY created_at DESC, id DESC')->fetchAll() ?: [];
+        $stmt = Database::connection()->prepare('SELECT * FROM archives WHERE event = ? ORDER BY created_at DESC, id DESC');
+        $stmt->execute([Events::active()]);
+        $rows = $stmt->fetchAll() ?: [];
 
         return array_map(self::decode(...), $rows);
     }
@@ -90,8 +107,11 @@ final class Archive
                 // DDL commits on its own in MySQL, so safety comes from checking the copies, not a transaction.
                 $pdo->exec("CREATE TABLE `{$copy}` LIKE `{$table}`");
                 $made[] = $copy;
-                $pdo->exec("INSERT INTO `{$copy}` SELECT * FROM `{$table}`");
-                $live = (int) $pdo->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn();
+                $where = self::scope($table);
+                $pdo->prepare("INSERT INTO `{$copy}` SELECT * FROM `{$table}` WHERE {$where}")->execute(['event' => Events::active()]);
+                $count = $pdo->prepare("SELECT COUNT(*) FROM `{$table}` WHERE {$where}");
+                $count->execute(['event' => Events::active()]);
+                $live = (int) $count->fetchColumn();
                 $copied = (int) $pdo->query("SELECT COUNT(*) FROM `{$copy}`")->fetchColumn();
                 if ($live !== $copied) {
                     throw new \RuntimeException("{$table}: {$copied} of {$live} rows copied");
@@ -107,8 +127,8 @@ final class Archive
             return 'The archive could not be made, so nothing was changed: ' . $e->getMessage();
         }
 
-        $pdo->prepare('INSERT INTO archives (slug, label, counts, cleared, created_by) VALUES (?, ?, ?, 0, ?)')
-            ->execute([$slug, $label, json_encode($counts), $by]);
+        $pdo->prepare('INSERT INTO archives (event, slug, label, counts, cleared, created_by) VALUES (?, ?, ?, ?, 0, ?)')
+            ->execute([Events::active(), $slug, $label, json_encode($counts), $by]);
 
         return $clear ? self::clearLive($slug) : null;
     }
@@ -119,14 +139,19 @@ final class Archive
         $pdo = Database::connection();
         try {
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-            foreach (array_keys(self::TABLES) as $table) {
+            // Only this event's rows go. Children first: they find their rows through the parent.
+            $children = ['attendances', 'watch_passes', 'prompt_answers', 'announcement_deliveries'];
+            $order = array_merge($children, array_diff(array_keys(self::TABLES), $children));
+            foreach ($order as $table) {
                 if (!self::exists($table) || in_array($table, self::KEEP_LIVE, true)) {
                     continue;
                 }
+                $where = self::scope($table);
                 // Summit places go; Initiative members carry on into the next edition.
-                $pdo->exec($table === 'registrations'
-                    ? "DELETE FROM `registrations` WHERE participation <> 'initiative'"
-                    : "TRUNCATE TABLE `{$table}`");
+                if ($table === 'registrations') {
+                    $where .= " AND participation <> 'initiative'";
+                }
+                $pdo->prepare("DELETE FROM `{$table}` WHERE {$where}")->execute(['event' => Events::active()]);
             }
         } catch (\Throwable $e) {
             error_log('Clearing live tables failed: ' . $e->getMessage());

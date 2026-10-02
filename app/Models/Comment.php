@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 /**
  * Comments left by viewers during the event. They are only collected while an
@@ -34,11 +35,11 @@ final class Comment
         $stmt = Database::connection()->prepare(
             "SELECT id, author_name, body, created_at
              FROM comments
-             WHERE id > :after
+             WHERE event = :event AND id > :after
              ORDER BY id DESC
              LIMIT {$limit}"
         );
-        $stmt->execute(['after' => max(0, $afterId)]);
+        $stmt->execute(['event' => Events::active(), 'after' => max(0, $afterId)]);
 
         return array_reverse($stmt->fetchAll());
     }
@@ -46,9 +47,10 @@ final class Comment
     public static function add(string $reference, string $authorName, string $body): int
     {
         $stmt = Database::connection()->prepare(
-            'INSERT INTO comments (reference, author_name, body) VALUES (?, ?, ?)'
+            'INSERT INTO comments (event, reference, author_name, body) VALUES (?, ?, ?, ?)'
         );
         $stmt->execute([
+            Events::active(),
             $reference,
             mb_substr(trim($authorName), 0, 120),
             mb_substr(trim($body), 0, self::MAX_LENGTH),
@@ -59,7 +61,7 @@ final class Comment
 
     public static function delete(int $id): void
     {
-        Database::connection()->prepare('DELETE FROM comments WHERE id = ?')->execute([$id]);
+        Database::connection()->prepare('DELETE FROM comments WHERE id = ? AND event = ?')->execute([$id, Events::active()]);
     }
 
     /** Remove every comment. Used when an organiser clears the board. */
@@ -67,22 +69,26 @@ final class Comment
     {
         $pdo = Database::connection();
         $count = self::count();
-        $pdo->exec('DELETE FROM comments');
+        $pdo->prepare('DELETE FROM comments WHERE event = ?')->execute([Events::active()]);
 
         return $count;
     }
 
     public static function count(): int
     {
-        return (int) Database::connection()->query('SELECT COUNT(*) FROM comments')->fetchColumn();
+        $stmt = Database::connection()->prepare('SELECT COUNT(*) FROM comments WHERE event = ?');
+        $stmt->execute([Events::active()]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     /** Newest first, for the moderation table. */
     public static function forModeration(int $limit = 200): array
     {
         $limit = max(1, min(500, $limit));
-        return Database::connection()
-            ->query("SELECT id, reference, author_name, body, created_at FROM comments ORDER BY id DESC LIMIT {$limit}")
-            ->fetchAll();
+        $stmt = Database::connection()->prepare("SELECT id, reference, author_name, body, created_at FROM comments WHERE event = ? ORDER BY id DESC LIMIT {$limit}");
+        $stmt->execute([Events::active()]);
+
+        return $stmt->fetchAll();
     }
 }

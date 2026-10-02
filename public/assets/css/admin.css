@@ -232,6 +232,7 @@ a.adm-stat { text-decoration: none; }
 .adm-scan__result { position: relative; min-height: 24rem; padding: 2rem; overflow: hidden; color: var(--paper); background: var(--stamp); transition: background .25s var(--ease-out); }
 .adm-scan__result[data-state="duplicate"] { background: #9a6b10; }
 .adm-scan__result[data-state="invalid"] { background: #602128; }
+.adm-scan__result[data-state="wrong_event"] { background: #3D3F86; }
 .adm-scan__result[data-state="loading"] { background: var(--ink); }
 .adm-scan__result[data-state="loading"]::after { content: ""; position: absolute; left: 2rem; right: 2rem; bottom: 1.2rem; height: 3px; background: linear-gradient(90deg, transparent, #e65a5f, transparent); transform: translateX(-100%); animation: scanner-load 1.15s var(--ease-out) infinite; }
 .adm-scan__result[data-state="checked_in"] { animation: result-in .42s var(--ease-out); }
@@ -715,3 +716,12 @@ td.adm-empty { display: table-cell; }
 .adm-icon-btn--light { color: var(--a-text-3); }
 @media (hover: hover) and (pointer: fine) { .adm-icon-btn--light:hover { background: var(--a-sunken); color: var(--a-text); } }
 .adm-shell--rail .adm-side__top { flex-direction: row; }
+
+/* Which event the admin is working on. Every page below reads and writes that event only. */
+.adm-event { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--a-border-2, #eceae6); }
+.adm-event__opt { padding: .38rem .85rem; border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: .82rem; font-weight: 500; color: var(--a-text-3); cursor: pointer;
+  transition-property: background-color, color, box-shadow; transition-duration: 260ms; transition-timing-function: cubic-bezier(.32, .72, 0, 1); }
+.adm-event__opt.is-active { background: #fff; color: var(--a-text); box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 2px 6px -2px rgba(0,0,0,.1); }
+.adm-event__opt:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) { .adm-event__opt:not(.is-active):hover { color: var(--a-text); } }
+@media (prefers-reduced-motion: reduce) { .adm-event__opt { transition: none; } }

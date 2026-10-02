@@ -51,11 +51,12 @@ final class BulkSender
         if ($php === null || !function_exists('exec')) {
             return false;
         }
-        self::write(['phase' => 'starting', 'what' => $what, 'audience' => $audience, 'by' => $by,
+        $event = \App\Core\Events::active();
+        self::write(['phase' => 'starting', 'event' => $event, 'what' => $what, 'audience' => $audience, 'by' => $by,
             'total' => 0, 'done' => 0, 'sent' => 0, 'failed' => 0, 'started_at' => time(), 'updated_at' => time()]);
         $script = BASE_PATH . '/bin/bulk-send.php';
         $log = BASE_PATH . '/storage/bulk-send.log';
-        exec(sprintf('(%s %s %s %s < /dev/null > %s 2>&1 &)', escapeshellarg($php), escapeshellarg($script), escapeshellarg($what), escapeshellarg($audience), escapeshellarg($log)));
+        exec(sprintf('(%s %s %s %s %s < /dev/null > %s 2>&1 &)', escapeshellarg($php), escapeshellarg($script), escapeshellarg($what), escapeshellarg($audience), escapeshellarg($event), escapeshellarg($log)));
 
         return true;
     }

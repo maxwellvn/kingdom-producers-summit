@@ -11,6 +11,7 @@ if (!defined('BASE_PATH')) {
     require __DIR__ . '/../app/bootstrap.php';
 }
 
+use App\Core\Events;
 use App\Models\Announcement;
 use App\Services\Announcer;
 
@@ -18,12 +19,17 @@ use App\Services\Announcer;
 while (Announcement::claimDue() !== null) {
 }
 foreach (Announcement::inFlight() as $a) {
-    Announcer::enqueue($a);
-    $state = Announcer::drain($a);
-    $progress = Announcer::progress((int) $a['id']);
-    if ($state === 'done') {
-        Announcement::finish((int) $a['id'], Announcer::summary($progress));
-    }
+    // Each announcement goes to its own event's people, with that event's links and details.
+    [$state, $progress] = Events::using((string) $a['event'], static function () use ($a): array {
+        Announcer::enqueue($a);
+        $state = Announcer::drain($a);
+        $progress = Announcer::progress((int) $a['id']);
+        if ($state === 'done') {
+            Announcement::finish((int) $a['id'], Announcer::summary($progress));
+        }
+
+        return [$state, $progress];
+    });
     if (PHP_SAPI === 'cli') {
         echo date('c') . " #{$a['id']} {$state}: {$progress['sent']}/{$progress['total']} sent, {$progress['failed']} failed\n";
     }

@@ -1,7 +1,9 @@
 <?php /** @var array $summit @var array $methods @var string $espeesCode @var int[] $presets */
 $errors = \App\Core\Session::get('_errors', []);
 $oldMethod = old('method', 'stripe');
-$oldAmount = old('amount');
+// A chip on the home page links here with ?amount=, so the choice carries over.
+$fromLink = preg_match('/^\d{1,6}(\.\d{1,2})?$/', (string) ($_GET['amount'] ?? '')) ? (string) $_GET['amount'] : '';
+$oldAmount = old('amount') !== '' ? old('amount') : e($fromLink);
 $isPreset = in_array((int) round(((float) $oldAmount) * 100), $presets, true);
 ?>
 <section class="reg">

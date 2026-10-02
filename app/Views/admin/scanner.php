@@ -79,6 +79,7 @@
   dialog[data-scan-modal]::backdrop { background: rgba(0,0,0,.55); }
   dialog[data-scan-modal][data-state="duplicate"] [data-modal-card] { background: #9a6b10; }
   dialog[data-scan-modal][data-state="invalid"] [data-modal-card] { background: #602128; }
+  dialog[data-scan-modal][data-state="wrong_event"] [data-modal-card] { background: #3D3F86; }
   [data-search-results] li { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .5rem .6rem; border: 1px solid rgba(27,34,66,.2); background: #fff; }
   [data-search-results] li small { display: block; opacity: .7; }
 </style>
@@ -138,7 +139,7 @@
     if (!modal || typeof modal.showModal !== 'function') return;
     var state = data.status || 'invalid';
     modal.dataset.state = state;
-    modal.querySelector('[data-modal-mark]').textContent = state === 'checked_in' ? '✓' : state === 'duplicate' ? '↺' : '✕';
+    modal.querySelector('[data-modal-mark]').textContent = state === 'checked_in' ? '✓' : state === 'duplicate' ? '↺' : state === 'wrong_event' ? '⇄' : '✕';
     modal.querySelector('[data-modal-label]').textContent = data.message || 'Unable to confirm access.';
     modal.querySelector('[data-modal-name]').textContent = data.name || 'Pass not accepted';
     if (!modal.open) modal.showModal();

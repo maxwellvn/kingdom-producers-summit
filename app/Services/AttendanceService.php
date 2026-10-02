@@ -47,6 +47,13 @@ final class AttendanceService
             return ['ok' => false, 'status' => 'invalid', 'message' => 'No active registration matches this code.'];
         }
 
+        // The desk runs one event. A pass for the other is refused, and says where it belongs.
+        $event = (string) ($registration['event'] ?? \App\Core\Events::DEFAULT);
+        if ($event !== \App\Core\Events::active()) {
+            return ['ok' => false, 'status' => 'wrong_event', 'message' => 'This pass is for ' . \App\Core\Events::label($event) . ', not ' . \App\Core\Events::label() . '. It cannot be checked in here.',
+                    'name' => trim($registration['first_name'] . ' ' . $registration['last_name']), 'reference' => $reference];
+        }
+
         if ($registration['status'] !== 'confirmed') {
             return ['ok' => false, 'status' => 'invalid', 'message' => 'This registration is not confirmed. Please contact the organisers.'];
         }

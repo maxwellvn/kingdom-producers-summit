@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 /** A poll or an open question put to viewers during the stream. */
 final class Prompt
@@ -16,34 +17,36 @@ final class Prompt
     public static function create(string $kind, string $question, array $options): int
     {
         $pdo = Database::connection();
-        $pdo->prepare('INSERT INTO prompts (kind, question, options) VALUES (?, ?, ?)')
-            ->execute([$kind, mb_substr(trim($question), 0, 255), $kind === 'poll' ? json_encode(array_values($options), JSON_UNESCAPED_UNICODE) : null]);
+        $pdo->prepare('INSERT INTO prompts (event, kind, question, options) VALUES (?, ?, ?, ?)')
+            ->execute([Events::active(), $kind, mb_substr(trim($question), 0, 255), $kind === 'poll' ? json_encode(array_values($options), JSON_UNESCAPED_UNICODE) : null]);
 
         return (int) $pdo->lastInsertId();
     }
 
     public static function close(int $id): void
     {
-        Database::connection()->prepare("UPDATE prompts SET status = 'closed', closed_at = NOW() WHERE id = ? AND status = 'open'")->execute([$id]);
+        Database::connection()->prepare("UPDATE prompts SET status = 'closed', closed_at = NOW() WHERE id = ? AND event = ? AND status = 'open'")->execute([$id, Events::active()]);
     }
 
     public static function delete(int $id): void
     {
-        Database::connection()->prepare('DELETE FROM prompts WHERE id = ?')->execute([$id]);
+        Database::connection()->prepare('DELETE FROM prompts WHERE id = ? AND event = ?')->execute([$id, Events::active()]);
     }
 
     /** The one prompt viewers should see right now: the newest open one. */
     public static function active(): ?array
     {
-        $row = Database::connection()->query("SELECT * FROM prompts WHERE status = 'open' ORDER BY id DESC LIMIT 1")->fetch();
+        $stmt = Database::connection()->prepare("SELECT * FROM prompts WHERE event = ? AND status = 'open' ORDER BY id DESC LIMIT 1");
+        $stmt->execute([Events::active()]);
+        $row = $stmt->fetch();
 
         return $row ? self::hydrate($row) : null;
     }
 
     public static function find(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM prompts WHERE id = ?');
-        $stmt->execute([$id]);
+        $stmt = Database::connection()->prepare('SELECT * FROM prompts WHERE id = ? AND event = ?');
+        $stmt->execute([$id, Events::active()]);
         $row = $stmt->fetch();
 
         return $row ? self::hydrate($row) : null;
@@ -52,10 +55,12 @@ final class Prompt
     /** Newest first, with answer counts, for the admin. */
     public static function all(int $limit = 50): array
     {
-        $rows = Database::connection()->query(
+        $stmt = Database::connection()->prepare(
             "SELECT p.*, (SELECT COUNT(*) FROM prompt_answers a WHERE a.prompt_id = p.id) AS answers
-             FROM prompts p ORDER BY p.id DESC LIMIT " . max(1, min(200, $limit))
-        )->fetchAll();
+             FROM prompts p WHERE p.event = ? ORDER BY p.id DESC LIMIT " . max(1, min(200, $limit))
+        );
+        $stmt->execute([Events::active()]);
+        $rows = $stmt->fetchAll();
 
         return array_map([self::class, 'hydrate'], $rows);
     }

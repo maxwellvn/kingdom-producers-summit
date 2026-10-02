@@ -79,6 +79,7 @@ $router->post('/api/analytics-choice', [PresenceController::class, 'choice']);
 
 $router->get('/admin/login', [AdminController::class, 'loginForm']);
 $router->post('/admin/login', [AdminController::class, 'login'], [VerifyCsrf::class]);
+$router->post('/admin/event', [AdminController::class, 'switchEvent'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/logout', [AdminController::class, 'logout'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin', [AdminController::class, 'dashboard'], [RequireAdmin::class]);
 $router->get('/admin/registrations', [AdminController::class, 'registrations'], [RequireAdmin::class]);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 use PDO;
 use PDOException;
 
@@ -63,8 +64,8 @@ final class Registration
 
     public static function findByEmail(string $email): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE email = ? LIMIT 1');
-        $stmt->execute([mb_strtolower(trim($email))]);
+        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE event = ? AND email = ? LIMIT 1');
+        $stmt->execute([Events::active(), mb_strtolower(trim($email))]);
         return $stmt->fetch() ?: null;
     }
 
@@ -93,9 +94,9 @@ final class Registration
         }
         // Match whether or not the stored handle kept its leading @.
         $stmt = Database::connection()->prepare(
-            'SELECT * FROM registrations WHERE LOWER(kingschat_username) IN (?, ?) LIMIT 1'
+            'SELECT * FROM registrations WHERE event = ? AND LOWER(kingschat_username) IN (?, ?) LIMIT 1'
         );
-        $stmt->execute([$username, '@' . $username]);
+        $stmt->execute([Events::active(), $username, '@' . $username]);
         return $stmt->fetch() ?: null;
     }
 
@@ -108,6 +109,8 @@ final class Registration
 
     public static function create(array $data): int
     {
+        // A registration belongs to the event whose page it came from.
+        $data['event'] = Events::active();
         $columns = array_keys($data);
         $placeholders = array_map(static fn (string $c) => ':' . $c, $columns);
 
@@ -134,16 +137,17 @@ final class Registration
 
     public static function find(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE id = ? LIMIT 1');
-        $stmt->execute([$id]);
+        // Admin acts on the event it is switched to; an id from the other event finds nothing.
+        $stmt = Database::connection()->prepare('SELECT * FROM registrations WHERE id = ? AND event = ? LIMIT 1');
+        $stmt->execute([$id, Events::active()]);
         $row = $stmt->fetch();
         return $row ?: null;
     }
 
     public static function delete(int $id): void
     {
-        $stmt = Database::connection()->prepare('DELETE FROM registrations WHERE id = ?');
-        $stmt->execute([$id]);
+        $stmt = Database::connection()->prepare('DELETE FROM registrations WHERE id = ? AND event = ?');
+        $stmt->execute([$id, Events::active()]);
     }
 
     /** Registrant says they sent an offline payment (Espees / bank). Awaiting admin confirmation. */
@@ -206,18 +210,23 @@ final class Registration
                     SUM(participation = 'initiative') AS initiative,
                     SUM(DATE(created_at) = CURDATE()) AS today,
                     COUNT(DISTINCT country) AS countries
-                FROM registrations WHERE status <> 'cancelled' AND email NOT LIKE '%@loadtest.invalid'";
+                FROM registrations WHERE event = ? AND status <> 'cancelled' AND email NOT LIKE '%@loadtest.invalid'";
 
-        $row = Database::connection()->query($sql)->fetch() ?: [];
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute([Events::active()]);
+        $row = $stmt->fetch() ?: [];
         return array_map('intval', $row + ['total' => 0, 'onsite' => 0, 'online' => 0, 'initiative' => 0, 'today' => 0, 'countries' => 0]);
     }
 
     /** @return array{today:int,total:int} */
     public static function attendanceStats(): array
     {
-        $row = Database::connection()->query(
-            "SELECT COUNT(*) AS total, SUM(DATE(checked_in_at) = CURDATE()) AS today FROM attendances"
-        )->fetch() ?: [];
+        $stmt = Database::connection()->prepare(
+            "SELECT COUNT(*) AS total, SUM(DATE(a.checked_in_at) = CURDATE()) AS today
+             FROM attendances a JOIN registrations r ON r.id = a.registration_id WHERE r.event = ?"
+        );
+        $stmt->execute([Events::active()]);
+        $row = $stmt->fetch() ?: [];
 
         return ['total' => (int) ($row['total'] ?? 0), 'today' => (int) ($row['today'] ?? 0)];
     }
@@ -246,9 +255,9 @@ final class Registration
     /** @return array<int, array{label:string, count:int}> */
     public static function byStage(): array
     {
-        $rows = Database::connection()
-            ->query("SELECT producer_stage AS label, COUNT(*) AS count FROM registrations WHERE status <> 'cancelled' GROUP BY producer_stage")
-            ->fetchAll();
+        $stmt = Database::connection()->prepare("SELECT producer_stage AS label, COUNT(*) AS count FROM registrations WHERE event = ? AND status <> 'cancelled' GROUP BY producer_stage");
+        $stmt->execute([Events::active()]);
+        $rows = $stmt->fetchAll();
         $map = array_column(array_filter($rows, static fn (array $r) => $r['label'] !== null), 'count', 'label');
         return array_map(static fn (string $s) => ['label' => $s, 'count' => (int) ($map[$s] ?? 0)], self::STAGES);
     }
@@ -269,8 +278,8 @@ final class Registration
     public static function paginate(int $page, int $perPage = 25, ?string $participation = null, string $search = '', string $support = ''): array
     {
         $pdo = Database::connection();
-        $where = ["r.status <> 'cancelled'", "r.email NOT LIKE '%@loadtest.invalid'"];
-        $params = [];
+        $where = ['r.event = :event', "r.status <> 'cancelled'", "r.email NOT LIKE '%@loadtest.invalid'"];
+        $params = ['event' => Events::active()];
 
         // 'contributed': gave under the new model. 'legacy': paid or claimed under the old pricing.
         if ($support === 'contributed') {
@@ -329,8 +338,8 @@ final class Registration
     /** Stream every row for CSV export. */
     public static function all(string $participation = ''): \Generator
     {
-        $where = "r.email NOT LIKE '%@loadtest.invalid'";
-        $params = [];
+        $where = "r.event = ? AND r.email NOT LIKE '%@loadtest.invalid'";
+        $params = [Events::active()];
         if (in_array($participation, self::PARTICIPATION, true)) {
             $where .= ' AND r.participation = ?';
             $params[] = $participation;

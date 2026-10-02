@@ -32,12 +32,29 @@ final class Events
             return $m[2] ?? '/';
         }
 
+        // Admin works on one event at a time, picked with the switch in the admin header.
+        if (str_starts_with($path, '/admin')) {
+            $chosen = Session::get('admin_event');
+            self::$active = in_array($chosen, self::SLUGS, true) ? $chosen : self::DEFAULT;
+        }
+
         return $path;
     }
 
     public static function active(): string
     {
         return self::$active;
+    }
+
+    /** "Manchester" / "Ireland", for admin headings and messages. */
+    public static function label(?string $slug = null): string
+    {
+        return ucfirst($slug ?? self::$active);
+    }
+
+    public static function isValid(string $slug): bool
+    {
+        return in_array($slug, self::SLUGS, true);
     }
 
     /** True on "/", the page that asks which event; false on an event's own home. */
@@ -105,6 +122,6 @@ final class Events
     /** One event's full summit block: config, its own block, then what admin saved. */
     public static function summit(string $slug): array
     {
-        return self::using($slug, static fn (): array => \App\Services\Edition::overlay(self::baseSummit(Config::raw('app'))));
+        return self::using($slug, static fn (): array => (array) Config::get('app.summit'));
     }
 }

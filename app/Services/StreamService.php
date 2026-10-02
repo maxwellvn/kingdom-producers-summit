@@ -264,7 +264,9 @@ final class StreamService
         // Someone whose payment is logged but not yet verified by an organiser
         // still gets in. Being locked out on the day is worse than the risk of a
         // false claim, which the one-viewer limit and cancellation already cover.
-        return $registration['status'] !== 'cancelled'
+        // A pass opens its own event's stream only.
+        return ($registration['event'] ?? \App\Core\Events::DEFAULT) === \App\Core\Events::active()
+            && $registration['status'] !== 'cancelled'
             && in_array($registration['participation'], self::allowedPaths(), true)
             && in_array($registration['payment_status'], ['paid', 'not_required', 'claimed'], true);
     }

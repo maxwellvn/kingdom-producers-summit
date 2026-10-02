@@ -151,6 +151,18 @@ final class AdminController extends Controller
         return $this->redirect('/admin/admins');
     }
 
+    /** Admin works on one event at a time; this switches which, and returns to the same page. */
+    public function switchEvent(Request $request): Response
+    {
+        $event = $request->str('event');
+        if (\App\Core\Events::isValid($event)) {
+            Session::put('admin_event', $event);
+        }
+        $back = $request->str('back');
+
+        return $this->redirect(preg_match('#^/admin(/[a-z0-9/_-]*)?$#', $back) ? $back : '/admin');
+    }
+
     public function dashboard(Request $request): Response
     {
         return $this->view('admin/dashboard', [

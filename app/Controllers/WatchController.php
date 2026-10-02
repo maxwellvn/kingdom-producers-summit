@@ -72,8 +72,11 @@ final class WatchController extends Controller
         $viewer = is_string($reference) ? \App\Models\Registration::findByReference($reference) : null;
 
         if ($viewer !== null && !StreamService::mayWatch($viewer)) {
+            // Signed in to the other event's stream: leave that sign-in alone, just not here.
+            if ($viewer['event'] === \App\Core\Events::active()) {
+                Session::forget(self::SESSION_KEY);
+            }
             $viewer = null;
-            Session::forget(self::SESSION_KEY);
         }
 
         // A pass taken by another device ends this one.

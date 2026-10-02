@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Events;
 
 /**
  * Traffic and presence.
@@ -106,11 +107,13 @@ final class Analytics
 
         // Everyone who opened the watch page since midnight, counted once per device. Survives
         // sign-outs and the presence prune, so it is the number to report after the stream.
-        $today = Database::connection()->query(
+        $stmt = Database::connection()->prepare(
             'SELECT COUNT(DISTINCT visitor_hash) AS devices, COUNT(DISTINCT session_hash) AS sessions
              FROM page_views
-             WHERE device <> "bot" AND path LIKE "%/watch" AND viewed_at >= CURDATE()'
-        )->fetch() ?: [];
+             WHERE device <> "bot" AND path LIKE ? AND viewed_at >= CURDATE()'
+        );
+        $stmt->execute(['%/' . Events::active() . '/watch']);
+        $today = $stmt->fetch() ?: [];
 
         return [
             'site'     => (int) ($row['site'] ?? 0),
@@ -125,28 +128,30 @@ final class Analytics
     /** How many people are on the watch page right now. */
     public static function watchingCount(): int
     {
-        $stmt = Database::connection()->query(
+        $stmt = Database::connection()->prepare(
             'SELECT COUNT(*) FROM presence p
              LEFT JOIN registrations r ON r.reference = p.reference
-             WHERE p.context = "watch" AND (r.id IS NOT NULL OR p.reference = "ORGANISER")
+             WHERE p.context = "watch" AND (r.event = ? OR (p.reference = "ORGANISER" AND p.path LIKE ?))
                AND p.last_seen_at > (NOW() - INTERVAL ' . self::PRESENCE_WINDOW . ' SECOND)'
         );
+        $stmt->execute([Events::active(), '%/' . Events::active() . '/watch%']);
 
         return (int) $stmt->fetchColumn();
     }
 
     public static function watchers(): array
     {
-        $stmt = Database::connection()->query(
+        $stmt = Database::connection()->prepare(
             'SELECT p.session_hash, p.reference, p.device, p.started_at, p.last_seen_at,
                     r.first_name, r.last_name, r.email, r.participation
              FROM presence p
              LEFT JOIN registrations r ON r.reference = p.reference
-             WHERE p.context = "watch" AND (r.id IS NOT NULL OR p.reference = "ORGANISER")
+             WHERE p.context = "watch" AND (r.event = ? OR (p.reference = "ORGANISER" AND p.path LIKE ?))
                AND p.last_seen_at > (NOW() - INTERVAL ' . self::PRESENCE_WINDOW . ' SECOND)
              ORDER BY p.started_at DESC
              LIMIT 200'
         );
+        $stmt->execute([Events::active(), '%/' . Events::active() . '/watch%']);
 
         return $stmt->fetchAll() ?: [];
     }

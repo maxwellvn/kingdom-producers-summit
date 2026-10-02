@@ -110,8 +110,8 @@ final class Announcer
         }
         $sql = "SELECT reference, first_name, last_name, email, kingschat_username, participation
                 FROM registrations
-                WHERE status = 'confirmed' AND email NOT LIKE '%@loadtest.invalid'";
-        $params = [];
+                WHERE event = :event AND status = 'confirmed' AND email NOT LIKE '%@loadtest.invalid'";
+        $params = ['event' => \App\Core\Events::active()];
 
         $checkedIn = 'id IN (SELECT registration_id FROM attendances)';
         $watched = 'reference IN (SELECT reference FROM watch_passes)';

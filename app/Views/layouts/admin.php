@@ -129,7 +129,14 @@ $current = \App\Core\Url::currentPath();
       <?php if ($crumbGroup !== ''): ?><span aria-hidden="true">/</span><span><?= e($crumbGroup) ?></span><?php endif; ?>
       <?php if ($crumbPage !== ''): ?><span aria-hidden="true">/</span><span class="adm-crumbs__here" aria-current="page"><?= e($crumbPage) ?></span><?php endif; ?>
     </nav>
-    <a class="adm-btn adm-btn--quiet" href="<?= url('/') ?>" target="_blank" rel="noopener"><span>View site</span><?= $icon('external') ?></a>
+    <form class="adm-event" method="post" action="<?= url('/admin/event') ?>" aria-label="Event you are managing">
+      <?= csrf_field() ?>
+      <input type="hidden" name="back" value="<?= e($current) ?>">
+      <?php foreach (\App\Core\Events::SLUGS as $slug): $on = \App\Core\Events::active() === $slug; ?>
+        <button type="submit" name="event" value="<?= e($slug) ?>" class="adm-event__opt<?= $on ? ' is-active' : '' ?>"<?= $on ? ' aria-pressed="true"' : ' aria-pressed="false"' ?>><?= e(\App\Core\Events::label($slug)) ?></button>
+      <?php endforeach; ?>
+    </form>
+    <a class="adm-btn adm-btn--quiet" href="<?= e(\App\Core\Url::base() . '/' . \App\Core\Events::active() . '/') ?>" target="_blank" rel="noopener"><span>View site</span><?= $icon('external') ?></a>
   </header>
   <?php endif; ?>
 
