@@ -20,6 +20,7 @@ $current = \App\Core\Url::currentPath();
   <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
   <link rel="stylesheet" href="<?= asset('vendor/phosphor/style.css') ?>">
   <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
+  <link rel="stylesheet" href="<?= asset('css/admin-ui.css') ?>">
 </head>
 <body class="<?= e($bodyClass) ?>">
   <?php
@@ -129,8 +130,9 @@ $current = \App\Core\Url::currentPath();
       <?php if ($crumbGroup !== ''): ?><span aria-hidden="true">/</span><span><?= e($crumbGroup) ?></span><?php endif; ?>
       <?php if ($crumbPage !== ''): ?><span aria-hidden="true">/</span><span class="adm-crumbs__here" aria-current="page"><?= e($crumbPage) ?></span><?php endif; ?>
     </nav>
-    <form class="adm-event" method="post" action="<?= url('/admin/event') ?>" aria-label="Event you are managing">
+    <form class="adm-event" method="post" action="<?= url('/admin/event') ?>" aria-label="Event you are managing" data-event-switch>
       <?= csrf_field() ?>
+      <span class="adm-event__thumb" aria-hidden="true"></span>
       <input type="hidden" name="back" value="<?= e($current) ?>">
       <?php foreach (\App\Core\Events::SLUGS as $slug): $on = \App\Core\Events::active() === $slug; ?>
         <button type="submit" name="event" value="<?= e($slug) ?>" class="adm-event__opt<?= $on ? ' is-active' : '' ?>"<?= $on ? ' aria-pressed="true"' : ' aria-pressed="false"' ?>><?= e(\App\Core\Events::label($slug)) ?></button>
@@ -165,6 +167,7 @@ $current = \App\Core\Url::currentPath();
   </div>
   <?php if ($authed): ?></div><?php endif; ?>
   <script src="<?= asset('js/notices.js') ?>" defer></script>
+  <script src="<?= asset('js/admin-ui.js') ?>" defer></script>
   <div class="adm-progress" data-progress aria-hidden="true"></div>
   <div class="adm-tip" data-tip-box aria-hidden="true"></div>
   <script>

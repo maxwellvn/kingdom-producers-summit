@@ -58,8 +58,8 @@ $qs = static fn (array $extra) => url($base) . '?' . http_build_query(array_filt
     <?php endif; ?>
   <?php else: ?>
     <div class="adm-table-wrap">
-    <table class="adm-table">
-      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>KingsChat</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Support</th><th>Attendance</th><th>Registered</th></tr></thead>
+    <table class="adm-table ui-table--people">
+      <thead><tr><th>Reference</th><th>Name</th><th>Contact</th><th>KingsChat</th><th>Path</th><th>Field</th><th>Stage</th><th>Location</th><th>Support</th><th>Attendance</th><th>Registered</th><th><span class="sr-only">Actions</span></th></tr></thead>
       <tbody>
         <?php foreach ($result['rows'] as $r): ?>
           <tr>
@@ -89,34 +89,6 @@ $qs = static fn (array $extra) => url($base) . '?' . http_build_query(array_filt
                 };
               ?>
               <span class="adm-pill adm-pill--<?= e($pill) ?>"><?= ['legacy' => ph('flag'), 'paid' => ph('star'), 'claimed' => ph('star')][$pill] ?? '' ?> <?= e($label) ?></span>
-              <?php if ($paidPath && in_array($payState, ['not_required', 'claimed'], true)): ?>
-                <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>" style="margin-top:.4rem">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                  <button type="submit" class="adm-btn adm-btn--dark" style="padding:.25rem .6rem;font-size:.75rem"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
-                </form>
-              <?php endif; ?>
-              <?php if ($r['status'] === 'confirmed'): ?>
-              <form method="post" action="<?= url('/admin/registrations/resend') ?>" class="resend" style="margin-top:.4rem">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                <input type="hidden" name="type" value="<?= e($participation) ?>"><input type="hidden" name="q" value="<?= e($search) ?>"><input type="hidden" name="page" value="<?= (int) $result['page'] ?>">
-                <select name="what" aria-label="What to send" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-                  <?php if ($r['participation'] === 'onsite'): ?><option value="pass">QR pass</option><?php endif; ?>
-                  <option value="live">Live link</option>
-                </select>
-                <select name="channel" aria-label="How to send it" style="padding:.25rem .4rem;font-size:.75rem;border:1px solid rgba(0,0,0,.25);background:#fff">
-                  <?php if (!empty($r['kingschat_username'])): ?><option value="both">Email + KingsChat</option><option value="kingschat">KingsChat</option><?php endif; ?>
-                  <option value="email">Email</option>
-                </select>
-                <button type="submit" class="adm-btn" style="padding:.25rem .6rem;font-size:.75rem">Send</button>
-              </form>
-              <?php endif; ?>
-              <form method="post" action="<?= url('/admin/registrations/delete') ?>" style="margin-top:.4rem" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                <button type="submit" class="adm-btn adm-btn--solid" style="padding:.25rem .6rem;font-size:.75rem;color:#b4232b">Delete</button>
-              </form>
             </td>
             <td><?php if ($r['checked_in_at']): ?><span class="adm-checkin mono">Checked in<br><?= e(date('j M, H:i', strtotime($r['checked_in_at']))) ?></span><?php else: ?>
               <form method="post" action="<?= url('/admin/check-in') ?>" style="margin:0">
@@ -127,6 +99,41 @@ $qs = static fn (array $extra) => url($base) . '?' . http_build_query(array_filt
               </form>
             <?php endif; ?></td>
             <td class="mono adm-muted"><?= e(date('j M Y', strtotime($r['created_at']))) ?></td>
+            <td class="ui-row-actions">
+              <details class="ui-menu">
+                <summary class="ui-menu__trigger" aria-label="Actions for <?= e($r['reference']) ?>"><?= ph('dots-three') ?></summary>
+                <div class="ui-menu__panel">
+              <?php if ($paidPath && in_array($payState, ['not_required', 'claimed'], true)): ?>
+                <form method="post" action="<?= url('/admin/registrations/confirm-payment') ?>">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                  <button type="submit" class="ui-menu__item"><?= $payState === 'claimed' ? 'Confirm' : 'Record' ?> <?= e(espees_price(price_pence((string) $r['participation']))) ?> contribution</button>
+                </form>
+              <?php endif; ?>
+              <?php if ($r['status'] === 'confirmed'): ?>
+              <form method="post" action="<?= url('/admin/registrations/resend') ?>" class="resend ui-menu__send">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                <input type="hidden" name="type" value="<?= e($participation) ?>"><input type="hidden" name="q" value="<?= e($search) ?>"><input type="hidden" name="page" value="<?= (int) $result['page'] ?>">
+                <select name="what" aria-label="What to send">
+                  <?php if ($r['participation'] === 'onsite'): ?><option value="pass">QR pass</option><?php endif; ?>
+                  <option value="live">Live link</option>
+                </select>
+                <select name="channel" aria-label="How to send it">
+                  <?php if (!empty($r['kingschat_username'])): ?><option value="both">Email + KingsChat</option><option value="kingschat">KingsChat</option><?php endif; ?>
+                  <option value="email">Email</option>
+                </select>
+                <button type="submit" class="ui-menu__item ui-menu__item--inline">Send</button>
+              </form>
+              <?php endif; ?>
+              <form method="post" action="<?= url('/admin/registrations/delete') ?>" onsubmit="return confirm('Permanently delete <?= e($r['reference']) ?>? This cannot be undone.')">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
+                <button type="submit" class="ui-menu__item ui-menu__item--danger">Delete</button>
+              </form>
+                </div>
+              </details>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

@@ -9,26 +9,20 @@ $stripeWebhook = trim((string) config('payments.stripe.webhook_secret')) !== '';
 $stripeKeyKind = str_starts_with((string) config('payments.stripe.secret'), 'sk_live_') ? 'live' : 'test';
 $paidPaths = array_values(array_filter(App\Models\Registration::PARTICIPATION, 'is_paid_path'));
 $textField = static function (string $key, string $label, string $value, string $hint = ''): void {
-    echo '<label style="display:block;margin-top:1rem;font-size:.95rem">'
-        . '<span class="mono" style="display:block;margin-bottom:.35rem;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#858B9C">' . e($label) . '</span>'
-        . '<input type="text" name="' . e($key) . '" value="' . e($value) . '" style="width:100%;padding:.6rem .7rem;border:1px solid rgba(0,0,0,.25);background:#fff">'
-        . ($hint !== '' ? '<span style="display:block;margin-top:.35rem;color:#4F5568;font-size:.85rem">' . e($hint) . '</span>' : '')
+    echo '<label class="ui-setting-field"><span class="ui-setting-field__label">' . e($label) . '</span>'
+        . '<input type="text" name="' . e($key) . '" value="' . e($value) . '">'
+        . ($hint !== '' ? '<span class="ui-setting-field__hint">' . e($hint) . '</span>' : '')
         . '</label>';
 };
 $toggle = static function (string $key, bool $on, string $label): void {
-    $checked = $on ? ' checked' : '';
-    echo '<label style="display:flex;gap:.6rem;align-items:center;font-size:.95rem">'
-        . '<input type="checkbox" name="' . e($key) . '" value="1"' . $checked . '>'
-        . '<span>' . e($label) . '</span></label>';
+    echo '<label class="ui-setting-toggle"><input type="checkbox" name="' . e($key) . '" value="1"' . ($on ? ' checked' : '') . '><span>' . e($label) . '</span></label>';
 };
 $row = static function (string $label, string $value): void {
     if (trim($value) === '') {
         return;
     }
     // Long links and addresses wrap rather than widening the page.
-    echo '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem 1rem;padding:.45rem 0;border-top:1px solid rgba(0,0,0,.12)">'
-        . '<span class="mono" style="flex:none;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:#858B9C">' . e($label) . '</span>'
-        . '<span style="flex:1 1 12rem;min-width:0;text-align:right;font-weight:600;overflow-wrap:anywhere">' . e($value) . '</span></div>';
+    echo '<div class="ui-setting-row"><span class="ui-setting-row__label">' . e($label) . '</span><span class="ui-setting-row__value">' . e($value) . '</span></div>';
 };
 ?>
 <section class="adm-page">

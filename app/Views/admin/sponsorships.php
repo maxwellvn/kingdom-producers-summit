@@ -9,7 +9,11 @@
   </header>
   <p class="adm-muted" style="margin:0 0 1.2rem">£<?= number_format($sponsorTotal / 100, 2) ?> confirmed. Card gifts confirm themselves; Espees and Revolut gifts wait here until you have seen the money.</p>
   <?php if (!$sponsorships): ?>
-    <p class="adm-muted">No sponsorships yet. Share <a href="<?= url('/sponsor') ?>"><?= e(rtrim(site_url(), '/')) ?>/sponsor</a>.</p>
+    <div class="ui-empty">
+      <span class="ui-empty__icon"><?= ph('hand-heart') ?></span>
+      <p class="ui-empty__title">No gifts yet for <?= e(\App\Core\Events::label()) ?></p>
+      <p class="ui-empty__text">Share the sponsor page: <a href="<?= e(url('/sponsor')) ?>"><?= e(rtrim(site_url(), '/') . \App\Core\Events::scope('/sponsor')) ?></a></p>
+    </div>
   <?php else: ?>
   <div class="adm-table-wrap">
     <table class="adm-table">
