@@ -45,6 +45,39 @@ final class HomeController extends Controller
         ]);
     }
 
+    /**
+     * Counts only, both events, for whoever holds the key. No names or contact details,
+     * so the link can be forwarded; regenerating or switching it off in admin kills old copies.
+     */
+    public function status(Request $request): Response
+    {
+        $key = \App\Models\Setting::get('status_share_token', '');
+        if ($key === '' || !hash_equals($key, $request->str('key'))) {
+            return Response::html(\App\Core\View::render('errors/404', ['title' => 'Not found']), 404);
+        }
+
+        $events = [];
+        foreach (Events::SLUGS as $slug) {
+            $events[$slug] = Events::using($slug, static fn (): array => [
+                'summit'     => (array) config('app.summit'),
+                'stats'      => Registration::stats(),
+                'stages'     => Registration::byStage(),
+                'attendance' => Registration::attendanceStats(),
+            ]);
+        }
+
+        return $this->view('home/status', [
+            'title'     => 'Registration status',
+            'bodyClass' => 'page-admin page-status',
+            'events'    => $events,
+        ], 'layouts/admin')
+            // The key sits in the URL: keep it out of Referer headers, caches and search engines.
+            ->header('Refresh', '60')
+            ->header('Referrer-Policy', 'no-referrer')
+            ->header('Cache-Control', 'no-store')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
     /** Copies the registration link and opens the device share sheet; for links in messages. */
     public function share(): Response
     {

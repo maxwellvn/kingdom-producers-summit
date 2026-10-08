@@ -17,7 +17,7 @@ Written 1 October 2026 from an interview with the owner, with answers prefilled 
 | What it does | Registration, QR passes, check-in and a live stream for a one-day summit, now held in Manchester and in Ireland on the same day (Saturday 17 October 2026) |
 | For | Loveworld members in the UK and Ireland, and the consulate team who run both events |
 | Stage | Live, small |
-| Scale | About 100 onsite per event, plus online viewers. The onsite figure is internal and must not appear on public pages |
+| Scale | About 100 onsite per event, plus online viewers. The onsite figure is internal and must not appear on public pages. Exception: the unlisted, revocable /status?key= page (counts only, no personal data) |
 | Traffic | Spiky: email blasts, then event day (check-in and stream at once) |
 | Read/write | Read-heavy, with write bursts at registration and check-in |
 | Data in 2 years | Thousands of rows, archived per edition |

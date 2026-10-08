@@ -1,4 +1,4 @@
-<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance @var bool $express @var string $openToken @var array $watchers */
+<?php /** @var array $stats @var array $stages @var array $recent @var array $attendance @var bool $express @var string $openToken @var array $watchers @var string $statusKey */
 $pathLabel = ['onsite' => 'Onsite', 'online' => 'Online', 'initiative' => 'Initiative'];
 $max = max(1, ...array_column($stages, 'count'));
 ?>
@@ -42,6 +42,29 @@ $max = max(1, ...array_column($stages, 'count'));
       <span class="adm-stat__sub mono"><?= number_format($attendance['total']) ?> total arrivals</span>
     </a>
   </div>
+
+  <section class="adm-panel eventday" style="margin-bottom:1.4rem">
+    <div class="eventday__item">
+      <div>
+        <strong>Shareable status link</strong>
+        <span class="mono eventday__state <?= $statusKey !== '' ? 'is-on' : '' ?>"><?= $statusKey !== '' ? 'Active' : 'Off' ?></span>
+        <p>Registration counts for Manchester and Ireland on one page. No names or contact details, so it's safe to forward.</p>
+        <?php if ($statusKey !== ''): ?>
+          <?php $statusUrl = site_url() . '/status?key=' . $statusKey; ?>
+          <p class="eventday__link"><input type="text" readonly value="<?= e($statusUrl) ?>" onclick="this.select()" aria-label="Status link"> <button type="button" class="adm-btn" data-copy="<?= e($statusUrl) ?>">Copy</button> <a class="adm-btn" href="<?= e($statusUrl) ?>" target="_blank" rel="noopener">Open</a></p>
+        <?php endif; ?>
+      </div>
+      <form method="post" action="<?= url('/admin/status-link') ?>" style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <?= csrf_field() ?>
+        <?php if ($statusKey !== ''): ?>
+          <button type="submit" name="action" value="new" class="adm-btn" onclick="return confirm('Make a new link? The old one stops working.')">New link</button>
+          <button type="submit" name="action" value="off" class="adm-btn">Switch off</button>
+        <?php else: ?>
+          <button type="submit" name="action" value="new" class="adm-btn adm-btn--solid">Create link</button>
+        <?php endif; ?>
+      </form>
+    </div>
+  </section>
 
   <section class="adm-panel" style="margin-bottom:1.4rem" data-connected data-url="<?= url('/admin/analytics/live') ?>">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
@@ -112,6 +135,14 @@ $max = max(1, ...array_column($stages, 'count'));
   </div>
 </section>
 <script>
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = b.getAttribute('data-copy'), done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done); }
+      else { var i = b.previousElementSibling; i.select(); document.execCommand('copy'); done(); }
+    });
+  });
+
   // Who is connected, refreshed every fifteen seconds.
   (function () {
     var root = document.querySelector('[data-connected]'); if (!root) return;

@@ -175,6 +175,7 @@ final class AdminController extends Controller
             'express'   => Setting::get('express_registration', '') === '1',
             'openToken' => Setting::get('watch_open_token', ''),
             'attendance'=> Registration::attendanceStats(),
+            'statusKey' => Setting::get('status_share_token', ''),
         ], 'layouts/admin');
     }
 
@@ -686,6 +687,18 @@ final class AdminController extends Controller
         }
 
         return $this->redirect('/admin/front-desk');
+    }
+
+    /** The shareable status page: make a new key (old links stop working) or switch it off. */
+    public function statusLink(Request $request): Response
+    {
+        $on = $request->str('action') === 'new';
+        Setting::set('status_share_token', $on ? bin2hex(random_bytes(16)) : '');
+        Session::flash('admin_flash', $on
+            ? 'New status link ready. Any older link no longer works.'
+            : 'Status link switched off.');
+
+        return $this->redirect('/admin');
     }
 
     public function saveComments(Request $request): Response

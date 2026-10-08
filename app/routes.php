@@ -22,6 +22,8 @@ $router->get('/', [HomeController::class, 'index']);
 $router->get('/about', [HomeController::class, 'about']);
 $router->get('/privacy', [HomeController::class, 'privacy']);
 $router->get('/share', [HomeController::class, 'share']);
+// Registration counts for both events, behind a secret key made in admin → Overview.
+$router->get('/status', [HomeController::class, 'status']);
 
 $router->get('/register', [RegistrationController::class, 'create']);
 $router->post('/register', [RegistrationController::class, 'store'], [VerifyCsrf::class]);
@@ -114,7 +116,8 @@ $router->post('/admin/stream/log/clear', [AdminController::class, 'clearStreamLo
 $router->post('/admin/prompts', [AdminController::class, 'createPrompt'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/prompts/close', [AdminController::class, 'closePrompt'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/prompts/results', [AdminController::class, 'promptResults'], [RequireAdmin::class]);
-$router->post('/admin/event-day', [AdminController::class, 'eventDay'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/status-link', [AdminController::class, 'statusLink'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->post('/admin/event-day',[AdminController::class, 'eventDay'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments', [AdminController::class, 'saveComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/comments/delete', [AdminController::class, 'deleteComments'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->get('/admin/analytics', [AdminController::class, 'analytics'], [RequireAdmin::class]);
