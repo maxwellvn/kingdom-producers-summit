@@ -13,7 +13,7 @@ final class Setting
     private const PER_EVENT = [
         'stream_state', 'stream_enabled', 'stream_starts_at', 'stream_message', 'stream_headline', 'stream_now',
         'stream_url', 'stream_url_sd', 'stream_title', 'stream_proxy', 'stream_note',
-        'watch_open_token', 'comments_enabled', 'live_link_mailed_at', 'express_registration',
+        'watch_open_token', 'comments_enabled', 'live_link_mailed_at', 'express_registration', 'status_share_token',
     ];
 
     private static function scoped(string $key): string

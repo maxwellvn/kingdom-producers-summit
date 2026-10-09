@@ -46,7 +46,7 @@ final class HomeController extends Controller
     }
 
     /**
-     * Counts only, both events, for whoever holds the key. No names or contact details,
+     * Counts only, one event, for whoever holds that event's key. No names or contact details,
      * so the link can be forwarded; regenerating or switching it off in admin kills old copies.
      */
     public function status(Request $request): Response
@@ -56,18 +56,16 @@ final class HomeController extends Controller
             return Response::html(\App\Core\View::render('errors/404', ['title' => 'Not found']), 404);
         }
 
-        $events = [];
-        foreach (Events::SLUGS as $slug) {
-            $events[$slug] = Events::using($slug, static fn (): array => [
-                'summit'     => (array) config('app.summit'),
-                'stats'      => Registration::stats(),
-                'stages'     => Registration::byStage(),
-                'attendance' => Registration::attendanceStats(),
-            ]);
-        }
+        // One event per link: /manchester/status and /ireland/status each check their own key.
+        $events = [Events::active() => [
+            'summit'     => (array) config('app.summit'),
+            'stats'      => Registration::stats(),
+            'stages'     => Registration::byStage(),
+            'attendance' => Registration::attendanceStats(),
+        ]];
 
         return $this->view('home/status', [
-            'title'     => 'Registration status',
+            'title'     => 'Registration status · ' . Events::label(),
             'bodyClass' => 'page-admin page-status',
             'events'    => $events,
         ], 'layouts/admin')

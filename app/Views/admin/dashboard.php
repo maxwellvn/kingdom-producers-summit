@@ -46,11 +46,11 @@ $max = max(1, ...array_column($stages, 'count'));
   <section class="adm-panel eventday" style="margin-bottom:1.4rem">
     <div class="eventday__item">
       <div>
-        <strong>Shareable status link</strong>
+        <strong>Shareable status link · <?= e(\App\Core\Events::label()) ?></strong>
         <span class="mono eventday__state <?= $statusKey !== '' ? 'is-on' : '' ?>"><?= $statusKey !== '' ? 'Active' : 'Off' ?></span>
-        <p>Registration counts for Manchester and Ireland on one page. No names or contact details, so it's safe to forward.</p>
+        <p>Registration counts for <?= e(\App\Core\Events::label()) ?> only. Switch event at the top to make the other event's link. No names or contact details, so it's safe to forward.</p>
         <?php if ($statusKey !== ''): ?>
-          <?php $statusUrl = site_url() . '/status?key=' . $statusKey; ?>
+          <?php $statusUrl = site_url() . \App\Core\Events::scope('/status') . '?key=' . $statusKey; ?>
           <p class="eventday__link"><input type="text" readonly value="<?= e($statusUrl) ?>" onclick="this.select()" aria-label="Status link"> <button type="button" class="adm-btn" data-copy="<?= e($statusUrl) ?>">Copy</button> <a class="adm-btn" href="<?= e($statusUrl) ?>" target="_blank" rel="noopener">Open</a></p>
         <?php endif; ?>
       </div>

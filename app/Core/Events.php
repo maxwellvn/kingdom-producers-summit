@@ -15,7 +15,7 @@ final class Events
     public const SLUGS = ['manchester', 'ireland'];
 
     /** First path segments that belong to an event; admin, api, assets and webhooks do not. */
-    private const SCOPED = ['register', 'watch', 'pass', 'sponsor', 'commitment', 'about', 'privacy', 'share'];
+    private const SCOPED = ['register', 'watch', 'pass', 'sponsor', 'commitment', 'about', 'privacy', 'share', 'status'];
 
     private static string $active = self::DEFAULT;
     private static bool $prefixed = false;

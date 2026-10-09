@@ -4,11 +4,10 @@ $sum = static fn (string $k): int => array_sum(array_map(static fn (array $e) =>
 $places = $sum('onsite') + $sum('online');
 ?>
 <style>
-  .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
-  @media (max-width: 860px) { .status-grid { grid-template-columns: 1fr; } }
+  .status-grid { display: grid; gap: 1.25rem; }
   .status-event__head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
   .status-event__when { font-size: .8rem; color: var(--a-text-3); }
-  .status-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 0 0 1.4rem; background: var(--a-border); border: 1px solid var(--a-border); border-radius: var(--a-r-sm); overflow: hidden; }
+  .status-figs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; margin: 0 0 1.4rem; background: var(--a-border); border: 1px solid var(--a-border); border-radius: var(--a-r-sm); overflow: hidden; }
   .status-figs > div { padding: .8rem .9rem; background: var(--a-surface); }
   .status-figs dt { font-size: .75rem; color: var(--a-text-2); }
   .status-figs dd { margin: .3rem 0 0; font-size: 1.35rem; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--a-text); }
@@ -16,20 +15,32 @@ $places = $sum('onsite') + $sum('online');
   .status-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--a-accent); animation: status-pulse 2s var(--a-ease) infinite; }
   @keyframes status-pulse { 50% { opacity: .35; } }
   @media (prefers-reduced-motion: reduce) { .status-live::before { animation: none; } }
+  @media (max-width: 860px) { .status-figs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 480px) { .status-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
       <p class="eyebrow"><img src="<?= asset('img/crest.png') ?>" alt="" width="22" height="16"> <?= e((string) config('app.name')) ?></p>
-      <h1 class="adm-page__title">Registration status</h1>
+      <h1 class="adm-page__title">Registration status · <?= e(\App\Core\Events::label()) ?></h1>
     </div>
     <span class="mono adm-page__meta status-live">Updated <?= date('j M Y, H:i') ?> · refreshes every minute</span>
   </header>
 
+  <?php $registerUrl = site_url() . \App\Core\Events::scope('/register'); ?>
+  <section class="adm-panel eventday" style="margin-bottom:1.4rem">
+    <div class="eventday__item">
+      <div>
+        <strong>Registration link</strong>
+        <p>Share this so people can register for <?= e(\App\Core\Events::label()) ?>.</p>
+        <p class="eventday__link"><input type="text" readonly value="<?= e($registerUrl) ?>" onclick="this.select()" aria-label="Registration link"> <button type="button" class="adm-btn" data-copy="<?= e($registerUrl) ?>">Copy</button></p>
+      </div>
+    </div>
+  </section>
+
   <div class="adm-stats">
     <div class="adm-stat adm-stat--lead">
-      <span class="adm-stat__label mono">Summit places, both events</span>
+      <span class="adm-stat__label mono">Summit places</span>
       <span class="adm-stat__value"><?= number_format($places) ?></span>
       <span class="adm-stat__sub mono">+<?= $sum('today') ?> today</span>
     </div>
@@ -76,3 +87,12 @@ $places = $sum('onsite') + $sum('online');
     <?php endforeach; ?>
   </div>
 </section>
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = b.getAttribute('data-copy'), done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done); }
+      else { var i = b.previousElementSibling; i.select(); document.execCommand('copy'); done(); }
+    });
+  });
+</script>

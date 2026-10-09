@@ -22,7 +22,7 @@ $router->get('/', [HomeController::class, 'index']);
 $router->get('/about', [HomeController::class, 'about']);
 $router->get('/privacy', [HomeController::class, 'privacy']);
 $router->get('/share', [HomeController::class, 'share']);
-// Registration counts for both events, behind a secret key made in admin → Overview.
+// One event's registration counts, behind that event's secret key made in admin → Overview.
 $router->get('/status', [HomeController::class, 'status']);
 
 $router->get('/register', [RegistrationController::class, 'create']);
