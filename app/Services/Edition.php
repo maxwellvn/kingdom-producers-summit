@@ -25,6 +25,7 @@ final class Edition
         'starts_at'       => 'Starts',
         'ends_at'         => 'Ends',
         'show_time'       => 'Show the start time',
+        'rescheduled'     => 'Rescheduled',
         'venue.name'      => 'Venue name',
         'venue.unit'      => 'Unit or room',
         'venue.street'    => 'Street',
@@ -54,7 +55,7 @@ final class Edition
         $clean = [];
         foreach (array_keys(self::FIELDS) as $key) {
             $value = trim((string) ($values[$key] ?? ''));
-            if ($key === 'show_time') {
+            if ($key === 'show_time' || $key === 'rescheduled') {
                 $value = $value === '1' ? '1' : '0';
             }
             if ($key === 'artwork' && !array_key_exists($value, (array) config('app.artwork'))) {
@@ -73,7 +74,7 @@ final class Edition
     {
         $saved = self::saved();
         if ($saved === []) {
-            return $summit;
+            return self::rescheduled($summit);
         }
         foreach ($saved as $key => $value) {
             if (str_contains($key, '.')) {
@@ -103,6 +104,24 @@ final class Edition
 
         $v = $summit['venue'];
         $summit['venue']['query'] = implode(', ', array_filter([$v['unit'] ?? '', $v['name'] ?? '', $v['street'] ?? '', trim(($v['town'] ?? '') . ' ' . ($v['postcode'] ?? ''))]));
+
+        return self::rescheduled($summit);
+    }
+
+    /**
+     * A rescheduled event drops its old date everywhere (pages, emails, calendar, countdown)
+     * and says so instead. Registration stays open: nothing gates on the date.
+     */
+    private static function rescheduled(array $summit): array
+    {
+        $flag = $summit['rescheduled'] ?? false;
+        if ($flag !== true && $flag !== '1') {
+            return $summit;
+        }
+        $summit['starts_at'] = $summit['ends_at'] = '';
+        $summit['date_day'] = $summit['date_text'] = 'Rescheduled, new date to be announced';
+        $summit['time'] = '';
+        $summit['time_hidden'] = true;
 
         return $summit;
     }

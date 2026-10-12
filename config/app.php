@@ -109,6 +109,8 @@ return [
             'date_day'  => 'Saturday 17th October 2026',
             'time'      => '',
             'time_hidden' => true,
+            // Moved off 17 October; the new date is not set yet. Untick in admin → Current edition.
+            'rescheduled' => true,
         ],
     ],
 ];

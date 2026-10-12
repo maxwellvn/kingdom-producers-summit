@@ -22,13 +22,13 @@ final class HomeController extends Controller
             'title'     => config('app.name') . ' — ' . config('app.summit.edition'),
             'bodyClass' => 'page-home',
             'description' => 'A one-day summit and an ongoing initiative that turns consumers into producers. '
-                . config('app.summit.date_day') . ' in ' . config('app.summit.city')
+                . config('app.summit.city') . ': ' . config('app.summit.date_day')
                 . '. Attend in person, watch online, or join the Kingdom Producers initiative.',
             'summit'    => config('app.summit'),
         ]);
     }
 
-    /** The front door while two events share one day: pick a city, land on its own site. */
+    /** The front door for the two events: pick a city, land on its own site. */
     private function choose(): Response
     {
         $events = [];
@@ -37,9 +37,9 @@ final class HomeController extends Controller
         }
 
         return $this->view('home/choose', [
-            'title'       => config('app.name') . ' — Manchester and Ireland, one day',
+            'title'       => config('app.name') . ' — Manchester and Ireland',
             'bodyClass'   => 'page-choose',
-            'description' => 'The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland on the same day. '
+            'description' => 'The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland. '
                 . 'Choose your city to register, or to watch online.',
             'events'      => $events,
         ]);

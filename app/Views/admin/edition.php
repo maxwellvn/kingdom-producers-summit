@@ -1,6 +1,6 @@
 <?php /** @var array<string,string> $fields @var array<string,string> $values @var string $flash */
 $groups = [
-    'The edition' => ['edition', 'place', 'city', 'artwork', 'starts_at', 'ends_at', 'show_time'],
+    'The edition' => ['edition', 'place', 'city', 'artwork', 'starts_at', 'ends_at', 'show_time', 'rescheduled'],
     'Venue'       => ['venue.name', 'venue.unit', 'venue.street', 'venue.town', 'venue.region', 'venue.postcode'],
     'Getting there' => ['travel.train', 'travel.bus', 'travel.car'],
 ];
@@ -38,11 +38,13 @@ $local = static fn (string $v): string => $v !== '' && strtotime($v) !== false ?
         <div class="adm-form__grid<?= $legend === 'Getting there' ? '' : ' adm-form__grid--2' ?>">
         <?php foreach ($keys as $key): $name = str_replace('.', '__', $key); $value = (string) ($values[$key] ?? ''); ?>
           <div class="adm-field">
-            <?php if ($key !== 'show_time'): ?><label class="adm-field__label" for="f-<?= e($name) ?>"><?= e($fields[$key]) ?><?= in_array($key, ['edition', 'place', 'artwork'], true) ? '' : ' <span class="adm-field__opt">Optional</span>' ?></label><?php endif; ?>
+            <?php if (!in_array($key, ['show_time', 'rescheduled'], true)): ?><label class="adm-field__label" for="f-<?= e($name) ?>"><?= e($fields[$key]) ?><?= in_array($key, ['edition', 'place', 'artwork'], true) ? '' : ' <span class="adm-field__opt">Optional</span>' ?></label><?php endif; ?>
             <?php if (str_starts_with($key, 'travel.')): ?>
               <textarea id="f-<?= e($name) ?>" name="<?= e($name) ?>" rows="3" maxlength="600"><?= e($value) ?></textarea>
             <?php elseif ($key === 'show_time'): ?>
               <label class="adm-check"><input type="checkbox" name="<?= e($name) ?>" value="1" <?= ($value === '' || $value === '1') ? 'checked' : '' ?>><span><strong>Show the start time</strong>Untick while the time is not settled: the site, emails and calendar show the day only.</span></label>
+            <?php elseif ($key === 'rescheduled'): ?>
+              <label class="adm-check"><input type="checkbox" name="<?= e($name) ?>" value="1" <?= ($value === '1' || ($value === '' && !empty(config('app.summit.rescheduled')))) ? 'checked' : '' ?>><span><strong>Rescheduled</strong>The old date disappears everywhere and the site says "Rescheduled, new date to be announced". Registration stays open. Untick once the new date is set above.</span></label>
             <?php elseif ($key === 'artwork'): ?>
               <select id="f-<?= e($name) ?>" name="<?= e($name) ?>">
                 <?php foreach (array_keys((array) config('app.artwork')) as $set): ?>

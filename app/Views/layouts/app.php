@@ -21,7 +21,7 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
   $canonical = rtrim(site_url(), '/') . (\App\Core\Events::isChooser($here) ? '/' : rtrim(\App\Core\Events::scope($here), '/'));
   $pageDescription = $description ?? (
       $summit['edition'] . ' of the Loveworld Kingdom Producers Summit. '
-      . $summit['date_day'] . ' in ' . $summit['city'] . '. '
+      . $summit['city'] . ': ' . $summit['date_day'] . '. '
       . 'From consumers to producers, whatever your age and whatever your field: attend in person, watch online, or join the Kingdom Producers initiative.'
   );
   // asset() already carries the base path, so only the scheme and host are added.
@@ -67,7 +67,7 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
         'description' => $pageDescription,
         'startDate' => $eventStart,
         'eventAttendanceMode' => 'https://schema.org/MixedEventAttendanceMode',
-        'eventStatus' => 'https://schema.org/EventScheduled',
+        'eventStatus' => !empty($summit['rescheduled']) && $summit['rescheduled'] !== '0' ? 'https://schema.org/EventRescheduled' : 'https://schema.org/EventScheduled',
         'image' => [$shareImage],
         'url' => $canonical,
         'location' => [

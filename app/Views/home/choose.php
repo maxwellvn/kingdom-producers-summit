@@ -2,7 +2,6 @@
 /**
  * @var array<string, array> $events each event's summit block, keyed by slug
  */
-$date = (string) ($events['manchester']['date_day'] ?? '');
 $copy = [
     'manchester' => ['label' => 'Manchester', 'country' => 'England, United Kingdom'],
     'ireland'    => ['label' => 'Ireland', 'country' => 'Dublin, Cork, Galway and beyond'],
@@ -11,10 +10,10 @@ $copy = [
 
 <section class="choose" id="choose">
   <div class="container choose__head">
-    <p class="eyebrow eyebrow--pill"><?= e($date) ?></p>
-    <h1 class="choose__title">Two cities.<br>One day.<br><span>Choose yours.</span></h1>
+    <p class="eyebrow eyebrow--pill">Registration open</p>
+    <h1 class="choose__title">Two cities.<br>One summit.<br><span>Choose yours.</span></h1>
     <p class="choose__lede">
-      The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland on the same day.
+      The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland.
       Choose your city to register, whether you're coming in person or watching online.
     </p>
   </div>
