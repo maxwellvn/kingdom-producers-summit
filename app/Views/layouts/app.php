@@ -130,6 +130,9 @@ $artwork = (array) (config('app.artwork.' . $artworkSet) ?: config('app.artwork.
       data-presence-url="<?= e(url('/api/presence')) ?>"
       data-presence-leave="<?= e(url('/api/presence/leave')) ?>"
       data-analytics-choice="<?= e(url('/api/analytics-choice')) ?>">
+  <?php if (!\App\Core\Events::isPublic(\App\Core\Events::active())): ?>
+    <div class="preview-bar" role="status"><?= ph('eye-slash') ?> <?= e(\App\Core\Events::label()) ?> is hidden from the public. You are seeing a preview because you are signed in to admin.</div>
+  <?php endif; ?>
   <?php if ($showIntro): ?>
     <div class="site-intro" id="siteIntro" aria-label="Loveworld Kingdom Producers Summit introduction">
       <video class="site-intro__video" autoplay muted playsinline preload="auto" aria-hidden="true">

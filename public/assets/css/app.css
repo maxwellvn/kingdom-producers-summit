@@ -1747,3 +1747,6 @@ body { background: var(--paper); }
 @media (max-width: 899px) {
   .give__print { inset: 45% 0 0 0; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%); mask-image: linear-gradient(to bottom, transparent, #000 35%); }
 }
+
+/* Signed-in preview of an event that is hidden from the public. */
+.preview-bar { position: fixed; z-index: 90; left: 50%; bottom: 1rem; transform: translateX(-50%); display: inline-flex; align-items: center; gap: .5rem; max-width: calc(100% - 2rem); padding: .6rem 1rem; border-radius: 999px; background: var(--ink); color: #fff; font-size: .85rem; font-weight: 500; box-shadow: var(--lift-3); }

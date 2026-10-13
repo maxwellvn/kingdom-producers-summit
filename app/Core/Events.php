@@ -89,18 +89,17 @@ final class Events
     }
 
     /**
-     * Visitors to a hidden event's pages go to the front door instead; signed-in admins still see them,
-     * so an event can be prepared before it is shown. With one event left, the front door is that event.
+     * Visitors to a hidden event's pages go to the front door instead; signed-in admins can still open them
+     * (with a preview bar), so an event can be prepared before it is shown. With one event left, the front
+     * door is that event, for admins too.
      */
     public static function visibilityRedirect(Request $request): ?Response
     {
         if (str_starts_with($request->path, '/admin') || str_starts_with($request->path, '/api') || str_starts_with($request->path, '/webhooks')) {
             return null;
         }
-        if (Session::get('admin_authenticated') === true) {
-            return null;
-        }
-        if (self::$prefixed && !self::isPublic(self::$active)) {
+        // Admins may open a hidden event's own pages to prepare them; the front door behaves as for everyone.
+        if (self::$prefixed && !self::isPublic(self::$active) && Session::get('admin_authenticated') !== true) {
             return Response::redirect(Url::base() . '/', 302);
         }
         $public = self::publicSlugs();

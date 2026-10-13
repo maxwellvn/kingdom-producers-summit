@@ -2,6 +2,8 @@
 $current = \App\Core\Url::currentPath();
 $chooser = \App\Core\Events::isChooser($current);
 $other = \App\Core\Events::active() === 'ireland' ? 'manchester' : 'ireland';
+// The city switch only makes sense while more than one event is on the public site.
+$multi = count(\App\Core\Events::publicSlugs()) > 1;
 $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.png') : null;
 ?>
 <header class="nav" id="nav">
@@ -32,12 +34,16 @@ $crest = is_file(BASE_PATH . '/public/assets/img/crest.png') ? asset('img/crest.
       <a class="nav__link<?= $current === '/about' ? ' is-active' : '' ?>" href="<?= url('/about') ?>">The Initiative</a>
       <a class="nav__link<?= str_starts_with($current, '/sponsor') ? ' is-active' : '' ?>" href="<?= url('/sponsor') ?>">Sponsor</a>
     </nav>
+    <?php if ($multi): ?>
     <nav class="city-switch" aria-label="Choose event" data-city-switch>
       <span class="city-switch__thumb" aria-hidden="true"></span>
       <?php foreach (['manchester' => 'Manchester', 'ireland' => 'Ireland'] as $slug => $label): $on = \App\Core\Events::active() === $slug; ?>
         <a class="city-switch__opt<?= $on ? ' is-active' : '' ?>" data-city="<?= e($slug) ?>" href="<?= e(\App\Core\Url::base() . '/' . $slug . '/') ?>"<?= $on ? ' aria-current="true"' : '' ?>><?= e($label) ?></a>
       <?php endforeach; ?>
     </nav>
+    <?php else: ?>
+    <span class="nav__edition"><i aria-hidden="true"></i><?= e((string) config('app.summit.edition')) ?></span>
+    <?php endif; ?>
 
     <div class="nav__cta">
       <a href="<?= url('/register') ?>" class="btn btn--ink <?= str_starts_with($current, '/register') ? 'is-active' : '' ?>">

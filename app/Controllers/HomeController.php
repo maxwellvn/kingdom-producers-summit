@@ -32,9 +32,7 @@ final class HomeController extends Controller
     private function choose(): Response
     {
         $events = [];
-        // Admins see every event here; visitors only the ones switched on.
-        $slugs = \App\Core\Session::get('admin_authenticated') === true ? Events::SLUGS : Events::publicSlugs();
-        foreach ($slugs as $slug) {
+        foreach (Events::publicSlugs() as $slug) {
             $events[$slug] = Events::summit($slug);
         }
 

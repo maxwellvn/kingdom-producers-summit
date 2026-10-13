@@ -22,7 +22,7 @@
       <?php $fv = (array) config('app.summit.venue'); ?>
       <p class="footer__venue mono"><?= e(venue_line()) ?></p>
       <p class="footer__motto mono"><?= e($summit['motto']) ?><br>Working together for a stronger international community.</p>
-      <a class="footer__switch mono" href="<?= e(\App\Core\Url::base() . '/') ?>">Manchester or Ireland? Choose your city <span aria-hidden="true">→</span></a>
+      <?php if (count(\App\Core\Events::publicSlugs()) > 1): ?><a class="footer__switch mono" href="<?= e(\App\Core\Url::base() . '/') ?>">Manchester or Ireland? Choose your city <span aria-hidden="true">→</span></a><?php endif; ?>
     </div>
 
     <div class="footer__col">
