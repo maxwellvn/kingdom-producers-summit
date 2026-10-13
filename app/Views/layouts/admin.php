@@ -44,6 +44,7 @@ $current = \App\Core\Url::currentPath();
           ['/admin/initiative', 'Initiative', 'exact', 'plant'],
           ['/admin/issue', 'Issue a place', 'exact', 'ticket'],
           ['/admin/commitments', 'Commitments', 'prefix', 'pen'],
+          ['/admin/exhibitors', 'Exhibitors', 'prefix', 'store'],
       ]],
       ['Campaigns', [
           ['/admin/notifications', 'Notifications', 'prefix', 'send'],
@@ -74,7 +75,7 @@ $current = \App\Core\Url::currentPath();
       'home' => 'squares-four', 'door' => 'door-open', 'scan' => 'scan', 'radio' => 'broadcast', 'chat' => 'chat-circle-dots',
       'users' => 'users-three', 'ticket' => 'ticket', 'pen' => 'pen-nib', 'send' => 'paper-plane-tilt', 'chart' => 'chart-bar',
       'pulse' => 'pulse', 'download' => 'download-simple', 'calendar' => 'calendar-blank', 'archive' => 'archive', 'card' => 'credit-card',
-      'heart' => 'hand-heart', 'plant' => 'plant', 'bubble' => 'chat-teardrop-text', 'shield' => 'shield-check', 'external' => 'arrow-square-out', 'logout' => 'sign-out',
+      'heart' => 'hand-heart', 'plant' => 'plant', 'store' => 'storefront', 'bubble' => 'chat-teardrop-text', 'shield' => 'shield-check', 'external' => 'arrow-square-out', 'logout' => 'sign-out',
   ];
   $icon = static fn (string $name): string => ph($icons[$name] ?? $name, 'adm-ico');
   // Where we are, for the breadcrumb.

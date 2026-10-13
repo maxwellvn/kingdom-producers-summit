@@ -163,6 +163,50 @@ final class AdminController extends Controller
         return $this->redirect(preg_match('#^/admin(/[a-z0-9/_-]*)?$#', $back) ? $back : '/admin');
     }
 
+    /** Applications to exhibit at the event being managed. */
+    public function exhibitors(Request $request): Response
+    {
+        $status = in_array($request->str('status'), \App\Models\Exhibitor::STATUSES, true) ? $request->str('status') : '';
+
+        return $this->view('admin/exhibitors', [
+            'title'  => 'Exhibitors',
+            'flash'  => (string) Session::get('admin_flash', ''),
+            'rows'   => \App\Models\Exhibitor::all($status),
+            'counts' => \App\Models\Exhibitor::counts(),
+            'status' => $status,
+            'link'   => rtrim(site_url(), '/') . '/' . \App\Core\Events::active() . '/exhibit',
+        ], 'layouts/admin');
+    }
+
+    /** Approve or decline; the applicant is emailed the outcome once, even if the button is pressed twice. */
+    public function decideExhibitor(Request $request): Response
+    {
+        $id = (int) $request->input('id', 0);
+        $status = $request->str('status');
+        $x = \App\Models\Exhibitor::find($id);
+        if ($x !== null && \App\Models\Exhibitor::decide($id, $status, (string) Session::get('admin_email', ''))) {
+            $status === 'approved' ? \App\Services\ExhibitorMail::approved($x) : \App\Services\ExhibitorMail::declined($x);
+            Session::flash('admin_flash', $x['business'] . ($status === 'approved' ? ' approved. They have been emailed their confirmation.' : ' declined. They have been emailed.'));
+        }
+
+        return $this->redirect('/admin/exhibitors' . ($request->str('back_status') !== '' ? '?status=' . rawurlencode($request->str('back_status')) : ''));
+    }
+
+    public function exhibitorsCsv(Request $request): Response
+    {
+        $handle = fopen('php://temp', 'r+');
+        $cols = ['status', 'business', 'category', 'first_name', 'last_name', 'email', 'phone', 'kingschat', 'website', 'staff', 'needs_power', 'description', 'notes', 'created_at', 'decided_by', 'decided_at'];
+        fputcsv($handle, $cols, ',', '"', '');
+        foreach (\App\Models\Exhibitor::all() as $r) {
+            fputcsv($handle, array_map(static fn ($c) => is_string($r[$c]) ? self::csvSafe($r[$c]) : $r[$c], $cols), ',', '"', '');
+        }
+        rewind($handle);
+        $csv = stream_get_contents($handle) ?: '';
+        fclose($handle);
+
+        return Response::download("\xEF\xBB\xBF" . $csv, 'exhibitors-' . \App\Core\Events::active() . '-' . date('Ymd-Hi') . '.csv');
+    }
+
     /** Show or hide an event on the public site; admins keep seeing it either way. */
     public function eventVisibility(Request $request): Response
     {

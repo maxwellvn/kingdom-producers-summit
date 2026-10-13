@@ -1750,3 +1750,13 @@ body { background: var(--paper); }
 
 /* Signed-in preview of an event that is hidden from the public. */
 .preview-bar { position: fixed; z-index: 90; left: 50%; bottom: 1rem; transform: translateX(-50%); display: inline-flex; align-items: center; gap: .5rem; max-width: calc(100% - 2rem); padding: .6rem 1rem; border-radius: 999px; background: var(--ink); color: #fff; font-size: .85rem; font-weight: 500; box-shadow: var(--lift-3); }
+
+/* ---------- Exhibit: same panel as sponsor, its own print and points ---------- */
+.exhibit__panel .give__print { background-image: var(--art-process); }
+.exhibit__points { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+.exhibit__points li { display: flex; align-items: center; gap: .6rem; font-size: .95rem; font-weight: 500; color: var(--ink); }
+.exhibit__points .ph { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-size: 1rem; }
+.exhibit__facts p { margin: 0; }
+.page-exhibit .pay__card textarea { min-height: 7rem; }
+/* The exhibit facts stay in view beside the long form on wide screens. */
+@media (min-width: 901px) { .page-exhibit .sponsor__aside { position: sticky; top: 6.5rem; align-self: start; } }

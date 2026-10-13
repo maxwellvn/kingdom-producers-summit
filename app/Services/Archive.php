@@ -39,6 +39,7 @@ final class Archive
         'attendances'             => 'Check-ins',
         'watch_passes'            => 'Watch passes',
         'commitments'             => 'Commitments',
+        'exhibitors'              => 'Exhibitors',
         'sponsorships'            => 'Sponsorships',
         'comments'                => 'Live chat',
         'prompt_answers'          => 'Poll answers',
@@ -49,6 +50,17 @@ final class Archive
         'presence'                => 'Viewers',
         'page_views'              => 'Page views',
     ];
+
+    /** How the archive view groups its tables, so a dozen of them stay readable. */
+    public const GROUPS = [
+        'People'   => ['registrations', 'attendances', 'watch_passes', 'commitments', 'exhibitors', 'sponsorships'],
+        'Live day' => ['comments', 'prompts', 'prompt_answers', 'stream_events'],
+        'Email'    => ['announcements', 'announcement_deliveries'],
+        'Traffic'  => ['presence', 'page_views'],
+    ];
+
+    /** What starting a new edition keeps live, in words for the admin page. */
+    public const KEPT_NOTE = 'Initiative members, commitments and site analytics stay';
 
     /** Columns kept out of the browser and the exports, as the registrations export does. */
     private const HIDDEN = ['ip_address', 'user_agent'];

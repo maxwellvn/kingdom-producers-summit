@@ -6,7 +6,7 @@ $csv = url('/admin/archives/export.csv') . '?' . http_build_query(array_filter([
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
-      <p class="eyebrow"><span class="eyebrow__dot"></span><a class="adm-link" href="<?= url('/admin/archives') ?>">Archive</a></p>
+      <p class="eyebrow"><span class="eyebrow__dot"></span><a class="adm-link" href="<?= url('/admin/archives') ?>">Archive</a> · <?= e(\App\Core\Events::label((string) ($archive['event'] ?? \App\Core\Events::active()))) ?> · archived <?= date('j M Y', strtotime((string) $archive['created_at'])) ?></p>
       <h1 class="adm-page__title"><?= e($archive['label']) ?> <span class="adm-page__title-sub"><?= number_format($result['total']) ?> <?= e(strtolower($tables[$table])) ?></span></h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end">
@@ -18,16 +18,34 @@ $csv = url('/admin/archives/export.csv') . '?' . http_build_query(array_filter([
     <div class="form__alert" role="status"><span><?= e($flash) ?></span></div>
   <?php endif; ?>
 
-  <form class="adm-filters" method="get" action="<?= url('/admin/archives/view') ?>">
-    <div class="adm-tabs" role="tablist">
-      <?php foreach ($tables as $key => $label): ?>
-        <a class="adm-tab <?= $table === $key ? 'is-active' : '' ?>" href="<?= $qs(['table' => $key, 'q' => null, 'page' => null]) ?>"><?= e($label) ?> <span class="adm-muted"><?= number_format((int) ($archive['counts'][$key] ?? 0)) ?></span></a>
-      <?php endforeach; ?>
+  <?php
+  $c = $archive['counts'];
+  $groupOf = static function (string $t): string { foreach (\App\Services\Archive::GROUPS as $g => $ts) { if (in_array($t, $ts, true)) { return $g; } } return 'People'; };
+  $group = $groupOf($table);
+  ?>
+  <div class="arch-stats">
+    <?php foreach (['registrations' => 'Registrations', 'attendances' => 'Checked in', 'exhibitors' => 'Exhibitors', 'sponsorships' => 'Sponsorships'] as $key => $label): ?>
+      <a class="arch-stat<?= $table === $key ? ' is-on' : '' ?>" href="<?= $qs(['table' => $key, 'q' => null, 'page' => null]) ?>"><span><?= e($label) ?></span><strong><?= number_format((int) ($c[$key] ?? 0)) ?></strong></a>
+    <?php endforeach; ?>
+  </div>
+
+  <form class="adm-filters arch-filters" method="get" action="<?= url('/admin/archives/view') ?>">
+    <div class="arch-nav">
+      <div class="adm-tabs" role="tablist" aria-label="Group">
+        <?php foreach (\App\Services\Archive::GROUPS as $g => $ts): ?>
+          <a class="adm-tab <?= $group === $g ? 'is-active' : '' ?>" href="<?= $qs(['table' => $ts[0], 'q' => null, 'page' => null]) ?>"><?= e($g) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <div class="arch-chips" role="tablist" aria-label="Table">
+        <?php foreach (\App\Services\Archive::GROUPS[$group] as $key): ?>
+          <a class="arch-chip<?= $table === $key ? ' is-on' : '' ?>" href="<?= $qs(['table' => $key, 'q' => null, 'page' => null]) ?>"><?= e($tables[$key]) ?> <span><?= number_format((int) ($c[$key] ?? 0)) ?></span></a>
+        <?php endforeach; ?>
+      </div>
     </div>
     <input type="hidden" name="slug" value="<?= e($slug) ?>">
     <input type="hidden" name="table" value="<?= e($table) ?>">
     <div class="adm-search">
-      <input type="search" name="q" value="<?= e($search) ?>" placeholder="Search this table" aria-label="Search">
+      <input type="search" name="q" value="<?= e($search) ?>" placeholder="Search <?= e(strtolower($tables[$table])) ?>" aria-label="Search">
       <button type="submit" class="adm-btn adm-btn--ghost">Search</button>
     </div>
   </form>
