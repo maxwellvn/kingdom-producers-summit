@@ -46,6 +46,71 @@ final class Events
         return self::$active;
     }
 
+    /** Setting holding the events taken off the public site, as a JSON list of slugs. Site-wide, not per event. */
+    private const HIDDEN_SETTING = 'events_hidden';
+
+    /** @return array<int,string> slugs switched off in admin */
+    public static function hidden(): array
+    {
+        try {
+            $list = json_decode(\App\Models\Setting::get(self::HIDDEN_SETTING, '[]'), true);
+        } catch (\Throwable) {
+            return []; // no database yet: everything shows
+        }
+
+        return array_values(array_intersect(self::SLUGS, is_array($list) ? $list : []));
+    }
+
+    public static function isPublic(string $slug): bool
+    {
+        return !in_array($slug, self::hidden(), true);
+    }
+
+    /** @return array<int,string> the events visitors can see; never empty */
+    public static function publicSlugs(): array
+    {
+        return array_values(array_diff(self::SLUGS, self::hidden())) ?: [self::DEFAULT];
+    }
+
+    /** Show or hide one event. Refuses to hide the last visible one. */
+    public static function setHidden(string $slug, bool $hide): bool
+    {
+        if (!self::isValid($slug)) {
+            return false;
+        }
+        $hidden = self::hidden();
+        $hidden = $hide ? array_values(array_unique([...$hidden, $slug])) : array_values(array_diff($hidden, [$slug]));
+        if (count($hidden) >= count(self::SLUGS)) {
+            return false;
+        }
+        \App\Models\Setting::set(self::HIDDEN_SETTING, (string) json_encode($hidden));
+
+        return true;
+    }
+
+    /**
+     * Visitors to a hidden event's pages go to the front door instead; signed-in admins still see them,
+     * so an event can be prepared before it is shown. With one event left, the front door is that event.
+     */
+    public static function visibilityRedirect(Request $request): ?Response
+    {
+        if (str_starts_with($request->path, '/admin') || str_starts_with($request->path, '/api') || str_starts_with($request->path, '/webhooks')) {
+            return null;
+        }
+        if (Session::get('admin_authenticated') === true) {
+            return null;
+        }
+        if (self::$prefixed && !self::isPublic(self::$active)) {
+            return Response::redirect(Url::base() . '/', 302);
+        }
+        $public = self::publicSlugs();
+        if (!self::$prefixed && $request->path === '/' && count($public) === 1) {
+            return Response::redirect(Url::base() . '/' . $public[0] . '/', 302);
+        }
+
+        return null;
+    }
+
     /** "Manchester" / "Ireland", for admin headings and messages. */
     public static function label(?string $slug = null): string
     {

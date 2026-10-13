@@ -30,6 +30,26 @@ $local = static fn (string $v): string => $v !== '' && strtotime($v) !== false ?
 
   <p class="adm-muted" style="margin:-.75rem 0 1.25rem">Everything here goes live as soon as you save: the site, the emails and the calendar files.</p>
 
+  <section class="adm-panel adm-visibility" style="max-width:860px;margin-bottom:1.25rem">
+    <header class="adm-form__head">
+      <h2 class="adm-panel__title">On the public site</h2>
+      <p>A hidden event disappears from the front page and its pages send visitors to the other event. You still see it while signed in, so it can be prepared before it goes up.</p>
+    </header>
+    <div class="adm-visibility__list">
+      <?php foreach (\App\Core\Events::SLUGS as $slug): $public = \App\Core\Events::isPublic($slug); ?>
+        <form method="post" action="<?= url('/admin/event/visibility') ?>" class="adm-visibility__row">
+          <?= csrf_field() ?>
+          <input type="hidden" name="event" value="<?= e($slug) ?>">
+          <input type="hidden" name="back" value="/admin/edition">
+          <input type="hidden" name="hide" value="<?= $public ? '1' : '0' ?>">
+          <span class="adm-visibility__name"><?= ph($public ? 'eye' : 'eye-slash') ?> <strong><?= e(\App\Core\Events::label($slug)) ?></strong></span>
+          <span class="adm-visibility__state<?= $public ? ' is-on' : '' ?>"><?= $public ? 'Shown' : 'Hidden' ?></span>
+          <button type="submit" class="adm-btn<?= $public ? '' : ' adm-btn--dark' ?>"><?= $public ? ph('eye-slash') . ' Hide' : ph('eye') . ' Show' ?></button>
+        </form>
+      <?php endforeach; ?>
+    </div>
+  </section>
+
   <form method="post" action="<?= url('/admin/edition') ?>" class="adm-form">
     <?= csrf_field() ?>
     <?php foreach ($groups as $legend => $keys): ?>

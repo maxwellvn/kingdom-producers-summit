@@ -135,7 +135,7 @@ $current = \App\Core\Url::currentPath();
       <span class="adm-event__thumb" aria-hidden="true"></span>
       <input type="hidden" name="back" value="<?= e($current) ?>">
       <?php foreach (\App\Core\Events::SLUGS as $slug): $on = \App\Core\Events::active() === $slug; ?>
-        <button type="submit" name="event" value="<?= e($slug) ?>" class="adm-event__opt<?= $on ? ' is-active' : '' ?>"<?= $on ? ' aria-pressed="true"' : ' aria-pressed="false"' ?>><?= e(\App\Core\Events::label($slug)) ?></button>
+        <button type="submit" name="event" value="<?= e($slug) ?>" class="adm-event__opt<?= $on ? ' is-active' : '' ?>"<?= $on ? ' aria-pressed="true"' : ' aria-pressed="false"' ?>><?= e(\App\Core\Events::label($slug)) ?><?= \App\Core\Events::isPublic($slug) ? '' : ' <span class="adm-event__hidden" title="Hidden from the public site">' . ph('eye-slash') . '</span>' ?></button>
       <?php endforeach; ?>
     </form>
     <a class="adm-btn adm-btn--quiet" href="<?= e(\App\Core\Url::base() . '/' . \App\Core\Events::active() . '/') ?>" target="_blank" rel="noopener"><span>View site</span><?= $icon('external') ?></a>

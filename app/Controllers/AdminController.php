@@ -163,6 +163,20 @@ final class AdminController extends Controller
         return $this->redirect(preg_match('#^/admin(/[a-z0-9/_-]*)?$#', $back) ? $back : '/admin');
     }
 
+    /** Show or hide an event on the public site; admins keep seeing it either way. */
+    public function eventVisibility(Request $request): Response
+    {
+        $slug = $request->str('event');
+        $hide = $request->input('hide') === '1';
+        $ok = \App\Core\Events::setHidden($slug, $hide);
+        Session::flash('admin_flash', !$ok
+            ? 'At least one event has to stay on the site.'
+            : \App\Core\Events::label($slug) . ($hide ? ' is hidden from the public site. You can still preview it while signed in.' : ' is back on the public site.'));
+        $back = $request->str('back');
+
+        return $this->redirect(preg_match('#^/admin(/[a-z0-9/_-]*)?$#', $back) ? $back : '/admin/edition');
+    }
+
     public function dashboard(Request $request): Response
     {
         return $this->view('admin/dashboard', [

@@ -725,3 +725,13 @@ td.adm-empty { display: table-cell; }
 .adm-event__opt:active { transform: scale(.97); }
 @media (hover: hover) and (pointer: fine) { .adm-event__opt:not(.is-active):hover { color: var(--a-text); } }
 @media (prefers-reduced-motion: reduce) { .adm-event__opt { transition: none; } }
+
+/* ---------- Event visibility ---------- */
+.adm-visibility__list { display: grid; gap: .5rem; }
+.adm-visibility__row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: .9rem; padding: .7rem .7rem .7rem 1rem; border-radius: var(--a-r-sm); background: var(--a-field); }
+.adm-visibility__name { display: inline-flex; align-items: center; gap: .55rem; font-size: .95rem; }
+.adm-visibility__name .ph { color: var(--a-text-3); }
+.adm-visibility__state { padding: .2rem .6rem; border-radius: 999px; background: var(--a-sunken); font-size: .78rem; font-weight: 500; color: var(--a-text-2); }
+.adm-visibility__state.is-on { background: #E3F2E7; color: #14532D; }
+.adm-event__hidden { margin-left: .2rem; opacity: .7; }
+@media (max-width: 520px) { .adm-visibility__row { grid-template-columns: 1fr auto; } .adm-visibility__state { display: none; } }
