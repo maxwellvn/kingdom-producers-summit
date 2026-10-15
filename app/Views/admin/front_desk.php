@@ -32,7 +32,7 @@
           <span class="mono eventday__state <?= $openToken !== '' ? 'is-on' : '' ?>"><?= $openToken !== '' ? 'Active' : 'Off' ?></span>
           <p>Anyone with the link enters the stream with just a name and email; unregistered people are added as online registrants.</p>
           <?php if ($openToken !== ''): ?>
-            <?php $openUrl = site_url() . '/watch?open=' . $openToken; ?>
+            <?php $openUrl = event_url('/watch') . '?open=' . $openToken; ?>
             <p class="eventday__link"><input type="text" readonly value="<?= e($openUrl) ?>" onclick="this.select()" aria-label="Open watch link"> <button type="button" class="adm-btn" data-copy="<?= e($openUrl) ?>">Copy</button></p>
           <?php endif; ?>
         </div>

@@ -97,6 +97,10 @@ $tab = $tab ?? 'stream';
   <?php endif; ?>
 
   <?php if ($tab === 'stream'): ?>
+  <?php foreach (array_filter([\App\Services\StreamService::relayProblem($url), \App\Services\StreamService::relayProblem($urlSd ?? '')]) as $problem): ?>
+    <div class="form__alert" role="alert" style="margin-top:1rem"><strong>Check the stream link.</strong><span><?= e($problem) ?></span></div>
+  <?php break; endforeach; ?>
+
   <div class="adm-columns adm-columns--2" style="margin-top:1.4rem">
   <!-- 2. Setup: the source and the heading. Rarely changes. -->
     <div class="adm-panel">

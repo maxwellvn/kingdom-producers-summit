@@ -86,7 +86,7 @@ final class HomeController extends Controller
             'noIndex'   => true,
             'bodyClass' => 'page-register',
             'summit'    => $summit,
-            'shareUrl'  => site_url() . '/register',
+            'shareUrl'  => event_url('/register'),
             'shareText' => 'The LoveWorld Kingdom Producers Summit — ' . $summit['edition'] . ', ' . $summit['date_text'] . '. Onsite in ' . $summit['place'] . ' and live online worldwide. Register at the link.',
         ]);
     }

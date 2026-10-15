@@ -1096,7 +1096,7 @@ final class AdminController extends Controller
             'title'  => 'Commitments',
             'rows'   => Commitment::all(),
             'items'  => Commitment::ITEMS,
-            'link'   => site_url() . '/commitment',
+            'link'   => event_url('/commitment'),
         ], 'layouts/admin');
     }
 
@@ -1121,7 +1121,7 @@ final class AdminController extends Controller
         $old = error_reporting(E_ALL & ~E_DEPRECATED);
         require_once BASE_PATH . '/lib/phpqrcode.php';
         ob_start();
-        \QRcode::png(site_url() . '/commitment', false, \QR_ECLEVEL_M, 12, 2, false, 0xFFFFFF, 0x000000);
+        \QRcode::png(event_url('/commitment'), false, \QR_ECLEVEL_M, 12, 2, false, 0xFFFFFF, 0x000000);
         $png = (string) ob_get_clean();
         error_reporting($old);
         $pos = strpos($png, chr(0x89) . 'PNG');

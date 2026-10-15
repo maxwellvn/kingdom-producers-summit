@@ -358,6 +358,8 @@ final class Announcer
     {
         $summit = (array) config('app.summit');
         $path = (string) ($person['participation'] ?? '');
+        // Links that belong to an event carry it (/manchester/watch), so they open the person's own event.
+        $at = static fn (string $p): string => site_url() . \App\Core\Events::scope($p);
 
         // {online_only}…{/online_only} and {onsite_only}…{/onsite_only}: each person
         // sees only the part meant for them, so one message serves both groups.
@@ -374,7 +376,7 @@ final class Announcer
             '{last_name}'   => (string) $person['last_name'],
             '{reference}'   => (string) $person['reference'],
             // Online and onsite both get a signed watch link: an onsite person may follow from elsewhere.
-            '{watch_url}'   => site_url() . '/watch?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])),
+            '{watch_url}'   => $at('/watch') . '?pass=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])),
             '{directions_url}' => 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) ($summit['venue']['query'] ?? '')),
             '{summit_date}' => (string) ($summit['date_text'] ?? ''),
             '{summit_city}' => (string) ($summit['city'] ?? ''),
@@ -382,17 +384,17 @@ final class Announcer
             '{email}'       => (string) ($person['email'] ?? ''),
             '{participation}' => ['onsite' => 'onsite', 'online' => 'online', 'initiative' => 'the initiative'][$person['participation'] ?? ''] ?? '',
             '{days_to_go}'  => (string) max(0, (int) ceil((strtotime((string) ($summit['starts_at'] ?? 'now')) - time()) / 86400)),
-            '{register_url}' => site_url() . '/register',
-            '{commitment_url}' => site_url() . '/commitment',
-            '{initiative_url}' => site_url() . '/register?mode=initiative',
+            '{register_url}' => $at('/register'),
+            '{commitment_url}' => $at('/commitment'),
+            '{initiative_url}' => $at('/register') . '?mode=initiative',
             '{timing_lead}'   => self::timing()['lead'],
             '{timing_detail}' => self::timing()['detail'],
             // The person's own QR pass: the confirmation page carries it, signed to them. Onsite only.
-            '{qr_url}'      => $path === 'onsite' ? site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
+            '{qr_url}'      => $path === 'onsite' ? $at('/register/confirmed') . '?access=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
             '{qr_image_url}' => $path === 'onsite' ? site_url() . '/access/qr?token=' . rawurlencode(AttendanceService::tokenFor((string) $person['reference'])) : '',
-            '{share_url}'   => site_url() . '/share',
+            '{share_url}'   => $at('/share'),
             '{site_url}'    => site_url(),
-            '{sponsor_url}' => site_url() . '/sponsor',
+            '{sponsor_url}' => $at('/sponsor'),
         ]);
     }
 

@@ -424,6 +424,9 @@
         var useLibrary = window.Hls && window.Hls.isSupported();
         if (!useLibrary && video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = data.source;
+          // Native players (older iOS Safari) have no retry of their own: an error, such as an expired
+          // link, rebuilds the player with a freshly signed one.
+          video.addEventListener('error', function () { window.setTimeout(reloadStream, 3000); }, { once: true });
         } else if (useLibrary) {
           // Dacast publishes a 6-second window (three 2 s segments). Sit one segment back from the
           // edge and keep buffering ahead, or any hiccup empties the buffer. Not a low-latency stream.
@@ -441,9 +444,15 @@
           hls.attachMedia(video);
           hls.on(window.Hls.Events.MANIFEST_PARSED, function (e, m) { qualityMenu(m.levels || []); });
           // Fatal errors: retry the network, patch the decoder, or rebuild the player as a last resort.
+          var netFails = 0;
+          hls.on(window.Hls.Events.FRAG_LOADED, function () { netFails = 0; });
           hls.on(window.Hls.Events.ERROR, function (e, err) {
             if (!err || !err.fatal || !hls) return;
-            if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) { hls.startLoad(); }
+            var code = err.response && err.response.code;
+            // The relay refuses an expired or bad signature (403/410): ask the site for a fresh link.
+            // Network trouble that keeps coming back also gets a fresh player rather than endless retries.
+            if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR && (code === 403 || code === 410 || ++netFails >= 3)) { netFails = 0; reloadStream(); }
+            else if (err.type === window.Hls.ErrorTypes.NETWORK_ERROR) { hls.startLoad(); }
             else if (err.type === window.Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
             else { reloadStream(); }
           });

@@ -82,7 +82,9 @@ final class StreamService
     }
 
     /**
-     * Signed URL on the HLS relay (the standby server's nginx), valid for six hours.
+     * Signed URL on the HLS relay, valid for twelve hours: longer than any summit day, so a viewer
+     * who opens the page before the start never has the link expire mid-programme. The player also
+     * fetches a fresh one if the relay ever refuses it.
      * Set STREAM_RELAY_URL and STREAM_RELAY_SECRET; the relay holds the real origin.
      */
     public static function relayUrl(?string $origin = null): ?string
@@ -93,18 +95,42 @@ final class StreamService
         if ($relay === '' || $secret === '' || $origin === '') {
             return null;
         }
-        $expires = time() + 6 * 3600;
+        $expires = time() + self::RELAY_LINK_HOURS * 3600;
         $token = rtrim(strtr(base64_encode(md5($secret . $expires, true)), '+/', '-_'), '=');
 
         // The relay's ORIGIN is a base folder; STREAM_RELAY_BASE names the same folder here so
         // several channels under it can be served. A link outside it falls back to its file name.
         $base = rtrim((string) env('STREAM_RELAY_BASE', ''), '/');
-        $file = $base !== '' && str_starts_with($origin, $base . '/')
-            ? substr($origin, strlen($base) + 1)
-            : basename((string) parse_url($origin, PHP_URL_PATH));
+        // A link outside the relay's folder cannot be served by it. Falling back to the bare file name
+        // would quietly play the relay's default channel (an old event), so say "no relay" instead;
+        // the site then carries the stream itself and the stream page warns the organiser.
+        if ($base !== '' && !str_starts_with($origin, $base . '/')) {
+            return null;
+        }
+        $file = $base !== '' ? substr($origin, strlen($base) + 1) : basename((string) parse_url($origin, PHP_URL_PATH));
         $file = implode('/', array_map('rawurlencode', explode('/', (string) parse_url($file, PHP_URL_PATH))));
 
         return $relay . '/hls/' . $expires . '/' . $token . '/' . $file;
+    }
+
+    public const RELAY_LINK_HOURS = 12;
+
+    /**
+     * Why an HLS link will not go through the relay, in words for the stream page; '' when it will.
+     * @param string $url the HD or Standard link as pasted
+     */
+    public static function relayProblem(string $url): string
+    {
+        if ($url === '' || self::kind($url) !== 'hls' || !self::proxyEnabled() || rtrim((string) env('STREAM_RELAY_URL', ''), '/') === '') {
+            return '';
+        }
+        $base = rtrim((string) env('STREAM_RELAY_BASE', ''), '/');
+        if ($base !== '' && !str_starts_with($url, $base . '/')) {
+            return 'This link is not on the relay\'s address (' . parse_url($base, PHP_URL_HOST) . '), so the website carries the video itself. '
+                . 'That works but holds far fewer viewers. Ask for the relay to be pointed at this address before the day.';
+        }
+
+        return '';
     }
 
     /** Optional second HLS link at a lower bitrate; viewers pick between the two. */

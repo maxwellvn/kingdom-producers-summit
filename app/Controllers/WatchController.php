@@ -94,7 +94,7 @@ final class WatchController extends Controller
         Analytics::touch(
             VisitorTracker::sessionHash(),
             Analytics::visitorHash($request->ip(), $request->userAgent()),
-            '/watch',
+            '/' . \App\Core\Events::active() . '/watch',
             Analytics::device($request->userAgent()),
             'watch',
             (string) $viewer['reference']
@@ -232,7 +232,7 @@ final class WatchController extends Controller
         Analytics::touch(
             $session,
             Analytics::visitorHash($request->ip(), $request->userAgent()),
-            '/watch',
+            '/' . \App\Core\Events::active() . '/watch',
             Analytics::device($request->userAgent()),
             'watch',
             (string) $viewer['reference']

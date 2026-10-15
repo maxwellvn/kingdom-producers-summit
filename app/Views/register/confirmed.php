@@ -11,7 +11,7 @@ $next = [
     'The programme and travel notes will follow by email.',
   ],
   'online' => [
-    'Watch the main sessions by livestream from ' . $summit['place'] . (App\Services\Edition::hasDate() ? ' on ' . $summit['date_text'] : ' once the date is announced') . '. Open ' . site_url() . '/watch and sign in with this email or your reference.',
+    'Watch the main sessions by livestream from ' . $summit['place'] . (App\Services\Edition::hasDate() ? ' on ' . $summit['date_text'] : ' once the date is announced') . '. Open ' . event_url('/watch and sign in with this email or your reference.'),
     'The workshops, mentoring, clinic and networking happen in the room and are not part of online access.',
     'If you decide to attend in person later, reply to any of our emails and we will switch you over.',
   ],
@@ -113,7 +113,7 @@ $gcal = 'https://calendar.google.com/calendar/render?' . http_build_query([
   'location' => $summit['venue']['query'],
   'details' => site_url(),
 ]);
-$shareText = "I've registered for " . $summit['short'] . ' (' . $summit['date_day'] . '). Join me: ' . site_url() . '/register';
+$shareText = "I've registered for " . $summit['short'] . ' (' . $summit['date_day'] . '). Join me: ' . event_url('/register');
 ?>
       <div class="confirmed__tools">
         <?php if ($summit['starts_at'] !== ''): ?>
@@ -126,7 +126,7 @@ $shareText = "I've registered for " . $summit['short'] . ' (' . $summit['date_da
         <span class="mono confirmed__tools-label">Invite a friend</span>
         <div class="confirmed__tools-row">
           <a class="btn btn--outline" href="https://wa.me/?text=<?= rawurlencode($shareText) ?>" target="_blank" rel="noopener"><span class="btn__label">WhatsApp</span></a>
-          <button type="button" class="btn btn--outline" data-copy="<?= e(site_url() . '/register') ?>"><span class="btn__label">Copy link</span></button>
+          <button type="button" class="btn btn--outline" data-copy="<?= e(event_url('/register')) ?>"><span class="btn__label">Copy link</span></button>
         </div>
       </div>
       <div class="confirmed__actions">

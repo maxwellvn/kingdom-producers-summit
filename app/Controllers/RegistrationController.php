@@ -177,7 +177,7 @@ final class RegistrationController extends Controller
                 : ['DTSTART;VALUE=DATE:' . date('Ymd', strtotime((string) $s['starts_at'])), 'DTEND;VALUE=DATE:' . date('Ymd', strtotime((string) $s['starts_at']) + 86400)]),
             'SUMMARY:' . $fold($s['short'] . ' — ' . $s['edition']),
             'LOCATION:' . $fold($venue),
-            'DESCRIPTION:' . $fold('Your pass and details: ' . site_url() . '/register'),
+            'DESCRIPTION:' . $fold('Your pass and details: ' . event_url('/register')),
             'URL:' . site_url(),
             'END:VEVENT', 'END:VCALENDAR', '',
         ]);

@@ -238,3 +238,9 @@ function ph(string $name, string $class = ''): string
 {
     return '<i class="ph ph-' . e($name) . ($class !== '' ? ' ' . e($class) : '') . '" aria-hidden="true"></i>';
 }
+
+/** Absolute address of an event page, with the event in front (/manchester/watch). For emails, messages and QR codes. */
+function event_url(string $path): string
+{
+    return site_url() . \App\Core\Events::scope('/' . ltrim($path, '/'));
+}

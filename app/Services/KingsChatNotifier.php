@@ -16,14 +16,14 @@ final class KingsChatNotifier
         $name = trim((string) $registration['first_name']);
         $reference = (string) $registration['reference'];
         $summit = (array) config('app.summit');
-        $link = site_url() . '/register/confirmed?access='
+        $link = event_url('/register/confirmed') . '?access='
             . rawurlencode(AttendanceService::tokenFor($reference));
 
         $support = '';
         if (is_paid_path((string) $registration['participation']) && ($registration['payment_status'] ?? '') === 'not_required') {
             $support = "If you would like to support the programme, a contribution of "
                 . espees_price(price_pence((string) $registration['participation'])) . " is suggested: "
-                . site_url() . '/register/method?resume=' . rawurlencode(PaymentService::resumeToken($reference)) . "\n\n";
+                . event_url('/register/method') . '?resume=' . rawurlencode(PaymentService::resumeToken($reference)) . "\n\n";
         }
 
         $where = '';
@@ -51,7 +51,7 @@ final class KingsChatNotifier
         $reference = (string) $registration['reference'];
         $v = (array) config('app.summit.venue');
         $text = "{$timing['lead']}, {$name}. {$timing['detail']}\n\n"
-            . "Your QR pass for the door: " . site_url() . '/register/confirmed?access=' . rawurlencode(AttendanceService::tokenFor($reference)) . "\n"
+            . "Your QR pass for the door: " . event_url('/register/confirmed') . '?access=' . rawurlencode(AttendanceService::tokenFor($reference)) . "\n"
             . "Reference: {$reference}\n\n"
             . 'Where: ' . venue_line() . "\n"
             . (trim((string) $v['name']) !== '' ? 'Get directions: https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode((string) $v['query']) . "\n" : '') . "\n"
