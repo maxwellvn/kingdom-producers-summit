@@ -77,6 +77,25 @@ final class AttendanceService
         ];
     }
 
+    /** Who checked themselves in, in place of a staff email on the attendance row. */
+    public const SELF = 'self check-in';
+
+    /**
+     * The attendee checks in on their own phone, from the QR at the desk.
+     * Someone registered to watch online who walked in is in the room now, so they become onsite.
+     */
+    public static function selfCheckIn(array $registration, string $ipAddress): array
+    {
+        if ($registration['participation'] === 'online' && $registration['status'] === 'confirmed'
+            && $registration['event'] === \App\Core\Events::active()) {
+            \App\Core\Database::connection()
+                ->prepare("UPDATE registrations SET participation = 'onsite' WHERE id = ? AND participation = 'online'")
+                ->execute([(int) $registration['id']]);
+        }
+
+        return self::checkIn(self::tokenFor((string) $registration['reference']), self::SELF, $ipAddress);
+    }
+
     private static function signature(string $reference): string
     {
         $key = (string) config('app.key');

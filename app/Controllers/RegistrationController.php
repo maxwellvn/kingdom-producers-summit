@@ -86,7 +86,10 @@ final class RegistrationController extends Controller
 
         (new KingsChatNotifier())->sendConfirmation($registration);
 
-        return $this->redirect('/register/confirmed');
+        // Registering at the venue from the desk QR: check them in straight away.
+        $welcome = CheckInController::afterRegistering($registration, $request->ip());
+
+        return $this->redirect($welcome ?? '/register/confirmed');
     }
 
     public function confirmed(Request $request): Response

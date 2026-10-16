@@ -1,4 +1,4 @@
-<?php /** @var bool $express @var string $openToken @var string $flash */ ?>
+<?php /** @var bool $express @var string $openToken @var bool $checkinOn @var string $checkinUrl @var string $flash */ ?>
 <section class="adm-page">
   <header class="adm-page__head">
     <div>
@@ -14,6 +14,21 @@
 
   <section id="event-day" class="adm-panel eventday">
         <div class="eventday__grid">
+      <div class="eventday__item eventday__item--checkin">
+        <div>
+          <strong>Self check-in</strong>
+          <span class="mono eventday__state <?= $checkinOn ? 'is-on' : '' ?>"><?= $checkinOn ? 'On' : 'Off' ?></span>
+          <p>Show this QR at the desk, on screen or printed; the link never changes. People scan it with their phone and check themselves in with one tap. Anyone not yet registered registers there and is checked in when they finish. Each person then shows you a welcome screen with their name. While self check-in is off, the QR asks people to see the desk.</p>
+          <p class="eventday__link"><input type="text" readonly value="<?= e($checkinUrl) ?>" onclick="this.select()" aria-label="Self check-in link"> <button type="button" class="adm-btn" data-copy="<?= e($checkinUrl) ?>">Copy</button></p>
+          <form method="post" action="<?= url('/admin/event-day') ?>" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem">
+            <?= csrf_field() ?>
+            <button type="submit" name="action" value="<?= $checkinOn ? 'checkin_off' : 'checkin_on' ?>" class="adm-btn <?= $checkinOn ? '' : 'adm-btn--solid' ?>"><?= $checkinOn ? 'Turn off' : 'Turn on' ?></button>
+            <a class="adm-btn" href="<?= url('/admin/check-in/display') ?>" target="_blank" rel="noopener">Show full screen</a>
+            <a class="adm-btn" href="<?= url('/admin/check-in/qr.png') ?>" download>Download PNG</a>
+          </form>
+        </div>
+        <img class="eventday__qr" src="<?= url('/admin/check-in/qr.png') ?>" alt="Self check-in QR code" width="180" height="180">
+      </div>
       <div class="eventday__item">
         <div>
           <strong>Express registration</strong>

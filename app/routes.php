@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AdminController;
 use App\Controllers\ArchiveController;
+use App\Controllers\CheckInController;
 use App\Controllers\ConsentController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
@@ -42,6 +43,10 @@ $router->get('/watch/comments', [WatchController::class, 'comments']);
 $router->post('/watch/comments', [WatchController::class, 'postComment'], [VerifyCsrf::class]);
 $router->post('/watch/prompt', [WatchController::class, 'answerPrompt'], [VerifyCsrf::class]);
 $router->get('/watch/hls', [WatchController::class, 'hls']);
+// Self check-in from the QR at the desk.
+$router->get('/checkin', [CheckInController::class, 'show']);
+$router->post('/checkin', [CheckInController::class, 'store'], [VerifyCsrf::class]);
+$router->get('/checkin/welcome', [CheckInController::class, 'welcome']);
 $router->get('/access/qr', [RegistrationController::class, 'qr']);
 $router->get('/register/pay', [PaymentController::class, 'payForm']);
 $router->post('/register/pay', [PaymentController::class, 'payResume'], [VerifyCsrf::class]);
@@ -107,6 +112,8 @@ $router->get('/admin/admins', [AdminController::class, 'admins'], [RequireAdmin:
 $router->post('/admin/admins', [AdminController::class, 'addAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/admins/delete', [AdminController::class, 'deleteAdmin'], [VerifyCsrf::class, RequireAdmin::class]);
 $router->post('/admin/check-in', [AdminController::class, 'checkIn'], [VerifyCsrf::class, RequireAdmin::class]);
+$router->get('/admin/check-in/qr.png', [AdminController::class, 'selfCheckInQr'], [RequireAdmin::class]);
+$router->get('/admin/check-in/display', [AdminController::class, 'selfCheckInDisplay'], [RequireAdmin::class]);
 $router->get('/admin/check-in/search', [AdminController::class, 'checkInSearch'], [RequireAdmin::class]);
 $router->get('/admin/stream', [AdminController::class, 'stream'], [RequireAdmin::class]);
 $router->get('/admin/engagement', [AdminController::class, 'engagement'], [RequireAdmin::class]);

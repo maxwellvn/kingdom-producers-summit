@@ -790,6 +790,27 @@ a.proof__value:hover { text-decoration-color: var(--ink); }
 .pay__fine { margin: 0; font-size: .8rem; color: var(--muted); }
 .pay__fine a { color: var(--ink); }
 
+/* ---------- Self check-in ---------- */
+.checkin .pay { gap: 1rem; }
+.checkin__show { width: min(100%, 34rem); padding: 1rem 1.2rem; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 1.05rem; line-height: 1.35; text-align: center; }
+.checkin__welcome { position: relative; }
+.checkin__stamp { position: absolute; top: 1.4rem; right: 1.4rem; transform: rotate(7deg); font-family: var(--font-display); font-weight: 700; text-transform: uppercase; color: var(--stamp); border: 4px double var(--stamp); border-radius: 8px; padding: .45rem .7rem .4rem; font-size: .9rem; letter-spacing: .1em; mix-blend-mode: multiply; animation: checkin-stamp .28s var(--ease-out) .15s both; }
+@keyframes checkin-stamp { from { opacity: 0; transform: rotate(7deg) scale(1.35); } to { opacity: 1; transform: rotate(7deg) scale(1); } }
+.checkin__welcome .pay__title { font-size: clamp(2.8rem, 12vw, 4.2rem); padding-right: 6.5rem; }
+.checkin__facts { display: grid; margin: 0; }
+.checkin__facts div { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-top: 1px solid var(--paper-line); }
+.checkin__facts dt { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.checkin__facts dd { margin: 0; font-weight: 600; color: var(--ink); text-align: right; overflow-wrap: anywhere; }
+.checkin__live { display: flex; align-items: center; gap: .55rem; margin: 0; font-size: .85rem; color: var(--ink); }
+.checkin__pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--stamp); animation: checkin-pulse 1.2s ease-in-out infinite; }
+@keyframes checkin-pulse { 50% { opacity: .25; } }
+.checkin__other summary { cursor: pointer; font-size: .9rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.checkin__other[open] summary { margin-bottom: 1.2rem; }
+.checkin__new { display: grid; gap: .9rem; padding-top: 1.4rem; border-top: 1px solid var(--paper-line); }
+.checkin__new p { margin: 0; color: var(--ink); line-height: 1.5; }
+.checkin__new .btn { justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .checkin__stamp, .checkin__pulse { animation: none; } }
+
 /* ---------- Confirmed ---------- */
 .confirmed { position: relative; overflow: clip; padding: clamp(8rem, 15vh, 11rem) 0 var(--section); color: var(--paper); background: var(--ink); isolation: isolate; }
 .confirmed::before { content: ""; position: absolute; z-index: -2; inset: 0; background: linear-gradient(110deg, rgba(27,34,66,.98) 0%, rgba(27,34,66,.9) 45%, rgba(27,34,66,.58) 100%); }

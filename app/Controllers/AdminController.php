@@ -245,6 +245,8 @@ final class AdminController extends Controller
             'flash'     => (string) Session::get('admin_flash', ''),
             'express'   => Setting::get('express_registration', '') === '1',
             'openToken' => Setting::get('watch_open_token', ''),
+            'checkinOn' => Setting::get('checkin_open', '') === '1',
+            'checkinUrl'=> event_url('/checkin'),
         ], 'layouts/admin');
     }
 
@@ -737,6 +739,15 @@ final class AdminController extends Controller
                 StreamEvent::log('desk', 'Open watch link created by ' . $by);
                 Session::flash('admin_flash', 'Open watch link ready. Anyone with it gets in with an email address.');
                 break;
+            case 'checkin_on':
+            case 'checkin_off':
+                $on = $request->str('action') === 'checkin_on';
+                Setting::set('checkin_open', $on ? '1' : '0');
+                StreamEvent::log('desk', 'Self check-in ' . ($on ? 'on' : 'off') . ' by ' . $by);
+                Session::flash('admin_flash', $on
+                    ? 'Self check-in is on. People who scan the desk QR can check themselves in.'
+                    : 'Self check-in is off. The QR now asks people to see the desk.');
+                break;
             case 'open_link_off':
                 Setting::set('watch_open_token', '');
                 StreamEvent::log('desk', 'Open watch link revoked by ' . $by);
@@ -1118,16 +1129,36 @@ final class AdminController extends Controller
     /** A QR pointing at the commitment page, for the screen or a printed card. */
     public function commitmentsQr(Request $request): Response
     {
+        return self::qrPng(event_url('/commitment'), 'commitment-qr.png');
+    }
+
+    /** The desk QR for self check-in: the plain link, so printed copies keep working. */
+    public function selfCheckInQr(Request $request): Response
+    {
+        return self::qrPng(event_url('/checkin'), 'check-in-qr-' . \App\Core\Events::active() . '.png');
+    }
+
+    /** The QR full screen, for a tablet or monitor at the desk. */
+    public function selfCheckInDisplay(Request $request): Response
+    {
+        return $this->view('admin/checkin_display', [
+            'title'  => 'Scan to check in',
+            'summit' => config('app.summit'),
+        ], null);
+    }
+
+    private static function qrPng(string $text, string $filename): Response
+    {
         $old = error_reporting(E_ALL & ~E_DEPRECATED);
         require_once BASE_PATH . '/lib/phpqrcode.php';
         ob_start();
-        \QRcode::png(event_url('/commitment'), false, \QR_ECLEVEL_M, 12, 2, false, 0xFFFFFF, 0x000000);
+        \QRcode::png($text, false, \QR_ECLEVEL_M, 12, 2, false, 0xFFFFFF, 0x000000);
         $png = (string) ob_get_clean();
         error_reporting($old);
         $pos = strpos($png, chr(0x89) . 'PNG');
         $png = $pos === false ? '' : substr($png, $pos);
 
-        return (new Response($png))->header('Content-Type', 'image/png')->header('Content-Disposition', 'inline; filename="commitment-qr.png"');
+        return (new Response($png))->header('Content-Type', 'image/png')->header('Content-Disposition', 'inline; filename="' . $filename . '"');
     }
 
     public function exportCsv(Request $request): Response

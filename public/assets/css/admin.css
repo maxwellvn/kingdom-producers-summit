@@ -448,7 +448,14 @@ tr:has(.adm-pill--paid) td { background: rgba(30,125,60,.06); }
 .eventday__state.is-on { background: #1e7d3c; color: #fff; }
 .eventday__link { display: flex; gap: .4rem; align-items: center; }
 .eventday__link input { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: .72rem; padding: .4rem .5rem; border: 1px solid rgba(27,34,66,.25); background: #fff; }
-@media (max-width: 720px) { .eventday__grid { grid-template-columns: 1fr; } }
+.eventday__item--checkin { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+.eventday__item--checkin > div { flex: 1; min-width: 0; }
+.eventday__qr { flex: none; width: 180px; height: 180px; background: #fff; border-radius: 6px; outline: 1px solid rgba(27,34,66,.1); outline-offset: -1px; }
+@media (max-width: 720px) {
+  .eventday__grid { grid-template-columns: 1fr; }
+  .eventday__item--checkin { flex-direction: column; align-items: stretch; }
+  .eventday__qr { align-self: center; }
+}
 
 /* ---------- Dashboard finish: older components on the new surfaces ---------- */
 .adm-columns { gap: 1.25rem; }
