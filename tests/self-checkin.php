@@ -50,7 +50,8 @@ try {
     verify(CheckInController::allowed(), 'turning self check-in on opens the page');
     verify(str_contains(body($c->show($get())), 'Register and check in'), 'the page offers registration to walk-ins');
 
-    verify(str_contains(body($c->store($post(['identifier' => 'nobody-' . bin2hex(random_bytes(4)) . '@example.org']))), 'could not find a registration'), 'an unknown email is refused');
+    $unknown = body($c->store($post(['identifier' => 'nobody-' . bin2hex(random_bytes(4)) . '@example.org'])));
+    verify(str_contains($unknown, 'You are not registered yet') && str_contains($unknown, 'Register now'), 'an unknown email gets a register button');
 
     $online = $make('online');
     $done = $c->store($post(['identifier' => strtoupper($online['email'])]));
@@ -75,7 +76,7 @@ try {
     verify(attended((int) $walkIn['id']) === 1, 'the walk-in is recorded as attended');
 
     $ireland = Events::using('ireland', static fn () => $make('onsite'));
-    verify(str_contains(body($c->store($post(['identifier' => $ireland['email']]))), 'could not find a registration'), 'a registration for the other event is not found here');
+    verify(str_contains(body($c->store($post(['identifier' => $ireland['email']]))), 'You are not registered yet'), 'a registration for the other event is not found here');
 
     Setting::set('checkin_open', '0');
     verify(str_contains(body($c->store($post(['me' => '1']))), 'Self check-in is not open right now'), 'turning it off stops check-ins');

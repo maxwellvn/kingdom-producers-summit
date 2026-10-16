@@ -1,5 +1,5 @@
 <?php
-/** @var string $state ready|closed|welcome @var array $summit @var array|null $person @var string|null $error @var string|null $identifier @var string|null $checkedInAt */
+/** @var string $state ready|unregistered|closed|welcome @var array $summit @var array|null $person @var string|null $error @var string|null $identifier @var string|null $checkedInAt */
 $person = $person ?? null;
 $error = $error ?? '';
 ?>
@@ -27,6 +27,17 @@ $error = $error ?? '';
           setInterval(function () { var d = new Date(); el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }, 1000);
         })();
       </script>
+
+    <?php elseif ($state === 'unregistered'): ?>
+      <div class="pay__card">
+        <h1 class="pay__title">You are not registered yet</h1>
+        <p class="pay__lede">We could not find a registration for <strong><?= e($identifier ?? '') ?></strong>. Register now and you are checked in as soon as you finish.</p>
+        <a class="btn btn--stamp btn--lg checkin__cta" href="<?= url('/register?mode=onsite') ?>">
+          <span class="btn__label">Register now</span>
+          <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
+        </a>
+        <p class="pay__fine mono">Already registered with a different email? <a href="<?= url('/checkin') ?>">Try again</a>.</p>
+      </div>
 
     <?php elseif ($state === 'closed'): ?>
       <div class="pay__card">

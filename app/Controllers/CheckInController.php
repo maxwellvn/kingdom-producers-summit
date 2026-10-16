@@ -47,11 +47,11 @@ final class CheckInController extends Controller
             if ($registration === null || $registration['status'] === 'cancelled') {
                 LoginAttempt::record($throttleKey);
                 usleep(random_int(200_000, 400_000));
+                // Carry what they typed into the registration form.
+                $typed = mb_substr(trim($request->str('identifier')), 0, 190);
+                Session::flash('_old', filter_var($typed, FILTER_VALIDATE_EMAIL) ? ['email' => $typed] : ['kingschat_username' => ltrim($typed, '@')]);
 
-                return $this->page('ready', [
-                    'error'      => 'We could not find a registration with that email or KingsChat username. Check the spelling, or register below.',
-                    'identifier' => $request->str('identifier'),
-                ]);
+                return $this->page('unregistered', ['identifier' => $typed]);
             }
             LoginAttempt::clear($throttleKey);
         }
