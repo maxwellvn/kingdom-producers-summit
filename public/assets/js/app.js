@@ -428,13 +428,10 @@
           // link, rebuilds the player with a freshly signed one.
           video.addEventListener('error', function () { window.setTimeout(reloadStream, 3000); }, { once: true });
         } else if (useLibrary) {
-          // Dacast publishes a 6-second window (three 2 s segments). Sit one segment back from the
-          // edge and keep buffering ahead, or any hiccup empties the buffer. Not a low-latency stream.
+          // hls.js defaults for live position and buffer: the tight 6 s caps tuned earlier left slow
+          // connections on a black screen. Not a low-latency stream.
           hls = new window.Hls({
             lowLatencyMode: false,
-            liveSyncDurationCount: 2,
-            maxBufferLength: 6,
-            maxMaxBufferLength: 8,
             fragLoadingMaxRetry: 8,
             manifestLoadingMaxRetry: 8,
             levelLoadingMaxRetry: 8,
