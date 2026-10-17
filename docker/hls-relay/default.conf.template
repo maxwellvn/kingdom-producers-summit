@@ -28,6 +28,9 @@ server {
         proxy_set_header Connection "";
         proxy_set_header Range "";        # always fetch whole files so every response is a cacheable 200
         proxy_hide_header Set-Cookie;
+        # An origin that sends its own CORS headers (Dacast does) would double them; browsers reject that.
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Expose-Headers;
 
         proxy_cache hls;
         proxy_cache_key $path;
