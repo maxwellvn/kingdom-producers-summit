@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/app/bootstrap.php';
 use App\Controllers\CheckInController;
+use App\Controllers\RegistrationController;
 use App\Core\Database;
 use App\Core\Events;
 use App\Core\Request;
@@ -72,15 +73,28 @@ try {
     verify(attended((int) $initiative['id']) === 0, 'an initiative registration is not checked in');
 
     $walkIn = $make('onsite');
-    verify(CheckInController::afterRegistering($walkIn, '127.0.0.1') === '/checkin/welcome', 'registering from the desk QR checks in at once');
+    $plain = $make('onsite');
+    verify(CheckInController::afterRegistering(new Request('POST', '/register', [], [], []), $plain) === null, 'registering from the ordinary form does not check in');
+    verify(attended((int) $plain['id']) === 0, 'the ordinary registrant is not recorded as attended');
+    verify(str_contains(body($c->store($post(['identifier' => 'nobody-' . bin2hex(random_bytes(4)) . '@example.org']))), 'checkin=1'), 'the register button carries the check-in flag');
+
+    $fromDesk = static fn () => new Request('POST', '/register', [], ['checkin' => '1'], []);
+    verify(CheckInController::afterRegistering($fromDesk(), $walkIn) === '/checkin/welcome', 'registering from the desk QR checks in at once');
     verify(attended((int) $walkIn['id']) === 1, 'the walk-in is recorded as attended');
+
+    // Registered through the ordinary form at the venue: the pass page offers check-in, and the tap does it.
+    Session::put('last_registration', $plain['reference']);
+    $confirmed = static fn () => body((new RegistrationController())->confirmed(new Request('GET', '/register/confirmed', [], [], [])));
+    verify(str_contains($confirmed(), 'Already at the venue?'), 'the pass page offers check-in to an onsite registrant');
+    verify(str_ends_with(location($c->store($post(['me' => '1']))), '/checkin/welcome') && attended((int) $plain['id']) === 1, 'tapping check in from the pass page checks them in');
 
     $ireland = Events::using('ireland', static fn () => $make('onsite'));
     verify(str_contains(body($c->store($post(['identifier' => $ireland['email']]))), 'You are not registered yet'), 'a registration for the other event is not found here');
 
     Setting::set('checkin_open', '0');
     verify(str_contains(body($c->store($post(['me' => '1']))), 'Self check-in is not open right now'), 'turning it off stops check-ins');
-    verify(CheckInController::afterRegistering($make('onsite'), '127.0.0.1') === null, 'registering while it is off shows the normal pass');
+    verify(!str_contains($confirmed(), 'Already at the venue?'), 'the pass page offers no check-in while it is closed');
+    verify(CheckInController::afterRegistering($fromDesk(), $make('onsite')) === null, 'registering while it is off shows the normal pass');
 
     echo "All checks passed; test data rolled back.\n";
 } finally {

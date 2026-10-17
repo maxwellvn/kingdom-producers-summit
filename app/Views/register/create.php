@@ -75,6 +75,9 @@ $stageLabels = [
       <?php // Bots fill every field and submit instantly; people do neither. Hidden from everyone real. ?>
       <div class="sr-only" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
       <input type="hidden" name="opened_at" value="<?= time() ?>">
+      <?php if (!empty($checkin)): // came from the check-in page: check in on finishing ?>
+        <input type="hidden" name="checkin" value="1">
+      <?php endif; ?>
 
       <?php if ($errors): ?>
         <div class="form__alert" role="alert">

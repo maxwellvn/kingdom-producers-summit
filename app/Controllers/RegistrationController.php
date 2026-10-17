@@ -33,6 +33,7 @@ final class RegistrationController extends Controller
                 . config('app.summit.city') . ', watch online, or join the initiative.',
             'summit'    => config('app.summit'),
             'mode'      => $mode,
+            'checkin'   => $request->str('checkin') === '1',
             'fields'    => Registration::FIELDS,
             'stages'    => Registration::STAGES,
             'ageBands'  => Registration::AGE_BANDS,
@@ -87,7 +88,7 @@ final class RegistrationController extends Controller
         (new KingsChatNotifier())->sendConfirmation($registration);
 
         // Registering at the venue from the desk QR: check them in straight away.
-        $welcome = CheckInController::afterRegistering($registration, $request->ip());
+        $welcome = CheckInController::afterRegistering($request, $registration);
 
         return $this->redirect($welcome ?? '/register/confirmed');
     }
@@ -117,6 +118,9 @@ final class RegistrationController extends Controller
             'summit'       => config('app.summit'),
             'registration' => $registration,
             'accessToken'  => AttendanceService::tokenFor($registration['reference']),
+            // At the venue without the check-in link: offer the one-tap check-in for the phone that just registered.
+            'canCheckIn'   => $registration['participation'] === 'onsite' && CheckInController::allowed()
+                && Session::get('last_registration') === $registration['reference'],
             // The optional contribution, offered once they are in.
             'supportUrl'   => is_paid_path((string) $registration['participation']) && $registration['payment_status'] === 'not_required'
                 ? url('/register/method?resume=' . rawurlencode(PaymentService::resumeToken((string) $registration['reference'])))

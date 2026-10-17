@@ -1,5 +1,5 @@
 <?php
-/** @var array $registration @var array $summit @var string $accessToken @var string|null $supportUrl */
+/** @var array $registration @var array $summit @var string $accessToken @var string|null $supportUrl @var bool $canCheckIn */
 $r = $registration;
 $pathLabel = ['onsite' => 'Attending onsite', 'online' => 'Attending online', 'initiative' => 'Joined the Kingdom Producers initiative'][$r['participation']] ?? $r['participation'];
 $next = [
@@ -61,6 +61,14 @@ $next = [
           <button type="button" class="confirmed__copy mono" data-copy="#refCode">Copy reference</button>
           <?php if ($onsite): ?>
             <p>Present this QR code to the attendance team. It confirms your arrival without exposing your registration details.</p>
+            <?php if (!empty($canCheckIn)): ?>
+              <form method="post" action="<?= url('/checkin') ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="me" value="1">
+                <p><strong>Already at the venue?</strong> Check in now and show the welcome screen at the desk.</p>
+                <button type="submit" class="btn btn--stamp"><span class="btn__label">Check me in</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></button>
+              </form>
+            <?php endif; ?>
           <?php elseif ($r['participation'] === 'online'): ?>
             <p>On the day, sign in with this email or your reference to watch. There is no pass to bring.</p>
             <a class="btn btn--stamp" href="<?= url('/watch') ?>"><span class="btn__label">Open the live room</span><span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span></a>

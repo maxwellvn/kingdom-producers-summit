@@ -77,10 +77,14 @@ final class CheckInController extends Controller
         return $this->page('welcome', ['person' => $registration, 'checkedInAt' => (string) $done['at']]);
     }
 
-    /** Registered from the check-in page: check them in at once and show the welcome screen. */
-    public static function afterRegistering(array $registration, string $ipAddress): ?string
+    /**
+     * Registered from the check-in page: check them in at once and show the welcome screen.
+     * Only the check-in page's register link carries checkin=1; the ordinary form never checks anyone in.
+     */
+    public static function afterRegistering(Request $request, array $registration): ?string
     {
-        $result = self::allowed() ? AttendanceService::selfCheckIn($registration, $ipAddress) : ['ok' => false];
+        $fromCheckIn = $request->str('checkin') === '1' && self::allowed();
+        $result = $fromCheckIn ? AttendanceService::selfCheckIn($registration, $request->ip()) : ['ok' => false];
         if (!$result['ok']) {
             return null;
         }

@@ -842,6 +842,7 @@ a.proof__value:hover { text-decoration-color: var(--ink); }
 .confirmed__copy:hover { background: var(--stamp-deep); }
 .confirmed__copy:active { transform: translateY(1px); }
 .confirmed__pass-copy p { max-width: 34ch; margin: 1.25rem 0 0; color: var(--muted); font-size: .92rem; }
+.confirmed__pass-copy form .btn { margin-top: 1rem; }
 .confirmed__facts { display: grid; grid-template-columns: repeat(2, 1fr); margin: 0; padding: clamp(1.5rem, 3vw, 2.25rem); }
 .confirmed__facts > div { min-width: 0; padding: 1rem 1.25rem 1rem 0; border-top: 1px solid var(--paper-line); }
 .confirmed__facts > div:nth-child(even) { padding-left: 1.25rem; border-left: 1px solid var(--paper-line); }

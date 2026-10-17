@@ -32,7 +32,7 @@ $error = $error ?? '';
       <div class="pay__card">
         <h1 class="pay__title">You are not registered yet</h1>
         <p class="pay__lede">We could not find a registration for <strong><?= e($identifier ?? '') ?></strong>. Register now and you are checked in as soon as you finish.</p>
-        <a class="btn btn--stamp btn--lg checkin__cta" href="<?= url('/register?mode=onsite') ?>">
+        <a class="btn btn--stamp btn--lg checkin__cta" href="<?= url('/register?mode=onsite&checkin=1') ?>">
           <span class="btn__label">Register now</span>
           <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
         </a>
@@ -87,7 +87,7 @@ $error = $error ?? '';
 
         <div class="checkin__new">
           <p><strong>Not registered yet?</strong> Register now. You are checked in as soon as you finish.</p>
-          <a class="btn btn--ink" href="<?= url('/register?mode=onsite') ?>">
+          <a class="btn btn--ink" href="<?= url('/register?mode=onsite&checkin=1') ?>">
             <span class="btn__label">Register and check in</span>
             <span class="btn__arrow" aria-hidden="true"><?= icon_arrow() ?></span>
           </a>
