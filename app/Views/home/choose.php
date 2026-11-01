@@ -10,7 +10,7 @@ $copy = [
 
 <section class="choose" id="choose">
   <div class="container choose__head">
-    <p class="eyebrow eyebrow--pill">Registration open</p>
+    <p class="eyebrow eyebrow--pill">Registration closed</p>
     <h1 class="choose__title">Two cities.<br>One summit.<br><span>Choose yours.</span></h1>
     <p class="choose__lede">
       The Loveworld Kingdom Producers Summit runs in Manchester and across Ireland.

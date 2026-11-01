@@ -19,11 +19,20 @@ use PDOException;
 
 final class RegistrationController extends Controller
 {
+    /** Summit registration is closed; the initiative (90-day challenge) still takes sign-ups. Set true to reopen. */
+    private const SUMMIT_OPEN = false;
+
     public function create(Request $request): Response
     {
         $mode = $request->str('mode');
         if (!in_array($mode, Registration::PARTICIPATION, true)) {
             $mode = '';
+        }
+        if (!self::SUMMIT_OPEN && $mode !== 'initiative') {
+            return $this->view('register/closed', [
+                'title'     => 'Registration closed — ' . config('app.name'),
+                'bodyClass' => 'page-register',
+            ]);
         }
 
         return $this->view('register/create', [
@@ -52,6 +61,10 @@ final class RegistrationController extends Controller
 
     public function store(Request $request): Response
     {
+        if (!self::SUMMIT_OPEN && $request->str('participation') !== 'initiative') {
+            return $this->redirect('/register');
+        }
+
         // A filled honeypot or an instant submit is a script, not a person.
         // Send it back looking like an ordinary error so it learns nothing.
         $opened = (int) $request->str('opened_at');
